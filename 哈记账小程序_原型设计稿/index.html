@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#f7f8f7" />
+  <title>哈记账｜微信小程序原型</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="prototype-shell" aria-label="哈记账微信小程序原型">
+    <div class="prototype-toolbar">
+      <div>
+        <span class="eyebrow">MOBILE PRODUCT PROTOTYPE</span>
+        <h1><img class="brand-mark" src="../哈记账.png" alt="" /> 哈记账 <span>·</span> v1.1</h1>
+      </div>
+      <button class="toolbar-button" data-action="show-spec" aria-label="查看设计说明">标注</button>
+    </div>
+
+    <section class="phone" id="phone" aria-label="哈记账手机画布">
+      <div class="status-bar"><span>9:41</span><span class="status-icons">● ◒ ▮</span></div>
+      <div id="screen-root"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+  <div class="modal-backdrop" id="modal-backdrop" hidden>
+    <div class="bottom-sheet" id="bottom-sheet" role="dialog" aria-modal="true"></div>
+  </div>
+  <div class="spec-panel" id="spec-panel" hidden>
+    <button class="close-spec" data-action="close-spec" aria-label="关闭说明">×</button>
+    <span class="eyebrow">DESIGN NOTES</span>
+    <h2>哈记账 · 原型说明</h2>
+    <p>清新、柔和、自然的移动端记账体验。点击账单、账户、月份和“+”入口，可查看主要交互状态。</p>
+    <div class="spec-grid">
+      <div><b>基准画布</b><span>375 × 812 px</span></div>
+      <div><b>安全边距</b><span>16 px / 底部 24 px</span></div>
+      <div><b>品牌主色</b><span><i class="color-dot mint"></i>#49AD9C</span></div>
+      <div><b>数据口径</b><span>自然月 · 本地时间</span></div>
+    </div>
+    <button class="spec-preview" data-action="preview-first-use">预览首次使用</button>
+    <div class="spec-foot">第一版仅开放首页、日历、资产、我的；统计仅做路由预留，凭证仅上传与预览，不做 OCR。</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
