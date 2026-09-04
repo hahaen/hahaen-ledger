@@ -3,6 +3,9 @@ const backdrop = document.getElementById('modal-backdrop');
 const sheet = document.getElementById('bottom-sheet');
 const toast = document.getElementById('toast');
 const specPanel = document.getElementById('spec-panel');
+let activeTrigger = null;
+let sheetAnchor = null;
+let sheetAnchorRect = null;
 
 const state = {
   view: 'home',
@@ -72,20 +75,21 @@ function appScreen(content, active, add = '') {
 
 function homeView() {
   const content = `
-    <header class="page-top"><div><div class="brand-lockup"><img src="../哈记账.png" alt="哈记账" /><span>哈记账</span></div><h2 class="page-title">首页</h2><p class="page-subtitle">记录每一笔，让生活更清晰</p></div><button class="icon-button" data-action="show-search" aria-label="搜索账单">⌕</button></header>
+    <header class="page-top home-page-top"><div><div class="brand-lockup home-brand-icon"><img src="../哈记账.png" alt="" /></div><p class="page-subtitle">记录每一笔，让生活更清晰</p></div><button class="icon-button" data-action="show-search" aria-label="搜索账单">⌕</button></header>
     <section class="summary-card" aria-label="本月收支概览">
       <div class="summary-kicker">2026 年 9 月 · 日均消费</div>
       <div class="summary-amount"><small>¥</small>86.40</div>
       <div class="summary-foot"><div>本月支出<strong>¥2,592.00</strong></div><div>本月收入<strong class="income-text">¥8,500.00</strong></div></div>
     </section>
-    <div class="section-row"><h3 class="section-title">最近记账</h3><span class="section-meta">共 18 笔</span></div>
-    <div class="date-group"><div class="date-heading"><b>今天 · 9月15日</b><span>周二</span></div><div class="transaction-list">
-      <button class="transaction-item" data-action="edit-entry"><span class="category-icon">🍜</span><span class="transaction-copy"><span class="transaction-title">午餐 <em class="type-tag">支出</em></span><span class="transaction-note">12:20 · 微信</span></span><span class="transaction-amount expense">− ¥32</span><span class="arrow">›</span></button>
-      <button class="transaction-item" data-action="edit-entry"><span class="category-icon">🚇</span><span class="transaction-copy"><span class="transaction-title">地铁通勤 <em class="type-tag">支出</em></span><span class="transaction-note">08:41 · 交通卡</span></span><span class="transaction-amount expense">− ¥6</span><span class="arrow">›</span></button>
+    <div class="section-row"><h3 class="section-title">最近记账</h3></div>
+    <div class="date-group"><div class="date-heading"><div class="date-heading-copy"><b>今天 · 9月15日</b><span>周二</span></div><div class="date-flow" aria-label="今日收支"><span class="date-income">收 ¥0.00</span><span class="date-expense">支 ¥38.00</span></div></div><div class="transaction-list">
+      <button class="transaction-item" data-action="edit-entry"><span class="category-icon type-icon expense" aria-hidden="true"><img src="assets/expense-coin.png" alt="" /></span><span class="transaction-copy"><span class="transaction-title type-label expense-label">支出</span><span class="transaction-note">12:20 · 微信</span></span><span class="transaction-amount expense">− ¥32</span><span class="arrow">›</span></button>
+      <button class="transaction-item" data-action="edit-entry"><span class="category-icon type-icon expense" aria-hidden="true"><img src="assets/expense-coin.png" alt="" /></span><span class="transaction-copy"><span class="transaction-title type-label expense-label">支出</span><span class="transaction-note">08:41 · 交通卡</span></span><span class="transaction-amount expense">− ¥6</span><span class="arrow">›</span></button>
+      <button class="transaction-item transfer-row" data-action="edit-entry"><span class="category-icon type-icon transfer" aria-hidden="true"><img src="assets/transfer-card.png" alt="" /></span><span class="transaction-copy"><span class="transaction-title type-label transfer-label">转账</span><span class="transaction-note">15:30 · 微信 → 银行卡</span></span><span class="transaction-amount transfer">¥100.00</span><span class="arrow">›</span></button>
     </div></div>
-    <div class="date-group"><div class="date-heading"><b>9月14日</b><span>周一</span></div><div class="transaction-list">
-      <button class="transaction-item" data-action="edit-entry"><span class="category-icon red">↗</span><span class="transaction-copy"><span class="transaction-title">工资 <em class="type-tag income">收入</em></span><span class="transaction-note">09:00 · 银行卡</span></span><span class="transaction-amount income">＋ ¥8,500</span><span class="arrow">›</span></button>
-      <button class="transaction-item" data-action="edit-entry"><span class="category-icon">🛍</span><span class="transaction-copy"><span class="transaction-title">日用补给 <em class="type-tag">支出</em></span><span class="transaction-note">18:26 · 支付宝</span></span><span class="transaction-amount expense">− ¥89.90</span><span class="arrow">›</span></button>
+    <div class="date-group"><div class="date-heading"><div class="date-heading-copy"><b>9月14日</b><span>周一</span></div><div class="date-flow" aria-label="9月14日收支"><span class="date-income">收 ¥8,500.00</span><span class="date-expense">支 ¥89.90</span></div></div><div class="transaction-list">
+      <button class="transaction-item" data-action="edit-entry"><span class="category-icon type-icon income" aria-hidden="true"><img src="assets/income-piggy-bank.png" alt="" /></span><span class="transaction-copy"><span class="transaction-title type-label income-label">收入</span><span class="transaction-note">09:00 · 银行卡</span></span><span class="transaction-amount income">＋ ¥8,500</span><span class="arrow">›</span></button>
+      <button class="transaction-item" data-action="edit-entry"><span class="category-icon type-icon expense" aria-hidden="true"><img src="assets/expense-coin.png" alt="" /></span><span class="transaction-copy"><span class="transaction-title type-label expense-label">支出</span><span class="transaction-note">18:26 · 支付宝</span></span><span class="transaction-amount expense">− ¥89.90</span><span class="arrow">›</span></button>
     </div></div>`;
   return appScreen(content, 'home', '<button class="circle-add" data-action="new-entry" aria-label="新增记账">＋</button>');
 }
@@ -173,13 +177,37 @@ function showToast(message) {
   clearTimeout(showToast.timer); showToast.timer = setTimeout(() => toast.classList.remove('show'), 2200);
 }
 
+function positionSheet(anchor = sheetAnchor) {
+  if (backdrop.hidden) return;
+  const padding = 16;
+  const gap = 10;
+  const backdropRect = backdrop.getBoundingClientRect();
+  const viewportWidth = backdrop.clientWidth;
+  const viewportHeight = backdrop.clientHeight;
+  const sheetWidth = sheet.offsetWidth;
+  const sheetHeight = sheet.offsetHeight;
+  const triggerRect = anchor?.isConnected ? anchor.getBoundingClientRect() : sheetAnchorRect;
+  let left = triggerRect ? triggerRect.left - backdropRect.left : (viewportWidth - sheetWidth) / 2;
+  let top = triggerRect ? triggerRect.bottom - backdropRect.top + gap : (viewportHeight - sheetHeight) / 2;
+
+  left = Math.min(Math.max(left, padding), viewportWidth - sheetWidth - padding);
+  if (top + sheetHeight > viewportHeight - padding && triggerRect) top = triggerRect.top - sheetHeight - gap;
+  top = Math.min(Math.max(top, padding), viewportHeight - sheetHeight - padding);
+
+  sheet.style.left = `${Math.round(left)}px`;
+  sheet.style.top = `${Math.round(top)}px`;
+}
+
 function openSheet(html, wide = false) {
+  sheetAnchor = activeTrigger?.isConnected ? activeTrigger : null;
+  sheetAnchorRect = sheetAnchor?.getBoundingClientRect() || null;
   sheet.className = `bottom-sheet${wide ? ' sheet-wide' : ''}`;
   sheet.innerHTML = `<div class="sheet-handle"></div>${html}`;
   backdrop.hidden = false;
+  requestAnimationFrame(() => positionSheet());
 }
 
-function closeSheet() { backdrop.hidden = true; sheet.innerHTML = ''; }
+function closeSheet() { backdrop.hidden = true; sheet.innerHTML = ''; sheetAnchor = null; sheetAnchorRect = null; }
 
 function categoryPicker() {
   const items = (state.entryType === 'income' ? incomeCategories : categories).map(([icon, name]) => `<button class="sheet-option ${(state.entryType === 'income' ? state.incomeCategory : state.category) === name ? 'selected' : ''}" data-pick-category="${name}"><span class="category-icon">${icon}</span>${name}</button>`).join('');
@@ -228,8 +256,10 @@ document.addEventListener('click', (event) => {
   const monthButton = event.target.closest('[data-month]');
   if (monthButton) { state.calendarMonth = Number(monthButton.dataset.month); closeSheet(); render(); return; }
 
-  const action = event.target.closest('[data-action]')?.dataset.action;
+  const actionElement = event.target.closest('[data-action]');
+  const action = actionElement?.dataset.action;
   if (!action) return;
+  activeTrigger = actionElement;
   if (action === 'new-entry') { state.view = 'entry'; state.editMode = false; state.entryType = 'expense'; state.receiptState = 'empty'; state.transferFrom = '微信'; state.transferTo = '银行卡'; resetCalculator(); render(); }
   if (action === 'edit-entry') { state.view = 'entry'; state.editMode = true; state.amount = '32.00'; state.category = '餐饮'; state.receiptState = 'ready'; state.expression = ''; state.formError = ''; state.calculatorFirst = null; state.calculatorOperator = ''; state.calculatorWaiting = false; render(); }
   if (action === 'back') { if (state.editMode) openSheet(`<h3 class="sheet-title">放弃这次修改？</h3><p class="confirm-copy">当前内容还没有保存，离开后修改会丢失。</p><div class="sheet-actions"><button class="secondary-button" data-action="close-sheet">继续编辑</button><button class="primary-button" data-action="discard-entry">放弃更改</button></div>`); else { state.view = 'home'; render(); } }
@@ -269,6 +299,7 @@ document.addEventListener('click', (event) => {
 });
 
 backdrop.addEventListener('click', (event) => { if (event.target === backdrop) closeSheet(); });
+window.addEventListener('resize', () => positionSheet());
 
 function evaluateExpression(expression) {
   const tokens = expression.trim().split(/\s+/);
