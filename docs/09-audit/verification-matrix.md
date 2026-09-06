@@ -9,10 +9,12 @@
 | 累计记账天数 | `ProfileService` 按 `app_user.created_at` 计算，`ProfileServiceTest` 覆盖创建日/前一日/未来日期 | PASS |
 | H5 头像上传 | `AppFileService` + MinIO 短时效上传/确认/预览接口，前端不持有密钥；真实对象上传未联调 | PARTIAL |
 | H5 退出后停留当前页 | `ledger.logout` 清理本地会话，mine 页切换为“登录”状态 | PASS（代码） |
+| H5 刷新保留当前路由 | `App.vue` 有效会话不再无条件跳首页，仅根路径补到首页 | PASS（代码）；真实登录态刷新为 PARTIAL |
+| Sa-Token 会话持久化 | `sa-token-redis-jackson` + `SaTokenRedisConfig`，Key 统一加 `haji:` | PASS（代码/依赖）；跨重启联调 BLOCKED |
 | 当前用户与逻辑删除过滤 | `ProfileService`、`AppFileService` 按当前用户并过滤 `deleted=0` | PASS（代码） |
 | 前端类型检查 | `pnpm run typecheck` exit 0 | PASS |
 | H5 生产构建 | 注入本地 API 地址后 `pnpm run build:h5` exit 0；未配置地址时按规则拒绝 | PASS |
 | 后端测试 | `mvn test`：4 tests，0 failures/errors/skipped | PASS |
-| H5 真实登录态运行 | 当前未启动后端且无联调账号，浏览器只验证到登录页 | NOT_RUN |
-| MySQL/Redis/MinIO 联调 | 本轮未取得可用基础设施证据 | BLOCKED |
+| H5 真实登录态运行 | H5 登录页可打开，但本机后端不可用，验证码请求失败 | PARTIAL |
+| MySQL/Redis/MinIO 联调 | 本机当前未监听 MySQL/Redis；MinIO 也未形成本轮有效会话证据 | BLOCKED |
 | 微信小程序运行 | 用户明确安排后续补齐 | NOT_RUN |

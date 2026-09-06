@@ -8,7 +8,15 @@ type State = { token:string; user?:{id:number;nickname:string}; accounts:Account
 const state = reactive<State>({ token:'', accounts:[], transactions:[], loading:false })
 let restored = false
 export function useLedger() {
-  async function restore() { if (restored) return; restored = true; state.token = uni.getStorageSync('auth-token') || '' }
+  async function restore() {
+    if (restored) return
+    restored = true
+    state.token = uni.getStorageSync('auth-token') || ''
+    const storedUser = uni.getStorageSync('auth-user') as { id?: unknown; nickname?: unknown } | undefined
+    if (storedUser && typeof storedUser.id === 'number' && typeof storedUser.nickname === 'string') {
+      state.user = { id: storedUser.id, nickname: storedUser.nickname }
+    }
+  }
   async function login() {
     let code = `dev-${Date.now()}`
     // #ifdef MP-WEIXIN
@@ -16,7 +24,7 @@ export function useLedger() {
     code = wxLogin.code
     // #endif
     const result = await request<{token:string;userId:number;nickname:string}>('/api/app/auth/login', { method:'POST', data:{ code } })
-    state.token=result.token; state.user={id:result.userId,nickname:result.nickname}; uni.setStorageSync('auth-token', result.token); await refresh()
+    state.token=result.token; state.user={id:result.userId,nickname:result.nickname}; uni.setStorageSync('auth-token', result.token); uni.setStorageSync('auth-user', state.user); await refresh()
   }
   async function refresh(month = localDateTime().slice(0,7)) { state.loading=true; try { const [summary,accounts] = await Promise.all([request<Summary>(`/api/app/home/summary?month=${month}`), request<Account[]>('/api/app/accounts')]); state.summary=summary || undefined; state.transactions=summary?.transactions || []; state.accounts=accounts } finally { state.loading=false } }
   async function createTransaction(payload:Record<string,unknown>) { await request<Transaction>('/api/app/transactions', { method:'POST', data:payload }); await refresh() }
@@ -30,6 +38,7 @@ export function useLedger() {
     state.transactions = []
     state.summary = undefined
     uni.removeStorageSync('auth-token')
+    uni.removeStorageSync('auth-user')
   }
   async function logout() {
     try {
@@ -45,5 +54,5 @@ export function useLedger() {
     uni.reLaunch({ url: '/pages/index/index' })
     // #endif
   }
-  return { state, restore, login, refresh, logout, createTransaction, updateTransaction, createAccount, deleteTransaction, localDateTime }
+  return { state, restore, login, refresh, logout, clearSession, createTransaction, updateTransaction, createAccount, deleteTransaction, localDateTime }
 }

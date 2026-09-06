@@ -56,6 +56,7 @@ async function submit() {
       ledger.state.token = result.token
       ledger.state.user = { id: result.userId, nickname: result.nickname }
       uni.setStorageSync('auth-token', result.token)
+      uni.setStorageSync('auth-user', ledger.state.user)
       uni.reLaunch({ url: '/pages/index/index' })
     } else {
       await request<null>('/api/app/auth/h5/register', { method: 'POST', data: payload })

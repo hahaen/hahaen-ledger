@@ -9,6 +9,10 @@ logging:
 spring:
   application:
     name: hahaen-ledger-server
+  autoconfigure:
+    # Redis DAO 由 SaTokenRedisConfig 统一注册，避免与 sa-token-redis-template 自动 Bean 重复。
+    exclude:
+      - cn.dev33.satoken.dao.SaTokenDaoForRedisTemplate
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:

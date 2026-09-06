@@ -8,10 +8,12 @@
 - 累计记账天数由服务端 `ProfileService` 依据当前用户 `app_user.created_at` 计算，创建日计为第 1 天，并有单元测试证据。
 - 头像上传复用现有 MinIO 预签名 URL 链路，文件查询补充当前用户和逻辑删除过滤；前端仅使用短时效预览 URL。
 - H5 退出登录在 store 中清理服务端会话对应的本地令牌和业务状态，mine 页保持当前页面并显示“登录”。
-- 前端 typecheck、H5 构建和后端测试 PASS；真实 H5 登录态、MinIO 上传和微信开发者工具验收分别为 NOT_RUN/BLOCKED/NOT_RUN。
+- H5 刷新有效会话时不再无条件跳首页；Sa-Token 会话改用 Redis DAO，并对 Redis Key 增加 `haji:` 前缀。
+- 用户启动日志发现 Redis DAO 自动配置与自定义 DAO 重复注册；已通过排除自动配置保留单一自定义 DAO，避免 Spring 上下文启动失败。
+- 前端 typecheck、H5 构建、后端编译和测试 PASS；真实 H5 登录态刷新为 PARTIAL，后端重启续会话和 MySQL/Redis/MinIO 联调为 BLOCKED，微信开发者工具验收仍为 NOT_RUN。
 
 ## 仍需人工验收
 
-1. 启动 MySQL、Redis、MinIO，使用真实 H5 会话验证个人资料、头像上传/刷新、旧预览 URL 过期重取和退出后的“登录”状态。
+1. 启动 MySQL、Redis、MinIO，使用真实 H5 会话验证刷新保留当前路由、后端重启续会话、个人资料、头像上传/刷新、旧预览 URL 过期重取和退出后的“登录”状态。
 2. 在 320/375/414px 下截图对照原型，检查滚动、安全区和帮助页长内容。
 3. 后续补齐微信小程序头像选择和平台差异，不把 H5 文件选择器直接移植到微信端。

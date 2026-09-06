@@ -2,19 +2,40 @@
 import { onLaunch } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { useLedger } from './stores/ledger'
+import { setAuthExpiredHandler } from './utils/api'
 const ledger = useLedger()
 const initialized = ref(false)
+
+setAuthExpiredHandler(() => {
+  ledger.clearSession()
+  // #ifdef H5
+  const path = currentH5Path()
+  if (initialized.value && !isAuthPath(path)) uni.reLaunch({ url: '/pages/auth/login/login' })
+  // #endif
+})
+
+// #ifdef H5
+function currentH5Path() {
+  return window.location.hash.replace(/^#/, '').split('?')[0] || '/'
+}
+
+function isAuthPath(path: string) {
+  return path === '/pages/auth/login/login' || path === '/pages/auth/register/register'
+}
+// #endif
+
 onLaunch(async () => {
   await ledger.restore()
   // #ifdef H5
-  const currentPath = window.location.hash.replace(/^#/, '').split('?')[0] || '/'
-  const isAuthPage = currentPath === '/pages/auth/login/login' || currentPath === '/pages/auth/register/register'
+  const currentPath = currentH5Path()
+  const isAuthPage = isAuthPath(currentPath)
   if (ledger.state.token) {
     try {
       await ledger.refresh()
-      uni.reLaunch({ url: '/pages/index/index' })
+      // 只有根路径需要补到首页；业务页、详情页和认证页保持浏览器当前路由。
+      if (currentPath === '/') uni.reLaunch({ url: '/pages/index/index' })
     } catch {
-      uni.removeStorageSync('auth-token')
+      ledger.clearSession()
       if (!isAuthPage) uni.reLaunch({ url: '/pages/auth/login/login' })
     }
   } else if (!isAuthPage) {
