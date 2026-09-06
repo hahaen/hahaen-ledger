@@ -14,15 +14,21 @@ spring:
   datasource:
     url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:hahaen_ledger}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: ${MYSQL_USERNAME:root}
-    password: ${MYSQL_PASSWORD:change-me}
+    password: ${MYSQL_PASSWORD:root}
   data:
     redis:
       host: ${REDIS_HOST:127.0.0.1}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
   flyway:
-    enabled: true
-    baseline-on-migrate: true
+    enabled: ${FLYWAY_ENABLED:true}
+    locations: ${FLYWAY_LOCATIONS:classpath:db/migration}
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
+    baseline-version: ${FLYWAY_BASELINE_VERSION:0}
+    baseline-description: ${FLYWAY_BASELINE_DESCRIPTION:haji-initial-baseline}
+    validate-on-migrate: ${FLYWAY_VALIDATE_ON_MIGRATE:true}
+    out-of-order: ${FLYWAY_OUT_OF_ORDER:false}
+    clean-disabled: ${FLYWAY_CLEAN_DISABLED:true}
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
@@ -42,6 +48,8 @@ springdoc:
     path: /swagger-ui.html
 hahaen:
   timezone: Asia/Shanghai
+  auth:
+    password-rsa-private-key: ${H5_PASSWORD_RSA_PRIVATE_KEY:GENERATE}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
   wechat:
@@ -50,6 +58,6 @@ hahaen:
     login-enabled: ${WECHAT_LOGIN_ENABLED:false}
   minio:
     endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
-    access-key: ${MINIO_ACCESS_KEY:minioadmin}
-    secret-key: ${MINIO_SECRET_KEY:minioadmin}
-    bucket: ${MINIO_BUCKET:hahaen-ledger}
+    access-key: ${MINIO_ACCESS_KEY:root}
+    secret-key: ${MINIO_SECRET_KEY:root}
+    bucket: ${MINIO_BUCKET:haji-dev}

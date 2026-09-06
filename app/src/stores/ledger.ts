@@ -23,5 +23,27 @@ export function useLedger() {
   async function createAccount(payload:Record<string,unknown>) { await request<Account>('/api/app/accounts', { method:'POST', data:payload }); await refresh() }
   async function deleteTransaction(id:number) { await request(`/api/app/transactions/${id}`, { method:'DELETE' }); await refresh() }
   async function updateTransaction(id:number, payload:Record<string,unknown>) { await request<Transaction>(`/api/app/transactions/${id}`, { method:'PUT', data:payload }); await refresh() }
-  return { state, restore, login, refresh, createTransaction, updateTransaction, createAccount, deleteTransaction, localDateTime }
+  function clearSession() {
+    state.token = ''
+    state.user = undefined
+    state.accounts = []
+    state.transactions = []
+    state.summary = undefined
+    uni.removeStorageSync('auth-token')
+  }
+  async function logout() {
+    try {
+      await request<void>('/api/app/auth/logout', { method:'POST' })
+    } finally {
+      clearSession()
+    }
+    // #ifdef H5
+    // H5 我的页负责呈现退出后的登录状态，保持当前页面。
+    // #endif
+    // #ifdef MP-WEIXIN
+    await login()
+    uni.reLaunch({ url: '/pages/index/index' })
+    // #endif
+  }
+  return { state, restore, login, refresh, logout, createTransaction, updateTransaction, createAccount, deleteTransaction, localDateTime }
 }

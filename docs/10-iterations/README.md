@@ -1,19 +1,23 @@
-# 长期迭代档案规范
+# 10｜迭代档案
 
-目录按 `YYYY/MM/<feature-key>/` 分层；`feature-key` 使用小写短横线，只描述一个独立需求。重大功能、Bug、数据库、权限、基础设施、设计整改必须先创建 iteration；纯文案且不影响规范的修改可以不单独创建。
+本目录按 `YYYY/MM/feature-key/` 保存历史变更。每个重大功能、Bug、数据库、权限、基础设施或设计整改，都应有一个独立 feature-key，避免把多次变更混成无法审计的长文档。
 
-每个 iteration 固定包含：`README.md`、`01-requirement.md`、`02-design.md`、`03-database.md`、`04-api.md`、`05-backend.md`、`06-frontend.md`、`07-testing.md`、`08-commands.md`、`09-verification.md`、`10-rollback.md`。commands 只记录真实执行过的命令和结果，禁止 Secret；危险数据库命令要标明目标和回滚；verification 必须附文件、日志、测试或运行证据；不具备外部条件使用 BLOCKED，未执行使用 NOT_RUN。完成后同步当前规范、`09-audit/verification-matrix.md` 和本索引。
+## 固定文件
 
-## 索引
+| 文件 | 说明 |
+| --- | --- |
+| `README.md` | 本次迭代摘要、边界、状态和文件导航。 |
+| `01-requirement.md` | 需求来源、目标、范围、非目标和验收条件。 |
+| `02-design.md` | 方案、关键决策、替代方案和影响面。 |
+| `03-database.md` | Migration、字段、索引、约束和数据风险。 |
+| `04-api.md` | 接口、DTO/VO、错误、权限和幂等变化。 |
+| `05-backend.md` | Entity、Mapper、Service、Controller、事务和日志实现。 |
+| `06-frontend.md` | 页面、状态、API 调用、平台差异和交互变化。 |
+| `07-testing.md` | 测试范围、用例、依赖、预期和实际结果。 |
+| `08-commands.md` | 真实执行的命令及结果，不放猜测命令。 |
+| `09-verification.md` | 分项状态和证据，区分 PASS/PARTIAL/FAIL/BLOCKED/NOT_RUN。 |
+| `10-rollback.md` | 未执行和已执行两种情况下的安全回滚策略。 |
 
-- `2026/09/flyway-v1-baseline/`：将当前开发阶段数据库完整收口为单一 V1 初始基线，重建 DEV 并完成 Schema/Entity/Flyway/文档核对。
+## 编写边界
 
-- `2026/09/audit-field-defaults/`：公共字段仅创建时间必填且默认当前时间，删除标识默认 0，同步 Java 和真实 DEV 回归。
-
-- `2026/09/third-round-governance/`：第三轮工程规范、数据库治理、文档和验收体系。
-- `2026/09/default-dev-profile/`：修复后端默认未激活 `dev` Profile 的配置问题。
-- `2026/09/flyway-v3-repair/`：修复 DEV 数据库 Flyway V3 失败迁移及启动阻断。
-- `2026/09/netty-jdk25-warning/`：升级 Netty 并配置 Java 25 开发启动兼容参数。
-- `2026/09/app-environments/`：为 uni-app 增加开发/生产环境配置和构建校验。
-- `2026/09/app-env-directory/`：统一 app/env 通用、dev、prod 配置目录。
-- `2026/09/h5-blank-page/`：补齐平台依赖、恢复官方 Vue 运行时和类型，修复 H5 空白并验证路由。
+历史档案可以记录当时的缺口，但不能将后续实现倒灌成当时已完成；共享环境执行过的 Migration 不修改、不删除，结构变化通过新的 Migration 记录。

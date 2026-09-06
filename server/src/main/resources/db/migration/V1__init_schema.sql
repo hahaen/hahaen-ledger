@@ -1,10 +1,15 @@
--- 当前开发阶段的完整数据库初始基线。
--- 所有正式结构、约束、审计字段和中文注释必须从空数据库一次创建完成。
+-- 哈记账当前开发阶段的数据库初始基线。
+-- 本迁移仅建立用户主表及微信身份关联表，业务实体和接口暂不在本次实现。
 
 CREATE TABLE app_user (
   id BIGINT NOT NULL COMMENT '用户ID',
+  login_account VARCHAR(64) NULL COMMENT 'H5登录账号，账号密码认证使用，微信用户可为空',
+  password_hash VARCHAR(255) NULL COMMENT '服务端密码哈希，仅保存哈希值，不保存明文密码或前端加密原文',
   nickname VARCHAR(40) NOT NULL DEFAULT '账本主人' COMMENT '用户昵称',
-  avatar_file_id BIGINT NULL COMMENT '头像文件ID',
+  avatar_file_id BIGINT NULL COMMENT '头像文件ID，未授权或未上传头像时为空',
+  status VARCHAR(16) NOT NULL DEFAULT 'ACTIVE' COMMENT '用户状态，ACTIVE正常，DISABLED停用',
+  last_login_at DATETIME(3) NULL COMMENT '最近登录时间',
+  last_login_ip VARCHAR(45) NULL COMMENT '最近登录IP地址，支持IPv4和IPv6',
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
   created_by BIGINT NULL COMMENT '创建人ID',
   created_name VARCHAR(100) NULL COMMENT '创建人',
@@ -15,31 +20,42 @@ CREATE TABLE app_user (
   deleted_by BIGINT NULL COMMENT '删除人ID',
   deleted_name VARCHAR(100) NULL COMMENT '删除人',
   deleted TINYINT NULL DEFAULT 0 COMMENT '删除标识，0存在1删除',
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_app_user_login_account (login_account),
+  KEY idx_app_user_status_deleted (status, deleted),
+  CONSTRAINT ck_app_user_status CHECK (status IN ('ACTIVE', 'DISABLED')),
+  CONSTRAINT ck_app_user_h5_credentials CHECK (
+    (login_account IS NULL AND password_hash IS NULL)
+    OR
+    (login_account IS NOT NULL AND password_hash IS NOT NULL)
+  )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用用户表';
 
 CREATE TABLE user_identity (
   id BIGINT NOT NULL COMMENT '用户身份记录ID',
   user_id BIGINT NOT NULL COMMENT '关联用户ID',
   provider VARCHAR(32) NOT NULL COMMENT '身份提供方，例如 WECHAT_MINI_PROGRAM',
-  open_id VARCHAR(128) NOT NULL COMMENT '身份提供方用户标识',
+  open_id VARCHAR(128) NOT NULL COMMENT '身份提供方用户标识，不返回给前端',
   union_id VARCHAR(128) NULL COMMENT '微信开放平台统一标识',
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-  updated_at DATETIME(3) NULL COMMENT '更新时间',
   deleted TINYINT NULL DEFAULT 0 COMMENT '删除标识，0存在1删除',
   PRIMARY KEY (id),
   UNIQUE KEY uk_identity_provider_open_id (provider, open_id),
   KEY idx_identity_user (user_id),
-  CONSTRAINT fk_identity_user FOREIGN KEY (user_id) REFERENCES app_user (id)
+  CONSTRAINT fk_identity_user FOREIGN KEY (user_id) REFERENCES app_user (id),
+  CONSTRAINT ck_user_identity_open_id CHECK (CHAR_LENGTH(TRIM(open_id)) > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户第三方身份关联表';
 
-CREATE TABLE ledger_book (
-  id BIGINT NOT NULL COMMENT '账本ID',
-  user_id BIGINT NOT NULL COMMENT '账本所属用户ID',
-  name VARCHAR(40) NOT NULL COMMENT '账本名称',
-  currency CHAR(3) NOT NULL DEFAULT 'CNY' COMMENT '账本货币代码',
-  timezone VARCHAR(64) NOT NULL DEFAULT 'Asia/Shanghai' COMMENT '账本统计时区',
-  status VARCHAR(16) NOT NULL DEFAULT 'ACTIVE' COMMENT '账本状态，ACTIVE启用',
+CREATE TABLE app_login_log (
+  id BIGINT NOT NULL COMMENT '登录日志ID',
+  user_id BIGINT NULL COMMENT '关联用户ID，登录失败且无法识别用户时为空',
+  login_channel VARCHAR(32) NOT NULL COMMENT '登录渠道，H5_PASSWORD账号密码，WECHAT_MINI_PROGRAM微信小程序',
+  login_result VARCHAR(16) NOT NULL COMMENT '登录结果，SUCCESS成功，FAILURE失败',
+  login_account VARCHAR(64) NULL COMMENT '登录账号快照，微信登录时为空',
+  login_ip VARCHAR(45) NULL COMMENT '登录IP地址，支持IPv4和IPv6',
+  user_agent VARCHAR(512) NULL COMMENT '登录客户端User-Agent或设备信息',
+  failure_code VARCHAR(64) NULL COMMENT '登录失败原因编码，成功时为空',
+  trace_id VARCHAR(64) NULL COMMENT '请求Trace ID，用于关联服务端日志',
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
   created_by BIGINT NULL COMMENT '创建人ID',
   created_name VARCHAR(100) NULL COMMENT '创建人',
@@ -51,95 +67,15 @@ CREATE TABLE ledger_book (
   deleted_name VARCHAR(100) NULL COMMENT '删除人',
   deleted TINYINT NULL DEFAULT 0 COMMENT '删除标识，0存在1删除',
   PRIMARY KEY (id),
-  UNIQUE KEY uk_book_user_name (user_id, name),
-  KEY idx_book_user_status (user_id, status),
-  CONSTRAINT fk_book_user FOREIGN KEY (user_id) REFERENCES app_user (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账本表';
-
-CREATE TABLE ledger_account (
-  id BIGINT NOT NULL COMMENT '账户ID',
-  book_id BIGINT NOT NULL COMMENT '所属账本ID',
-  name VARCHAR(20) NOT NULL COMMENT '账户名称',
-  kind VARCHAR(16) NOT NULL COMMENT '账户类型，FUND资金账户，CREDIT信贷账户',
-  balance_cents BIGINT NOT NULL DEFAULT 0 COMMENT '当前余额或信贷欠款，单位为分',
-  credit_limit_cents BIGINT NOT NULL DEFAULT 0 COMMENT '信贷账户总额度，单位为分',
-  included_in_net_asset BOOLEAN NOT NULL DEFAULT TRUE COMMENT '是否计入净资产',
-  status VARCHAR(16) NOT NULL DEFAULT 'ACTIVE' COMMENT '账户状态，ACTIVE启用，DISABLED停用',
-  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-  created_by BIGINT NULL COMMENT '创建人ID',
-  created_name VARCHAR(100) NULL COMMENT '创建人',
-  updated_at DATETIME(3) NULL COMMENT '更新时间',
-  updated_by BIGINT NULL COMMENT '更新人ID',
-  update_name VARCHAR(100) NULL COMMENT '更新人',
-  deleted_at DATETIME(3) NULL COMMENT '删除时间',
-  deleted_by BIGINT NULL COMMENT '删除人ID',
-  deleted_name VARCHAR(100) NULL COMMENT '删除人',
-  deleted TINYINT NULL DEFAULT 0 COMMENT '删除标识，0存在1删除',
-  PRIMARY KEY (id),
-  UNIQUE KEY uk_account_book_name (book_id, name),
-  KEY idx_account_book_kind_status (book_id, kind, status),
-  CONSTRAINT fk_account_book FOREIGN KEY (book_id) REFERENCES ledger_book (id),
-  CONSTRAINT ck_account_kind CHECK (kind IN ('FUND', 'CREDIT')),
-  CONSTRAINT ck_account_balance CHECK (balance_cents >= 0),
-  CONSTRAINT ck_account_credit_limit CHECK (credit_limit_cents >= 0)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账本账户表';
-
-CREATE TABLE ledger_transaction (
-  id BIGINT NOT NULL COMMENT '账单ID',
-  book_id BIGINT NOT NULL COMMENT '所属账本ID',
-  type VARCHAR(16) NOT NULL COMMENT '账单类型，EXPENSE支出，INCOME收入，TRANSFER转账，REPAYMENT还款',
-  amount_cents BIGINT NOT NULL COMMENT '账单金额，单位为分',
-  account_id BIGINT NULL COMMENT '单账户账单关联账户ID',
-  from_account_id BIGINT NULL COMMENT '转账或还款转出账户ID',
-  to_account_id BIGINT NULL COMMENT '转账或还款转入账户ID',
-  occurred_at DATETIME(3) NOT NULL COMMENT '业务发生时间',
-  note VARCHAR(100) NULL COMMENT '账单备注',
-  status VARCHAR(16) NOT NULL DEFAULT 'ACTIVE' COMMENT '账单状态，ACTIVE有效，DELETED已删除',
-  idempotency_key VARCHAR(80) NULL COMMENT '写操作幂等键',
-  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-  created_by BIGINT NULL COMMENT '创建人ID',
-  created_name VARCHAR(100) NULL COMMENT '创建人',
-  updated_at DATETIME(3) NULL COMMENT '更新时间',
-  updated_by BIGINT NULL COMMENT '更新人ID',
-  update_name VARCHAR(100) NULL COMMENT '更新人',
-  deleted_at DATETIME(3) NULL COMMENT '删除时间',
-  deleted_by BIGINT NULL COMMENT '删除人ID',
-  deleted_name VARCHAR(100) NULL COMMENT '删除人',
-  deleted TINYINT NULL DEFAULT 0 COMMENT '删除标识，0存在1删除',
-  PRIMARY KEY (id),
-  UNIQUE KEY uk_transaction_idempotency (book_id, idempotency_key),
-  KEY idx_transaction_book_occurred (book_id, occurred_at, status),
-  KEY idx_transaction_account (account_id, occurred_at),
-  KEY idx_transaction_from (from_account_id, occurred_at),
-  KEY idx_transaction_to (to_account_id, occurred_at),
-  CONSTRAINT fk_transaction_book FOREIGN KEY (book_id) REFERENCES ledger_book (id),
-  CONSTRAINT fk_transaction_account FOREIGN KEY (account_id) REFERENCES ledger_account (id),
-  CONSTRAINT fk_transaction_from_account FOREIGN KEY (from_account_id) REFERENCES ledger_account (id),
-  CONSTRAINT fk_transaction_to_account FOREIGN KEY (to_account_id) REFERENCES ledger_account (id),
-  CONSTRAINT ck_transaction_amount CHECK (amount_cents > 0),
-  CONSTRAINT ck_transaction_type CHECK (type IN ('EXPENSE', 'INCOME', 'TRANSFER', 'REPAYMENT'))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账单流水表';
-
-CREATE TABLE transaction_refund (
-  id BIGINT NOT NULL COMMENT '退款记录ID',
-  transaction_id BIGINT NOT NULL COMMENT '原账单ID',
-  amount_cents BIGINT NOT NULL COMMENT '退款金额，单位为分',
-  refunded_at DATETIME(3) NOT NULL COMMENT '退款发生时间',
-  status VARCHAR(16) NOT NULL DEFAULT 'ACTIVE' COMMENT '退款状态，ACTIVE有效，DELETED已删除',
-  idempotency_key VARCHAR(80) NULL COMMENT '退款幂等键',
-  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-  created_by BIGINT NULL COMMENT '创建人ID',
-  created_name VARCHAR(100) NULL COMMENT '创建人',
-  updated_at DATETIME(3) NULL COMMENT '更新时间',
-  updated_by BIGINT NULL COMMENT '更新人ID',
-  update_name VARCHAR(100) NULL COMMENT '更新人',
-  deleted_at DATETIME(3) NULL COMMENT '删除时间',
-  deleted_by BIGINT NULL COMMENT '删除人ID',
-  deleted_name VARCHAR(100) NULL COMMENT '删除人',
-  deleted TINYINT NULL DEFAULT 0 COMMENT '删除标识，0存在1删除',
-  PRIMARY KEY (id),
-  UNIQUE KEY uk_refund_idempotency (transaction_id, idempotency_key),
-  KEY idx_refund_transaction_status (transaction_id, status),
-  CONSTRAINT fk_refund_transaction FOREIGN KEY (transaction_id) REFERENCES ledger_transaction (id),
-  CONSTRAINT ck_refund_amount CHECK (amount_cents > 0)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账单退款记录表';
+  KEY idx_login_log_user_created (user_id, created_at),
+  KEY idx_login_log_account_created (login_account, created_at),
+  KEY idx_login_log_result_created (login_result, created_at),
+  CONSTRAINT fk_login_log_user FOREIGN KEY (user_id) REFERENCES app_user (id),
+  CONSTRAINT ck_login_log_channel CHECK (login_channel IN ('H5_PASSWORD', 'WECHAT_MINI_PROGRAM')),
+  CONSTRAINT ck_login_log_result CHECK (login_result IN ('SUCCESS', 'FAILURE')),
+  CONSTRAINT ck_login_log_failure_code CHECK (
+    (login_result = 'SUCCESS' AND failure_code IS NULL)
+    OR
+    (login_result = 'FAILURE' AND failure_code IS NOT NULL)
+  )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用登录日志表';

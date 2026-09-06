@@ -1,5 +1,14 @@
-# 测试与验收规范
+# 07｜测试规范
 
-后端以 `mvn test`、`mvn clean package` 和 DEV 启动验证为准；前端以 `pnpm install`、实际存在的 typecheck/build script 为准。真实验收要覆盖权限、IDOR、金额、事务、幂等、软删除、统计、Redis、MinIO、微信平台和设计稿状态。没有执行就标记 `NOT_RUN`，外部条件不可得才标记 `BLOCKED`。
+本目录说明如何验证哈记账，而不是只列出“执行过构建”。测试需要覆盖业务正确性、权限隔离、数据库约束、金额事务、幂等、平台差异和运行依赖。
 
-公共字段回归包含 `AuditMetaObjectHandlerTest` 的六项单元测试。`AuditFieldDefaultsDevTest` 默认跳过；仅在明确需要迁移本地配置的 `haji_dev` 时运行 `mvn test "-Dledger.audit.dev=true"`，验证 V4、六表 information_schema 与事务回滚的默认值插入，不输出凭证。
+## 测试层次
+
+- 单元测试：金额、校验、状态流转、密码处理、Key 生成等纯逻辑。
+- 服务测试：事务、归属校验、逻辑删除、幂等和异常传播。
+- 接口/黑盒测试：认证、API 契约、越权、重复提交和文件链路。
+- 构建与运行测试：后端 Maven、前端 typecheck/H5/微信构建，以及真实 MySQL、Redis、MinIO 联调。
+
+## 结果记录
+
+测试结果必须注明命令、前提、实际输出和未覆盖范围。无法获得外部依赖时写 `BLOCKED`，没有执行写 `NOT_RUN`；只有有证据且符合预期才可写 `PASS`。
