@@ -18,3 +18,7 @@
 | H5 真实登录态运行 | H5 登录页可打开，但本机后端不可用，验证码请求失败 | PARTIAL |
 | MySQL/Redis/MinIO 联调 | 本机当前未监听 MySQL/Redis；MinIO 也未形成本轮有效会话证据 | BLOCKED |
 | 微信小程序运行 | 用户明确安排后续补齐 | NOT_RUN |
+| V3 资产账户 Migration 与统一表设计 | `server/src/main/resources/db/migration/V3__create_asset_account_table.sql`、`docs/02-database/asset-account.md` | PASS（静态核对） |
+| 资产账户名称非唯一 | V3 未设置账户名称唯一索引，账户通过账户ID区分 | PASS（静态核对） |
+| 资产账户类型金额对应约束 | `ck_asset_account_type_amounts` 覆盖 `FUND`/`CREDIT` 字段必填与置空关系 | PASS（静态核对） |
+| 资产账户 Flyway/MySQL 实际执行 | 本轮只新增 Migration，未应用数据库或查询 `information_schema` | NOT_RUN |

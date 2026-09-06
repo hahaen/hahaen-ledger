@@ -10,6 +10,10 @@
 - 金额使用整数分或 `BigDecimal`，禁止 `float`/`double`。
 - 当前开发基线为唯一 `V1__init_schema.sql`；后续结构变化新增版本，不修改共享环境已执行的历史 Migration。
 
+## 当前业务表设计
+
+- [`asset-account.md`](asset-account.md)：V3 统一资产账户表，区分资金账户和信贷账户。
+
 ## 关联说明
 
 表分类和主表/关联表的判断见 [`table-classification.md`](table-classification.md)。新增字段时需要同时核对 Migration、Entity、DTO/VO、TypeScript、测试和迭代档案。
