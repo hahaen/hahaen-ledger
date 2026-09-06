@@ -1,0 +1,1 @@
+{ "compilerOptions": { "target": "ESNext", "module": "ESNext", "moduleResolution": "Bundler", "strict": true, "noImplicitAny": false, "skipLibCheck": true, "jsx": "preserve", "sourceMap": true, "resolveJsonModule": true, "allowJs": false }, "include": ["src/**/*.ts", "src/**/*.vue", "pages.json", "env.d.ts"] }

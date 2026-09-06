@@ -1,0 +1,3 @@
+export function cents(value: string | number): number { const text = String(value).trim(); if (!/^\d+(\.\d{1,2})?$/.test(text)) throw new Error('金额格式不正确'); const n = Number(text); if (!Number.isFinite(n) || n <= 0 || n > 999999999.99) throw new Error('金额必须在 ¥0.01～¥999,999,999.99 之间'); return Math.round(n * 100) }
+export function yuan(value: number | null | undefined): string { return `¥${(Number(value || 0) / 100).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` }
+export function localDateTime(): string { const d = new Date(); const pad = (x: number) => String(x).padStart(2, '0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00` }

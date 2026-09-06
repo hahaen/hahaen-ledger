@@ -1,0 +1,10 @@
+{
+  "name": "哈记账",
+  "appid": "__UNI__HAHAEN_LEDGER",
+  "description": "3 秒记下一笔，10 秒看懂当月",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "mp-weixin": { "appid": "wx0000000000000000", "setting": { "urlCheck": false }, "usingComponents": true },
+  "h5": { "title": "哈记账" }
+}
