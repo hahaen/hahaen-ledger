@@ -4,13 +4,15 @@
 
 | 范围 | 事实来源/入口 | 证据 | 状态 |
 | --- | --- | --- | --- |
+| H5 登录/注册原型 | 根目录原型、两份产品文档、h5-auth-prototype 迭代 | 已补充登录/注册页、图形验证码展示/点击图片刷新、验证码错误、失败/禁用态和路由说明；本机浏览器核心交互复验通过，精确视口复验未执行 | PARTIAL |
+| H5/微信登录差异 | 原型认证预览、完整功能说明、AI 设计稿需求 | H5 默认账号登录；微信小程序自动登录直达首页；真实 H5 接口尚未实现 | PARTIAL |
 | 需求与原型 | 根目录三份产品资料 | 静态复核 | PASS |
 | 数据库分类/注释 | V1、table-classification、information_schema | DEV clean 后从 V1 重建；6/6 表注释、全部字段 COMMENT、主表审计字段 50/50、删除标识 6/6 核对 | PASS |
 | 公共字段可空/默认值（当前 V1） | V1、AuditFieldDefaultsDevTest、BaseAuditEntity/BaseRelationEntity | haji_dev 从空库执行 V1 并 validate；53 列可空/默认/注释、六表默认插入/NULL 与事务回滚通过 | PASS |
 | Java Entity/自动填充 | BaseAuditEntity、BaseRelationEntity、MetaObjectHandler | `mvn test`、`mvn clean package` | PASS |
 | API/权限/IDOR | Service 当前用户和账本条件 | 单元/HTTP 回归待执行 | NOT_RUN |
 | 逻辑删除/统计 | `deleted` + `@TableLogic` + Service | 真实数据库回归待执行 | NOT_RUN |
-| 设计稿逐页 | `docs/08-design/design-verification.md` | 静态页面核对；H5 可视检查 #app 为空 | PARTIAL |
+| 设计稿逐页 | `docs/08-design/design-verification.md` | 静态页面核对；H5 页面已可见，认证核心状态本机浏览器复验；完整逐页和精确视口仍未完成 | PARTIAL |
 | 后端测试 | `mvn test "-Dledger.audit.dev=true"` | 9 tests, 0 failures/errors/skipped；含 6 项审计单元测试、1 项真实 DEV、2 项金额测试 | PASS |
 | 后端构建 | `mvn clean package "-Dledger.audit.dev=true"` | BUILD SUCCESS；DEV JAR 启动、Redis PING、MinIO Bucket 复验成功 | PASS |
 | Java 25/Netty 兼容性 | `server/pom.xml`、依赖树、开发启动和 JAR 启动 | Netty 统一为 4.1.137.Final；两种启动方式均成功且应用日志无 Netty Unsafe 警告 | PASS |

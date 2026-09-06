@@ -8,6 +8,8 @@
 
 ## 当前结果
 
+- 2026-09-06 H5 登录/注册原型补充：V1 原型新增 H5 登录页、注册页、图形验证码展示/点击图片刷新、验证码错误、登录失败、提交禁用、退出登录和微信自动登录预览；两份产品文档已同步认证页面、路由和多端差异。本机浏览器已复验核心状态与路由，320/375/414 精确视口未执行；真实 H5 账号密码验证码接口当前不存在，因此该范围为 PARTIAL/BLOCKED，不影响微信小程序现有自动登录链路。
+
 - 2026-09-06 Flyway 基线收口：当前完整数据库初始化统一为唯一 `V1__init_schema.sql`；原 V2/V3/V4 已完整吸收并从 Migration 目录移除。真实 DEV `haji_dev` 已在目录断言后执行 Flyway clean，从空库 migrate V1 并 validate；history 仅保留一个成功的 V1。六表字段、53 个公共/历史审计列、默认值/可空、中文 COMMENT、索引、外键、CHECK 约束、六表默认插入和事务回滚均 PASS。旧 V2/V3/V4 迭代文档保留为历史证据，不代表当前初始化顺序。
 
 - 数据库：`V1__init_schema.sql` 现在一次性包含原 V2/V3/V4 的最终结构；Migration 目录不存在旧 V2/V3/V4。`AuditFieldDefaultsDevTest` 在真实 `haji_dev` 上完成 clean、migrate、validate 和 information_schema 核对，6/6 表、全部字段 COMMENT、索引、8 个外键、6 个 CHECK 约束及 history 单版本核对通过，状态 PASS。

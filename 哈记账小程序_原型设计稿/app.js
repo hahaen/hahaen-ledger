@@ -14,7 +14,17 @@ function getCurrentDateTime() {
 }
 
 const state = {
-  view: 'home',
+  view: 'login',
+  platform: 'h5',
+  authenticated: false,
+  wechatLoggingIn: false,
+  authMode: 'login',
+  authSubmitting: false,
+  authStatus: 'idle',
+  captchaCode: 'K7P2',
+  captchaMessage: '',
+  authError: '',
+  authForm: { account: '', password: '', code: '' },
   entryType: 'expense',
   amount: '128.00',
   expression: '',
@@ -346,7 +356,7 @@ function mineView() {
     <header class="page-top home-page-top"><div><div class="brand-lockup home-brand-icon"><img src="../哈记账.png" alt="" /></div><p class="page-subtitle">记录每一笔，让生活更清晰</p></div></header>
     <section class="profile-card"><div class="avatar ${state.avatarAuthState === 'success' ? 'authorized' : ''}" aria-label="${state.avatarAuthState === 'success' ? '已授权头像' : '默认头像'}"><img src="../哈记账.png" alt="" /></div><div class="profile-copy"><div class="profile-name">账本主人</div><div class="profile-status">${state.avatarAuthState === 'success' ? '头像已授权 · 数据随时可用' : state.avatarAuthState === 'loading' ? '正在获取微信头像…' : '头像未授权 · 可继续使用'}</div></div><button class="text-button" data-action="avatar-auth" ${state.avatarAuthState === 'loading' ? 'disabled' : ''}>${state.avatarAuthState === 'success' ? '更换头像' : state.avatarAuthState === 'loading' ? '授权中' : '去授权'}</button></section>
     <div class="days-card"><span>坚持记录，正在变成习惯</span><strong>累计记账 28 天</strong></div>
-    <section class="settings-group"><p class="settings-label">更多</p><div class="settings-list"><button class="setting-item" data-action="open-about">${settingIcons.help}<span>关于与帮助</span><span class="setting-arrow">›</span></button></div></section>`;
+    <section class="settings-group"><p class="settings-label">更多</p><div class="settings-list"><button class="setting-item" data-action="open-about">${settingIcons.help}<span>关于与帮助</span><span class="setting-arrow">›</span></button><button class="setting-item logout-item" data-action="logout"><span class="setting-icon logout-icon" aria-hidden="true">↪</span><span>退出登录</span><span class="setting-arrow">›</span></button></div></section>`;
   return appScreen(content, 'mine');
 }
 
@@ -369,7 +379,7 @@ function aboutView() {
       <section class="about-section faq-section"><div class="about-section-heading"><div><span class="section-kicker">FAQ</span><h3>常见问题</h3></div><span class="section-meta">点击查看</span></div><div class="faq-list">${faqItems}</div></section>
       <section class="about-section"><div class="about-section-heading"><div><span class="section-kicker">YOUR DATA</span><h3>数据与隐私</h3></div></div><div class="about-settings"><button class="about-setting" data-action="show-privacy"><span class="about-setting-icon">♡</span><span class="about-setting-copy"><b>隐私说明</b><small>只为记账服务，数据去向清晰可见</small></span><span class="setting-arrow">›</span></button><div class="about-setting"><span class="about-setting-icon">↗</span><span class="about-setting-copy"><b>数据导出 / 删除</b><small>首版暂未开放，不会生成不可用操作</small></span><span class="about-status">暂未开放</span></div></div></section>
       <section class="about-note"><span class="about-note-icon">✦</span><div><b>需要反馈？</b><p>告诉我们哪里还可以更好，帮助哈记账变得更顺手。</p></div><button class="about-feedback" data-action="show-feedback">反馈建议</button></section>
-      <footer class="about-footer"><img src="../哈记账.png" alt="" /><span>哈记账 · 原型版本 v1.1</span><span>简单记账，安心生活</span></footer>
+      <footer class="about-footer"><img src="../哈记账.png" alt="" /><span>哈记账 · 原型版本 v1.0</span><span>简单记账，安心生活</span></footer>
     </div>
   </section>`;
 }
@@ -421,7 +431,70 @@ function firstUseView() {
   return `<section class="first-use"><div class="welcome-brand"><img src="../哈记账.png" alt="哈记账" /><span>哈记账</span></div><span class="eyebrow">A LITTLE BOOKKEEPER</span><div class="first-illustration"><span class="leaf"></span></div><h2>记录每一笔，<br><span style="color:var(--primary-dark)">让生活更清晰</span></h2><p>用 3 秒记下一笔，<br>用 10 秒看懂这个月。</p><button class="primary-button" data-action="start-use">开始记账</button><button class="skip-link" data-action="skip-use">稍后设置账户</button></section>`;
 }
 
+function resetAuthForm() {
+  state.authForm = { account: '', password: '', code: '' };
+  state.authMode = 'login';
+  state.authSubmitting = false;
+  state.authStatus = 'idle';
+  state.captchaCode = createCaptchaCode();
+  state.captchaMessage = '';
+  state.authError = '';
+}
+
+function createCaptchaCode() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: 4 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+}
+
+function authView(mode = state.authMode) {
+  const isLogin = mode === 'login';
+  const account = escapeAttribute(state.authForm.account);
+  const password = escapeAttribute(state.authForm.password);
+  const code = escapeAttribute(state.authForm.code);
+  const codeStatus = state.captchaMessage || '请输入右侧图形验证码';
+  const canSubmit = Boolean(state.authForm.account.trim() && state.authForm.password && state.authForm.code.trim()) && !state.authSubmitting;
+  return `<section class="auth-screen">
+    <div class="auth-scroll">
+      <header class="auth-header">
+        <div class="auth-brand"><img src="../哈记账.png" alt="哈记账" /><span>哈记账</span></div>
+        <span class="eyebrow">${isLogin ? 'WELCOME BACK' : 'A LITTLE BOOKKEEPER'}</span>
+        <div class="auth-context">H5 · 账号${isLogin ? '登录' : '注册'}</div>
+        <h2>${isLogin ? '欢迎回来' : '创建你的账号'}</h2>
+        <p>${isLogin ? '登录后继续记录每一笔生活' : '用一个轻量账号，开启你的记账空间'}</p>
+      </header>
+      <form class="auth-card" data-auth-form novalidate>
+        <label class="auth-field ${state.authForm.account ? 'has-value' : ''}">
+          <span class="auth-field-icon" aria-hidden="true">◎</span>
+          <span class="auth-field-copy"><small>账号</small><input data-auth-field="account" autocomplete="username" value="${account}" placeholder="输入账号" required /></span>
+        </label>
+        <label class="auth-field ${state.authForm.password ? 'has-value' : ''}">
+          <span class="auth-field-icon" aria-hidden="true">⌁</span>
+          <span class="auth-field-copy"><small>密码</small><input data-auth-field="password" type="password" autocomplete="${isLogin ? 'current-password' : 'new-password'}" value="${password}" placeholder="请输入密码" minlength="6" required /></span>
+        </label>
+        <div class="auth-code-row">
+          <label class="auth-field auth-code-field ${state.authForm.code ? 'has-value' : ''}">
+            <span class="auth-field-icon" aria-hidden="true">◇</span>
+            <span class="auth-field-copy"><small>图形验证码</small><input data-auth-field="code" autocapitalize="characters" maxlength="4" value="${code}" placeholder="输入图形验证码" required /></span>
+          </label>
+          <button class="captcha-refresh" type="button" data-action="refresh-captcha" aria-label="刷新图形验证码"><span class="captcha-art" aria-hidden="true">${state.captchaCode}</span></button>
+        </div>
+        <div class="auth-code-status ${state.captchaMessage ? 'sent' : ''}"><span class="auth-status-dot"></span>${codeStatus}</div>
+        ${state.authError ? `<div class="auth-error" role="alert">${state.authError}</div>` : ''}
+        <button class="primary-button auth-submit ${state.authSubmitting ? 'loading' : ''}" type="submit" data-action="auth-submit" ${canSubmit ? '' : 'disabled'}>${state.authSubmitting ? (isLogin ? '登录中…' : '注册中…') : (isLogin ? '登录' : '注册')}</button>
+        <button class="auth-switch" type="button" data-action="${isLogin ? 'goto-register' : 'goto-login'}">${isLogin ? '还没有账号？去注册' : '已有账号？返回登录'}</button>
+      </form>
+      <p class="auth-footnote">${isLogin ? '微信小程序会自动完成微信登录，无需账号密码。' : '注册仅需要账号、密码和验证码，不收集昵称或头像。'}</p>
+    </div>
+  </section>`;
+}
+
+function wechatAutoLoginView() {
+  return `<section class="wechat-auto-screen"><div class="wechat-auto-card"><div class="auth-brand"><img src="../哈记账.png" alt="哈记账" /><span>哈记账</span></div><span class="eyebrow">WECHAT MINI PROGRAM</span><div class="wechat-spinner" aria-hidden="true"></div><h2>正在自动登录</h2><p>正在确认微信登录状态，马上进入首页</p><span class="wechat-auto-note">无需填写账号和密码</span></div></section>`;
+}
+
 function render() {
+  if (state.wechatLoggingIn) { root.innerHTML = wechatAutoLoginView(); return; }
+  if (!state.authenticated && state.platform === 'h5') { root.innerHTML = authView(); return; }
   if (state.firstUse) { root.innerHTML = firstUseView(); return; }
   if (state.view === 'repayment-edit') root.innerHTML = repaymentEditView();
   else if (state.view === 'entry') root.innerHTML = entryView();
@@ -489,9 +562,110 @@ function accountForm(edit = false, accountType = state.accountFormType || 'asset
   openSheet(`<h3 class="sheet-title">${edit ? '编辑账户' : '新增资产账户'}</h3><div class="settings-list">${typeChoice}<div class="field-row"><span class="field-label">账户名称</span><span class="field-value">${edit ? (isCredit ? '花呗' : '微信') : (isCredit ? '例如：花呗' : '例如：微信')}</span></div><div class="field-row"><span class="field-label">${balanceLabel}</span><span class="field-value">¥${edit ? (isCredit ? '2,520.00' : '4,280.00') : '0.00'}</span></div><div class="field-row"><span class="field-label">计入净资产</span><button class="asset-switch ${state.accountIncludeNetAsset ? 'active' : ''}" data-action="toggle-net-asset" role="switch" aria-checked="${state.accountIncludeNetAsset}" aria-label="计入净资产"></button></div></div><div class="sheet-actions"><button class="secondary-button" data-action="close-sheet">取消</button><button class="primary-button" data-action="save-account">保存账户</button></div>`, false, !edit);
 }
 
+function refreshCaptcha() {
+  state.captchaCode = createCaptchaCode();
+  state.authForm.code = '';
+  state.captchaMessage = '图形验证码已更新，请重新输入';
+  state.authError = '';
+  render();
+}
+
+function authSubmit() {
+  const { account, password, code } = state.authForm;
+  if (state.authSubmitting) return;
+  if (!account.trim() || !password || !code.trim()) {
+    state.authError = '请填写完整的账号、密码和验证码';
+    render();
+    return;
+  }
+  if (password.length < 6) {
+    state.authError = '密码至少需要 6 位';
+    render();
+    return;
+  }
+  if (code.trim().toUpperCase() !== state.captchaCode) {
+    state.authError = '图形验证码不正确，请重新输入';
+    render();
+    return;
+  }
+  state.authError = '';
+  state.authSubmitting = true;
+  render();
+  setTimeout(() => {
+    if (state.authMode === 'login' && account.trim().toLowerCase() === 'fail') {
+      state.authSubmitting = false;
+      state.authStatus = 'error';
+      state.authError = '账号或密码错误，请检查后重试';
+      render();
+      return;
+    }
+    if (state.authMode === 'register') {
+      state.authSubmitting = false;
+      state.authMode = 'login';
+      state.authStatus = 'idle';
+      state.authForm = { account: account.trim(), password: '', code: '' };
+      state.captchaMessage = '';
+      state.authError = '';
+      render();
+      showToast('注册成功，请登录');
+      return;
+    }
+    state.authSubmitting = false;
+    state.authStatus = 'idle';
+    state.authError = '';
+    state.authenticated = true;
+    state.platform = 'h5';
+    state.view = 'home';
+    render();
+    showToast('登录成功，欢迎回来');
+  }, 650);
+}
+
+function startWechatAutoLogin() {
+  state.platform = 'mini';
+  state.authenticated = false;
+  state.wechatLoggingIn = true;
+  state.firstUse = false;
+  render();
+  setTimeout(() => {
+    state.wechatLoggingIn = false;
+    state.authenticated = true;
+    state.view = 'home';
+    render();
+    showToast('微信登录成功，已进入首页');
+  }, 850);
+}
+
+function logout() {
+  state.authenticated = false;
+  state.platform = 'h5';
+  state.firstUse = false;
+  state.view = 'login';
+  resetAuthForm();
+  render();
+  showToast('已退出登录');
+}
+
 document.addEventListener('input', (event) => {
   const refundInput = event.target.closest('[data-refund-input]');
   if (refundInput) { state.refundAmountDraft = refundInput.value; state.refundError = ''; }
+  const authInput = event.target.closest('[data-auth-field]');
+  if (authInput) {
+    state.authForm[authInput.dataset.authField] = authInput.value;
+    if (state.authError) {
+      state.authError = '';
+      document.querySelector('.auth-error')?.remove();
+    }
+    const submit = document.querySelector('[data-action="auth-submit"]');
+    if (submit) submit.disabled = !(state.authForm.account.trim() && state.authForm.password && state.authForm.code.trim()) || state.authSubmitting;
+  }
+});
+
+document.addEventListener('submit', (event) => {
+  if (event.target.closest('[data-auth-form]')) {
+    event.preventDefault();
+    authSubmit();
+  }
 });
 
 document.addEventListener('click', (event) => {
@@ -519,6 +693,14 @@ document.addEventListener('click', (event) => {
   const actionElement = event.target.closest('[data-action]');
   const action = actionElement?.dataset.action;
   if (!action) return;
+  if (action === 'goto-register') { state.authMode = 'register'; state.authStatus = 'idle'; state.authError = ''; state.authForm = { account: '', password: '', code: '' }; render(); return; }
+  if (action === 'goto-login') { state.authMode = 'login'; state.authStatus = 'idle'; state.authError = ''; state.authForm = { account: state.authForm.account || '', password: '', code: '' }; render(); return; }
+  if (action === 'refresh-captcha') { refreshCaptcha(); return; }
+  if (action === 'logout') { logout(); return; }
+  if (action === 'preview-login') { specPanel.hidden = true; state.platform = 'h5'; state.authenticated = false; state.wechatLoggingIn = false; state.firstUse = false; resetAuthForm(); render(); return; }
+  if (action === 'preview-register') { specPanel.hidden = true; state.platform = 'h5'; state.authenticated = false; state.wechatLoggingIn = false; state.firstUse = false; resetAuthForm(); state.authMode = 'register'; render(); return; }
+  if (action === 'preview-login-error') { specPanel.hidden = true; state.platform = 'h5'; state.authenticated = false; state.wechatLoggingIn = false; state.firstUse = false; resetAuthForm(); state.authForm = { account: 'fail', password: 'error123', code: state.captchaCode }; state.captchaMessage = '图形验证码已显示，请输入'; state.authError = '账号或密码错误，请检查后重试'; render(); return; }
+  if (action === 'preview-wechat-auto') { specPanel.hidden = true; startWechatAutoLogin(); return; }
   if (action === 'view-credit') { state.selectedCreditId = actionElement.dataset.creditId; state.creditFilter = ''; state.view = 'credit-detail'; render(); }
   if (action === 'filter-credit') { state.creditFilter = actionElement.dataset.filter; render(); }
   if (action === 'choose-repay-fund') {
@@ -676,7 +858,7 @@ document.addEventListener('click', (event) => {
   if (action === 'next-month') { const now = new Date(); state.calendarYear = now.getFullYear(); state.calendarMonth = now.getMonth() + 1; state.selectedDay = now.getDate(); render(); }
   if (action === 'show-spec') specPanel.hidden = false;
   if (action === 'close-spec') specPanel.hidden = true;
-  if (action === 'preview-first-use') { specPanel.hidden = true; state.firstUse = true; render(); }
+  if (action === 'preview-first-use') { specPanel.hidden = true; state.platform = 'h5'; state.authenticated = true; state.wechatLoggingIn = false; state.firstUse = true; render(); }
   if (action === 'close-sheet') closeSheet();
   if (action === 'show-toast') { closeSheet(); showToast('该入口已预留，第一版暂不开放'); }
   if (action === 'start-use' || action === 'skip-use') { state.firstUse = false; state.view = 'home'; render(); showToast(action === 'start-use' ? '欢迎开始记账' : '已跳过账户设置'); }
