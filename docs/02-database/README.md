@@ -13,6 +13,7 @@
 ## 当前业务表设计
 
 - [`asset-account.md`](asset-account.md)：V3 统一资产账户表，区分资金账户和信贷账户。
+- [`transaction-detail-refund.md`](transaction-detail-refund.md)：V4 账单明细主表与独立退款记录表，说明四类账单字段规则和退款事务口径。
 
 ## 关联说明
 

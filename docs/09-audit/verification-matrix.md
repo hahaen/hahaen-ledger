@@ -14,7 +14,7 @@
 | 当前用户与逻辑删除过滤 | `ProfileService`、`AppFileService` 按当前用户并过滤 `deleted=0` | PASS（代码） |
 | 前端类型检查 | `pnpm run typecheck` exit 0 | PASS |
 | H5 生产构建 | 注入本地 API 地址后 `pnpm run build:h5` exit 0；未配置地址时按规则拒绝 | PASS |
-| 后端测试 | `mvn test`：4 tests，0 failures/errors/skipped | PASS |
+| 后端测试 | `mvn test`：5 tests，0 failures/errors/skipped | PASS |
 | H5 真实登录态运行 | H5 登录页可打开，但本机后端不可用，验证码请求失败 | PARTIAL |
 | MySQL/Redis/MinIO 联调 | 本机当前未监听 MySQL/Redis；MinIO 也未形成本轮有效会话证据 | BLOCKED |
 | 微信小程序运行 | 用户明确安排后续补齐 | NOT_RUN |
@@ -22,3 +22,7 @@
 | 资产账户名称非唯一 | V3 未设置账户名称唯一索引，账户通过账户ID区分 | PASS（静态核对） |
 | 资产账户类型金额对应约束 | `ck_asset_account_type_amounts` 覆盖 `FUND`/`CREDIT` 字段必填与置空关系 | PASS（静态核对） |
 | 资产账户 Flyway/MySQL 实际执行 | 本轮只新增 Migration，未应用数据库或查询 `information_schema` | NOT_RUN |
+| V4 账单明细与退款 Migration 静态设计 | `V4__create_transaction_detail_and_refund_tables.sql`、`docs/02-database/transaction-detail-refund.md`；两张表、中文注释、整数分金额、类型字段形状、唯一编号和索引已核对 | PASS（静态核对） |
+| V4 账单/退款 MySQL 与 Flyway 实际执行 | 本机未监听 MySQL 3306，且未发现 `mysql` 客户端；未执行应用迁移 | BLOCKED |
+| V4 `information_schema`、外键和 CHECK 运行时对照 | 依赖可用 MySQL 执行 V4 后核对 | BLOCKED |
+| 退款 Service 事务、并发锁、权限和余额联动 | 本次明确不修改 Java 业务代码 | NOT_RUN |

@@ -11,3 +11,7 @@
 ## 当前档案状态
 
 本轮新增的 H5 我的页及会话持久化修复审计结论已同步到 `docs/09-audit/verification-matrix.md` 和 `docs/09-audit/third-round-audit.md`；未执行的真实基础设施联调仍按 BLOCKED/NOT_RUN 记录。
+
+## 本轮追加：账单明细与退款数据库设计
+
+本轮追加了 V4 账单明细与退款数据库设计，具体迭代档案为 `../transaction-detail-refund-schema/`。静态 Migration、命名、注释、金额和索引核对为 PASS；由于本机没有可用 MySQL，Flyway 实际执行及 `information_schema` 对照为 BLOCKED，Java Service 事务实现按本次范围为 NOT_RUN。

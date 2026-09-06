@@ -23,3 +23,11 @@
 - 已新增 V3 `asset_account` 统一账户表，使用 `FUND`/`CREDIT` 区分资金账户和信贷账户，并用数据库约束维护金额字段的类型对应关系。
 - 账户表包含用户归属、净资产标识、完整公共审计字段、逻辑删除字段和资产页查询索引；账户名称允许重复，当前单账本模型不重复保存账本字段。
 - 本轮仅完成 SQL 与文档；未修改 Java、TypeScript 或业务接口，也未实际执行 Flyway/MySQL。数据库执行和 `information_schema` 对照保持 `NOT_RUN`，不能据此宣称运行通过。
+
+## 本轮追加：账单明细与退款数据库设计
+
+- 已新增 V4 `transaction_detail` 账单明细主表和 `transaction_refund` 独立退款关联表。
+- 主表使用 `EXPENSE`、`INCOME`、`TRANSFER`、`REPAYMENT` 四类账单；退款不占用账单类型，并以 `transaction_id` 关联原始账单。
+- 金额使用整数分，保留 `original_amount`，以 `amount` 表示有效金额，并使用 `has_refund` 记录是否曾发生退款；V4 静态约束覆盖金额范围、字段适用形状、编号唯一性和查询索引。
+- 当前为单账本模型，V4 不在 `transaction_detail` 重复保存 `book_id`；用户/账户归属和退款累计事务由后续 Service 完成。
+- V4 尚未在 MySQL/Flyway 中执行，`information_schema` 对照和退款运行时事务用例为 `BLOCKED`/`NOT_RUN`，详见 `docs/10-iterations/2026/09/transaction-detail-refund-schema/09-verification.md`。
