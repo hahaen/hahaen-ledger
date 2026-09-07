@@ -1,6 +1,6 @@
 # 账单明细与退款数据库设计
 
-更新日期：2026-09-06。
+更新日期：2026-09-08。
 
 本设计依据 `AGENTS.md`、`README.md`、`哈记账微信小程序_完整功能说明.md`、`哈记账微信小程序_AI设计稿需求.md`、`哈记账小程序_原型设计稿/README.md` 及原型 `app.js` 的账单、还款和退款交互制定。正式结构以 `server/src/main/resources/db/migration/V4__create_transaction_detail_and_refund_tables.sql` 为准。
 
@@ -10,7 +10,7 @@
 - 新增 `transaction_refund` 退款记录关联表。退款不是账单类型，不使用父子账单、自关联或退款类型字段。
 - 金额使用整数分，字段名按本次需求保留为 `original_amount`、`amount`、`refund_amount`；三者均禁止按元保存浮点值。
 - 主表和退款表均使用完整 10 个公共审计字段。退款虽通过 `transaction_id` 关联账单，但有独立退款编号、金额、幂等键和独立逻辑删除生命周期，不属于只表达关系的纯关联表；完整审计字段用于满足退款删除可追溯要求。
-- 当前数据库没有 `app_book` 表，且 `asset_account` 按单用户、单账本模型仅保存 `user_id`。因此 `transaction_detail` 不重复保存 `book_id`，通过 `user_id` 归属当前用户及其唯一账本。当前用户、当前账本上下文、账户类型、账户归属和逻辑删除由 Service 层校验；未来扩展多账本时再单独设计账本归属模型。
+- 当前 Migration 没有 `app_book` 表，且 `asset_account` 按单用户、单账本模型仅保存 `user_id`。因此 `transaction_detail` 不重复保存 `book_id`，当前通过 `user_id` 归属用户；项目没有可供代码查询的独立账本上下文。账户类型、账户归属和逻辑删除由 Service 层校验；未来扩展多账本时再单独设计账本归属模型。
 
 ## 2. 需求与原型字段映射
 
@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | 每条账单唯一记录编号 | `transaction_detail.transaction_no` | 独立于主键的用户可读编号，唯一索引保证不重复。 |
 | 账单主键 | `transaction_detail.id` | 内部关联 ID；也是退款表的 `transaction_id` 外键目标。 |
-| 所属用户及当前账本 | `user_id` | 当前单账本模型不在账单表重复保存 `book_id`；`user_id` 外键关联 `app_user.id`。 |
+| 所属用户及当前账本 | `user_id` | 当前单账本模型不在账单表重复保存 `book_id`；`user_id` 外键关联 `app_user.id`。当前没有独立 `book_id` 过滤。 |
 | 支出 | `transaction_type=EXPENSE`、`account_id` | `account_id` 必须是有效资金账户；原型的金额、账户、日期时间、备注分别映射金额字段、账户字段、`occurred_at`、`note`。 |
 | 收入 | `transaction_type=INCOME`、`account_id` | 结构同支出，金额方向由 Service 按收入规则处理。 |
 | 转账 | `transaction_type=TRANSFER`、`from_account_id`、`to_account_id` | 转出和转入账户均必填且不能相同，均须为资金账户。 |
@@ -134,7 +134,7 @@ asset_account (1) ──< transaction_detail
 
 ### Service 保证
 
-- Sa-Token 当前用户和当前账本上下文，禁止信任前端 `userId` 或任何未由服务端解析的归属信息作为权限依据。
+- Sa-Token 当前用户范围；当前没有独立账本实体或 `book_id` 过滤，禁止把“单账本”描述成已经实现的账本权限模型，也禁止信任前端 `userId` 作为权限依据。
 - 账户类型、账户未删除、账户和账单属于同一用户；已停用账户只能保留历史关联。
 - 只有支出/收入可退款；转账/还款拒绝退款。
 - 多笔退款累计不超过原始金额；逻辑删除账单/退款不参与计算。
@@ -146,7 +146,7 @@ asset_account (1) ──< transaction_detail
 
 - 新增文件：`server/src/main/resources/db/migration/V4__create_transaction_detail_and_refund_tables.sql`。
 - 新增表：`transaction_detail`、`transaction_refund`。
-- 未修改或删除 V1、V2、V3；未修改 Java Entity、DTO、VO、Mapper、Service、Controller、前端页面或 TypeScript。
+- V4 设计迭代当时未修改 Java Entity、DTO、VO、Mapper、Service、Controller、前端页面或 TypeScript；后续 `home-calendar-assets` 迭代已补齐对应 Entity、Service、Controller 和前端关联实现，当前代码应与 V4 一起核对。
 - V4 先建主表，再建退款表，保证退款外键目标已存在；未加入危险的自动回滚 SQL。
 - 未修改 V2 的 `app_file` 外键。现有 `app_file.book_id` 是文件服务历史兼容字段，`app_file.transaction_id` 已使用统一命名，后续可单独补充关联约束。
 

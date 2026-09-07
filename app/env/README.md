@@ -14,9 +14,9 @@
 
 ```powershell
 Copy-Item env/.env.example env/.env
-Copy-Item env/.env.development.example env/.env.development
-Copy-Item env/.env.production.example env/.env.production
 ```
+
+当前仓库只提供通用 `.env.example`；`.env.development` 和 `.env.production` 是本机环境文件，不保证存在对应的 `.example` 模板。需要按模式配置时，直接在被 Git 忽略的文件中填写公开的 `VITE_*` 变量。
 
 `pnpm run dev:h5` 和 `pnpm run dev:mp-weixin` 加载通用及 development 配置；`pnpm run build:h5` 和 `pnpm run build:mp-weixin` 加载通用及 production 配置。修改后重启开发服务或重新构建。
 

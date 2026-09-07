@@ -16,7 +16,7 @@
 - MySQL 8、Redis 7.4、MinIO
 - 微信开发者工具（小程序构建产物导入 `app/dist/build/mp-weixin`）
 
-复制 `server/src/main/resources/application-dev.example.yml` 为被忽略的 `application-dev.yml`，按环境填写连接信息。当前 DEV 使用 Profile `dev`、数据库 `haji_dev`、独立 Redis 和 MinIO Bucket `haji-dev`；真实凭证只保存在本地忽略文件，不要提交。开发环境 `WECHAT_LOGIN_ENABLED=false` 时仅接受 `dev-*` code；生产环境必须开启真实微信 `code2session`。
+当前仓库实际使用 `server/src/main/resources/application-dev.yml` 作为 `dev` Profile 配置；该文件不是 `application-dev.example.yml` 的复制产物。真实数据库、Redis、MinIO、CORS、H5 RSA 私钥和微信配置应通过环境变量或本地忽略配置覆盖，不能提交真实凭证。当前后端已实现 H5 账号/密码/验证码认证；小程序前端仍保留微信登录分支，但当前后端尚未提供对应的微信登录 Controller，不能把微信 `code2session` 写成已完成能力。
 
 ## 后端启动
 

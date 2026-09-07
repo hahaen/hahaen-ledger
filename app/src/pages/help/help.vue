@@ -4,7 +4,7 @@ import { ref } from 'vue'
 const openFaq = ref('quick-start')
 
 const faqs = [
-  { id: 'quick-start', title: '如何开始记一笔？', answer: '点击首页右下角的“＋”，选择支出、收入或转账，输入金额后选择账户并确认日期时间，最后点击保存即可。常用账户会优先为你保留。' },
+  { id: 'quick-start', title: '如何开始记一笔？', answer: '点击首页右下角的“＋”，选择支出、收入或转账，输入金额后选择账户并确认日期时间，最后点击“确定”即可。常用账户会优先为你保留。' },
   { id: 'transfer', title: '转账为什么不算收支？', answer: '转账只是资金在不同账户之间移动，不会改变你的总资产，也不会进入本月收入或支出统计。' },
   { id: 'balance', title: '账户余额是怎么计算的？', answer: '余额会根据期初余额和每一笔已保存的流水自动计算。需要调整余额时，请通过记账或转账完成，避免流水对不上。' },
   { id: 'account', title: '记账账户会自动选择吗？', answer: '会。新增记账默认使用上一次保存记账时使用的账户，也可以在当前页面手动切换。' },
@@ -57,8 +57,8 @@ function showReserved(message: string) {
       <view class="about-section faq-section">
         <view class="about-heading"><view><text class="section-kicker">FAQ</text><text class="about-section-title">常见问题</text></view><text class="section-meta">点击查看</text></view>
         <view class="faq-list">
-          <view v-for="faq in faqs" :key="faq.id" class="about-faq" :class="{ open: openFaq === faq.id }" @click="toggleFaq(faq.id)">
-            <view class="faq-question"><text>{{ faq.title }}</text><text class="faq-plus">{{ openFaq === faq.id ? '−' : '＋' }}</text></view>
+          <view v-for="faq in faqs" :key="faq.id" class="about-faq" :class="{ open: openFaq === faq.id }">
+            <button class="faq-question" :aria-expanded="openFaq === faq.id" @click="toggleFaq(faq.id)"><text>{{ faq.title }}</text><text class="faq-plus" /></button>
             <text v-if="openFaq === faq.id" class="about-faq-answer">{{ faq.answer }}</text>
           </view>
         </view>
@@ -73,7 +73,7 @@ function showReserved(message: string) {
       </view>
 
       <view class="about-note"><text class="about-note-icon">✦</text><view class="about-note-copy"><text>需要反馈？</text><text>告诉我们哪里还可以更好，帮助哈记账变得更顺手。</text></view><button class="about-feedback" @click="showReserved('反馈入口已预留，感谢你的建议')">反馈建议</button></view>
-      <view class="about-footer"><image src="/static/brand.png" mode="aspectFill" /><text>哈记账 · 原型版本 v1.0</text><text>简单记账，安心生活</text></view>
+      <view class="about-footer"><image src="/static/brand.png" mode="aspectFill" /><text>哈记账 · v1.0</text><text>简单记账，安心生活</text></view>
     </scroll-view>
   </view>
 </template>

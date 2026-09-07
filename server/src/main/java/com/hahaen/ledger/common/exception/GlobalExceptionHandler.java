@@ -3,6 +3,7 @@ package com.hahaen.ledger.common.exception;
 import com.hahaen.ledger.common.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -14,7 +15,10 @@ import org.slf4j.LoggerFactory;
 public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     @ExceptionHandler(BusinessException.class)
-    public ApiResponse<Void> handleBusiness(BusinessException ex) { return new ApiResponse<>(1, ex.getMessage(), null); }
+    public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException ex) {
+        HttpStatus status = "AUTH_REQUIRED".equals(ex.getErrorCode()) ? HttpStatus.UNAUTHORIZED : HttpStatus.BAD_REQUEST;
+        return ResponseEntity.status(status).body(new ApiResponse<>(1, ex.getMessage(), null));
+    }
 
     @ExceptionHandler({MethodArgumentNotValidException.class, ConstraintViolationException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)

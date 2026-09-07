@@ -1,28 +1,45 @@
 # 当前验证矩阵
 
-更新日期：2026-09-06。状态只表示本轮实际证据：PASS=已执行且符合预期；PARTIAL=部分完成；BLOCKED=外部条件不可得；NOT_RUN=尚未执行。
+更新日期：2026-09-08。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
+
+## 当前实现与静态核对
 
 | 范围 | 证据 | 状态 |
 | --- | --- | --- |
-| 我的页原型内容 | `app/src/pages/mine/mine.vue`、原型 `app.js` 的 `mineView` | PASS |
-| 关于与帮助原型内容 | `app/src/pages/help/help.vue`、原型 `app.js` 的 `aboutView` | PASS |
-| 累计记账天数 | `ProfileService` 按 `app_user.created_at` 计算，`ProfileServiceTest` 覆盖创建日/前一日/未来日期 | PASS |
-| H5 头像上传 | `AppFileService` + MinIO 短时效上传/确认/预览接口，前端不持有密钥；真实对象上传未联调 | PARTIAL |
-| H5 退出后停留当前页 | `ledger.logout` 清理本地会话，mine 页切换为“登录”状态 | PASS（代码） |
-| H5 刷新保留当前路由 | `App.vue` 有效会话不再无条件跳首页，仅根路径补到首页 | PASS（代码）；真实登录态刷新为 PARTIAL |
-| Sa-Token 会话持久化 | `sa-token-redis-jackson` + `SaTokenRedisConfig`，Key 统一加 `haji:` | PASS（代码/依赖）；跨重启联调 BLOCKED |
-| 当前用户与逻辑删除过滤 | `ProfileService`、`AppFileService` 按当前用户并过滤 `deleted=0` | PASS（代码） |
-| 前端类型检查 | `pnpm run typecheck` exit 0 | PASS |
-| H5 生产构建 | 注入本地 API 地址后 `pnpm run build:h5` exit 0；未配置地址时按规则拒绝 | PASS |
-| 后端测试 | `mvn test`：5 tests，0 failures/errors/skipped | PASS |
-| H5 真实登录态运行 | H5 登录页可打开，但本机后端不可用，验证码请求失败 | PARTIAL |
-| MySQL/Redis/MinIO 联调 | 本机当前未监听 MySQL/Redis；MinIO 也未形成本轮有效会话证据 | BLOCKED |
-| 微信小程序运行 | 用户明确安排后续补齐 | NOT_RUN |
-| V3 资产账户 Migration 与统一表设计 | `server/src/main/resources/db/migration/V3__create_asset_account_table.sql`、`docs/02-database/asset-account.md` | PASS（静态核对） |
-| 资产账户名称非唯一 | V3 未设置账户名称唯一索引，账户通过账户ID区分 | PASS（静态核对） |
-| 资产账户类型金额对应约束 | `ck_asset_account_type_amounts` 覆盖 `FUND`/`CREDIT` 字段必填与置空关系 | PASS（静态核对） |
-| 资产账户 Flyway/MySQL 实际执行 | 本轮只新增 Migration，未应用数据库或查询 `information_schema` | NOT_RUN |
-| V4 账单明细与退款 Migration 静态设计 | `V4__create_transaction_detail_and_refund_tables.sql`、`docs/02-database/transaction-detail-refund.md`；两张表、中文注释、整数分金额、类型字段形状、唯一编号和索引已核对 | PASS（静态核对） |
-| V4 账单/退款 MySQL 与 Flyway 实际执行 | 本机未监听 MySQL 3306，且未发现 `mysql` 客户端；未执行应用迁移 | BLOCKED |
-| V4 `information_schema`、外键和 CHECK 运行时对照 | 依赖可用 MySQL 执行 V4 后核对 | BLOCKED |
-| 退款 Service 事务、并发锁、权限和余额联动 | 本次明确不修改 Java 业务代码 | NOT_RUN |
+| 文档目录全量清点 | `Get-ChildItem docs -Recurse -File`；当前审计覆盖 `docs/` 下全部文件（含本审计档案新增文件） | PASS |
+| 文档相对链接 | 当前审计脚本检查所有 Markdown 相对链接 | PASS |
+| 后端域与 Entity/Controller | `server/src/main/java/com/hahaen/ledger/{auth,user,file,account,asset,transaction,home,calendar}` | PASS（代码存在） |
+| V1–V4 Migration 文件 | `server/src/main/resources/db/migration/` | PASS（文件静态存在） |
+| V3/V4 Entity 与数据库字段 | `AssetAccount`、`TransactionDetail`、`TransactionRefund` 与对应 Migration | PASS（静态核对） |
+| 当前用户与逻辑删除过滤 | `CurrentUser`、各 Service/Mapper 查询和删除逻辑 | PARTIAL（静态代码通过；真实跨用户 DB 查询未跑） |
+| 账户名称规则 | V3 无数据库唯一索引；`AccountService.assertNameAvailable` 校验有效账户重名 | PARTIAL（存在并发唯一性竞态） |
+| 账户余额/欠款直接编辑 | `AccountService.update` 直接更新账户金额，没有余额补齐流水模型 | PARTIAL（缺少可追溯校准流水） |
+| H5 认证接口 | `AuthController`、`H5AuthService`、`CaptchaService`、`PasswordCryptoService` | PASS（代码存在） |
+| 微信小程序认证 | `app/src/stores/ledger.ts` 调用 `/api/app/auth/login`；当前后端无该路径 | FAIL（接口不匹配） |
+| H5 头像链路 | `FileController`、`AppFileService`、`MinioStorageService`、`utils/file.ts` | PARTIAL（代码存在；真实对象上传未在本次执行） |
+| 账单附件 | Schema 预留 `TRANSACTION_ATTACHMENT`，当前业务页面/Service 未开放 | NOT_RUN |
+
+## 自动化与运行证据
+
+| 范围 | 证据 | 状态 |
+| --- | --- | --- |
+| 后端测试 | `server`: `mvn test`；18 tests，0 failures/errors/skipped，BUILD SUCCESS | PASS |
+| 前端类型检查 | `app`: `pnpm run typecheck` exit 0 | PASS |
+| H5 生产构建 | `VITE_API_BASE_URL=http://127.0.0.1:8080 pnpm run build:h5` 完成 | PASS |
+| 微信小程序生产构建 | `VITE_API_BASE_URL=http://127.0.0.1:8080 pnpm run build:mp-weixin` 完成 | PASS（仅构建） |
+| OpenAPI 暴露路径 | `GET http://127.0.0.1:8080/api-docs` 返回 200；包含当前 Controller 路径 | PASS（运行探针） |
+| 未登录业务接口 | `GET /api/app/accounts` 返回 HTTP 401 | PASS（运行探针） |
+| 验证码接口 | `GET /api/app/auth/captcha` 返回 HTTP 200 | PASS（运行探针） |
+| MySQL 端口与 Schema | 当前无 3306 监听；未执行 `flyway_schema_history`/`information_schema` 对照 | BLOCKED |
+| Redis 运行与会话 | 当前无 6379 监听；未执行跨重启会话恢复 | BLOCKED |
+| MinIO 对象链路 | 当前无 9000 监听；未执行真实上传、确认、预览和删除 | BLOCKED |
+| H5 有效会话刷新 | 未取得真实会话；未执行多路由刷新回归 | NOT_RUN |
+| 微信开发者工具人工验收 | 未执行 | NOT_RUN |
+| 320/375/414 逐区域设计截图 | 当前工作区未找到 `app/tests/evidence/*.png`；仅有视觉服务脚本和日志 | NOT_RUN |
+
+## 当前高风险项
+
+1. 在补齐并验证 `/api/app/auth/login` 前，微信小程序不能作为认证已闭环发布。
+2. 账户名称只有 Service 级重复校验，V3 没有数据库唯一约束；并发创建同名账户仍需产品/数据库决策。
+3. Migration 文件存在不代表目标环境已经执行；必须在可用 MySQL 上补做 Flyway、`information_schema`、事务和并发验证。
+4. `application-prod.yml` 对 H5 RSA 私钥使用生成兜底，部署必须显式注入固定私钥；安全检查不能只依赖默认配置。
