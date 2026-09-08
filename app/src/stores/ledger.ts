@@ -4,9 +4,10 @@ import { localDateTime } from '../utils/money'
 
 export type AccountKind = 'FUND' | 'CREDIT'
 export type Account = {
-  id: number
+  id: string
   name: string
   kind: AccountKind
+  sortOrder: number
   balanceCents: number
   creditLimitCents: number
   includedInNetAsset: boolean
@@ -14,15 +15,15 @@ export type Account = {
 }
 export type TransactionType = 'EXPENSE' | 'INCOME' | 'TRANSFER' | 'REPAYMENT'
 export type Transaction = {
-  id: number
+  id: string
   transactionNo: string
   type: TransactionType
   amountCents: number
   originalAmountCents: number
   hasRefund: boolean
-  accountId?: number
-  fromAccountId?: number
-  toAccountId?: number
+  accountId?: string
+  fromAccountId?: string
+  toAccountId?: string
   occurredAt: string
   note?: string
   status: string
@@ -44,7 +45,7 @@ export type AssetOverview = {
 }
 type State = {
   token: string
-  user?: { id: number; nickname: string }
+  user?: { id: string; nickname: string }
   accounts: Account[]
   transactions: Transaction[]
   summary?: Summary
@@ -61,8 +62,8 @@ export function useLedger() {
     restored = true
     state.token = uni.getStorageSync('auth-token') || ''
     const storedUser = uni.getStorageSync('auth-user') as { id?: unknown; nickname?: unknown } | undefined
-    if (storedUser && typeof storedUser.id === 'number' && typeof storedUser.nickname === 'string') {
-      state.user = { id: storedUser.id, nickname: storedUser.nickname }
+    if (storedUser && (typeof storedUser.id === 'string' || typeof storedUser.id === 'number') && typeof storedUser.nickname === 'string') {
+      state.user = { id: String(storedUser.id), nickname: storedUser.nickname }
     }
   }
 
@@ -72,7 +73,7 @@ export function useLedger() {
     const wxLogin = await new Promise<UniApp.LoginRes>((resolve, reject) => uni.login({ provider: 'weixin', success: resolve, fail: reject }))
     code = wxLogin.code
     // #endif
-    const result = await request<{ token: string; userId: number; nickname: string }>('/api/app/auth/login', { method: 'POST', data: { code } })
+    const result = await request<{ token: string; userId: string; nickname: string }>('/api/app/auth/login', { method: 'POST', data: { code } })
     state.token = result.token
     state.user = { id: result.userId, nickname: result.nickname }
     uni.setStorageSync('auth-token', result.token)
@@ -102,7 +103,7 @@ export function useLedger() {
     await refresh()
   }
 
-  async function updateTransaction(id: number, payload: Record<string, unknown>) {
+  async function updateTransaction(id: string, payload: Record<string, unknown>) {
     await request<Transaction>(`/api/app/transactions/${id}`, { method: 'PUT', data: payload })
     await refresh()
   }
@@ -112,12 +113,25 @@ export function useLedger() {
     await refresh()
   }
 
-  async function deleteAccount(id: number) {
+  async function reorderAccounts(accountId: string, targetAccountId: string, sortOrder: number, targetSortOrder: number) {
+    await request<Account[]>(`/api/app/accounts/${accountId}/order`, {
+      method: 'PUT',
+      data: {
+        targetAccountId,
+        expectedSortOrder: sortOrder,
+        targetExpectedSortOrder: targetSortOrder,
+        idempotencyKey: `account-order-${accountId}-${targetAccountId}-${sortOrder}-${targetSortOrder}`,
+      },
+    })
+    await refresh()
+  }
+
+  async function deleteAccount(id: string) {
     await request<void>(`/api/app/accounts/${id}`, { method: 'DELETE' })
     await refresh()
   }
 
-  async function deleteTransaction(id: number) {
+  async function deleteTransaction(id: string) {
     await request<void>(`/api/app/transactions/${id}`, { method: 'DELETE' })
     await refresh()
   }
@@ -144,5 +158,5 @@ export function useLedger() {
     // #endif
   }
 
-  return { state, restore, login, refresh, logout, clearSession, createTransaction, updateTransaction, createAccount, deleteAccount, deleteTransaction, localDateTime }
+  return { state, restore, login, refresh, logout, clearSession, createTransaction, updateTransaction, createAccount, reorderAccounts, deleteAccount, deleteTransaction, localDateTime }
 }

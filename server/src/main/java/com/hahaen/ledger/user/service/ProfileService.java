@@ -30,12 +30,12 @@ public class ProfileService {
         LocalDateTime createdAt = user.getCreatedAt();
         LocalDate createdDate = createdAt == null ? LocalDate.now() : createdAt.toLocalDate();
         return new ProfileVO(
-                user.getId(),
+                String.valueOf(user.getId()),
                 user.getNickname(),
                 createdAt,
                 calculateCumulativeDays(createdDate, LocalDate.now()),
                 user.getAvatarFileId() != null,
-                user.getAvatarFileId());
+                user.getAvatarFileId() == null ? null : String.valueOf(user.getAvatarFileId()));
     }
 
     static long calculateCumulativeDays(LocalDate createdDate, LocalDate today) {

@@ -1,6 +1,7 @@
 package com.hahaen.ledger.account.controller;
 
 import com.hahaen.ledger.account.dto.AccountRequest;
+import com.hahaen.ledger.account.dto.AccountOrderRequest;
 import com.hahaen.ledger.account.service.AccountService;
 import com.hahaen.ledger.account.vo.AccountVO;
 import com.hahaen.ledger.common.response.ApiResponse;
@@ -47,6 +48,11 @@ public class AccountController {
     @PutMapping("/{id}")
     public ApiResponse<AccountVO> update(@PathVariable long id, @Valid @RequestBody AccountRequest request) {
         return ApiResponse.ok(accountService.update(id, request));
+    }
+
+    @PutMapping("/{id}/order")
+    public ApiResponse<List<AccountVO>> reorder(@PathVariable long id, @Valid @RequestBody AccountOrderRequest request) {
+        return ApiResponse.ok(accountService.reorder(id, request));
     }
 
     @DeleteMapping("/{id}")

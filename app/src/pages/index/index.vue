@@ -5,8 +5,9 @@ import BottomNav from '../../components/BottomNav.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import TransactionRow from '../../components/TransactionRow.vue'
 import MonthPicker from '../../components/MonthPicker.vue'
+import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import { Transaction, useLedger } from '../../stores/ledger'
-import { localDateTime, yuan } from '../../utils/money'
+import { localDateTime } from '../../utils/money'
 
 const ledger = useLedger()
 const state = ledger.state
@@ -39,7 +40,7 @@ async function load() {
 }
 
 function retry() { void load() }
-function open(id: number) { uni.navigateTo({ url: `/pages/detail/detail?id=${id}` }) }
+function open(id: string) { uni.navigateTo({ url: `/pages/detail/detail?id=${id}` }) }
 function newEntry() { uni.navigateTo({ url: '/pages/entry/entry' }) }
 
 onShow(async () => {
@@ -58,8 +59,8 @@ onPullDownRefresh(async () => { await load(); uni.stopPullDownRefresh() })
     <PageHeader />
     <view class="summary-card">
       <button class="summary-kicker" aria-label="选择月份" @click="monthOpen = true">{{ monthTitle }} · 日均消费</button>
-      <view class="summary-amount"><text class="currency">¥</text>{{ yuan(state.summary?.dailyExpenseCents).slice(1) }}</view>
-      <view class="summary-foot"><view>本月支出<text>{{ yuan(state.summary?.expenseCents) }}</text></view><view>本月收入<text class="income">{{ yuan(state.summary?.incomeCents) }}</text></view></view>
+      <MoneyDisplay class="summary-amount" :value="state.summary?.dailyExpenseCents" />
+      <view class="summary-foot"><view>本月支出<MoneyDisplay :value="state.summary?.expenseCents" /></view><view>本月收入<MoneyDisplay class="income" :value="state.summary?.incomeCents" /></view></view>
     </view>
     <view class="section-row"><text class="section-title">最近记账</text></view>
     <scroll-view scroll-y :show-scrollbar="false" class="home-recent-list transaction-list">
@@ -68,7 +69,7 @@ onPullDownRefresh(async () => { await load(); uni.stopPullDownRefresh() })
       <template v-else>
         <view v-if="!groups.length" class="list-empty"><view class="empty-art" />暂无记账记录<button class="text-button" @click="newEntry">添加第一笔记账</button></view>
         <view v-for="group in groups" :key="group[0]" class="date-group">
-          <view class="date-heading"><text class="date-title">{{ dateTitle(group[0]) }}</text><view class="date-flow"><text class="income">收 {{ yuan(dayTotal(group[1], 'INCOME')) }}</text><text class="expense">支 {{ yuan(dayTotal(group[1], 'EXPENSE')) }}</text></view></view>
+          <view class="date-heading"><text class="date-title">{{ dateTitle(group[0]) }}</text><view class="date-flow"><MoneyDisplay class="income" prefix="收 " :value="dayTotal(group[1], 'INCOME')" /><MoneyDisplay class="expense" prefix="支 " :value="dayTotal(group[1], 'EXPENSE')" /></view></view>
           <TransactionRow v-for="transaction in group[1]" :key="transaction.id" :transaction="transaction" @open="open" />
         </view>
       </template>

@@ -79,7 +79,7 @@ public class H5AuthService {
             StpUtil.login(user.getId());
             StpUtil.getSession().set("auditName", user.getNickname());
             success(user, account, ip, userAgent);
-            return new LoginVO(StpUtil.getTokenValue(), user.getId(), user.getNickname());
+            return new LoginVO(StpUtil.getTokenValue(), String.valueOf(user.getId()), user.getNickname());
         } catch (BusinessException ex) {
             if (!"AUTH_FAILED".equals(ex.getErrorCode()) && !"ACCOUNT_EXISTS".equals(ex.getErrorCode())) {
                 failure(account, ip, userAgent, ex.getErrorCode());

@@ -5,9 +5,10 @@ import BottomNav from '../../components/BottomNav.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import TransactionRow from '../../components/TransactionRow.vue'
 import MonthPicker from '../../components/MonthPicker.vue'
+import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import { request } from '../../utils/api'
 import { Summary, Transaction, TransactionType, useLedger } from '../../stores/ledger'
-import { localDateTime, yuan } from '../../utils/money'
+import { localDateTime } from '../../utils/money'
 
 type CalendarDay = { date: string; day: number; currentMonth: boolean; today: boolean; hasRecords: boolean; expenseCents: number; incomeCents: number; balanceCents: number }
 type CalendarMonth = { month: string; days: CalendarDay[] }
@@ -78,7 +79,7 @@ function selectDay(day: CalendarDay) {
   selected.value = day.date
   void loadDay(day.date)
 }
-function open(id: number) { uni.navigateTo({ url: `/pages/detail/detail?id=${id}` }) }
+function open(id: string) { uni.navigateTo({ url: `/pages/detail/detail?id=${id}` }) }
 
 onShow(() => { void loadMonth() })
 </script>
@@ -93,7 +94,7 @@ onShow(() => { void loadMonth() })
       <view v-else-if="error" class="list-empty">暂时无法加载月历<button class="text-button" @click="loadMonth">重试</button></view>
       <view v-else class="calendar-grid"><button v-for="day in visibleDays" :key="day.date" :class="['calendar-cell', { muted: !day.currentMonth, selected: selected === day.date, today: day.today }]" :disabled="!day.currentMonth" :aria-label="day.date" :aria-pressed="selected === day.date" @click="selectDay(day)"><text class="day-num">{{ day.day }}</text><view class="calendar-dots"><text v-for="type in dayTypes(day.date)" :key="type" :class="['calendar-dot', dotClass(type)]" /></view></button></view>
       <view class="calendar-legend"><view><text class="calendar-dot expense-dot" />支出</view><view><text class="calendar-dot income-dot" />收入</view><view><text class="calendar-dot neutral-dot" />转账</view><view><text class="calendar-dot repayment-dot" />还款</view></view>
-      <view class="day-summary"><view><text>当日支出</text><text class="day-total expense">{{ yuan(detail?.expenseCents) }}</text></view><view><text>当日收入</text><text class="day-total income">{{ yuan(detail?.incomeCents) }}</text></view><view><text>当日结余</text><text class="day-total">{{ yuan(detail?.balanceCents) }}</text></view></view>
+      <view class="day-summary"><view><text>当日支出</text><MoneyDisplay class="day-total expense" :value="detail?.expenseCents" /></view><view><text>当日收入</text><MoneyDisplay class="day-total income" :value="detail?.incomeCents" /></view><view><text>当日结余</text><MoneyDisplay class="day-total" :value="detail?.balanceCents" /></view></view>
     </view>
     <view class="date-heading calendar-date"><view><text class="date-title">{{ selectedTitle }}</text><text class="date-week">{{ selectedWeek }}</text></view><text class="section-meta">{{ detail?.transactions.length || 0 }} 笔</text></view>
     <view class="transaction-list"><view v-if="dayError" class="list-empty">暂时无法加载当天账单<button class="text-button" @click="loadDay(selected)">重试</button></view><view v-else-if="!detail?.transactions.length" class="list-empty">这一天还没有记账记录</view><template v-else><TransactionRow v-for="transaction in detail.transactions" :key="transaction.id" :transaction="transaction" @open="open" /></template></view>

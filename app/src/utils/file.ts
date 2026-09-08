@@ -1,7 +1,7 @@
 import { request } from './api'
 
-type UploadUrl = { fileId: number; uploadUrl: string; expiresInSeconds: number; status: string }
-export type FileViewUrl = { fileId: number; viewUrl: string; expiresInSeconds: number }
+type UploadUrl = { fileId: string; uploadUrl: string; expiresInSeconds: number; status: string }
+export type FileViewUrl = { fileId: string; viewUrl: string; expiresInSeconds: number }
 
 function newIdempotencyKey(): string {
   const cryptoApi = globalThis.crypto as Crypto & { randomUUID?: () => string } | undefined

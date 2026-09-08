@@ -4,7 +4,8 @@ import { onLoad, onBackPress } from '@dcloudio/uni-app'
 import CenterModal from '../../components/CenterModal.vue'
 import { useLedger, Account } from '../../stores/ledger'
 import { request } from '../../utils/api'
-import { cents, localDateTime } from '../../utils/money'
+import { cents, formatYuan, localDateTime } from '../../utils/money'
+import { stringId } from '../../utils/id'
 
 type EntryType = 'EXPENSE' | 'INCOME' | 'TRANSFER'
 const ledger = useLedger()
@@ -14,7 +15,7 @@ const note = ref('')
 const accountIndex = ref(0)
 const toIndex = ref(1)
 const dateTime = ref(localDateTime())
-const editingId = ref(0)
+const editingId = ref('')
 const saving = ref(false)
 const modal = ref<'account' | 'to' | 'date' | 'note' | ''>('')
 const formError = ref('')
@@ -50,7 +51,7 @@ function selectAccount(index: number) {
   modal.value = ''
 }
 const accounts = computed(() => ledger.state.accounts.filter(account => account.kind === 'FUND' && account.status === 'ACTIVE'))
-const isEdit = computed(() => editingId.value > 0)
+const isEdit = computed(() => Boolean(editingId.value))
 const typeOptions: Array<{ value: EntryType; label: string }> = [{ value: 'EXPENSE', label: '支出' }, { value: 'INCOME', label: '收入' }, { value: 'TRANSFER', label: '转账' }]
 
 function setType(value: EntryType) { type.value = value }
@@ -78,26 +79,26 @@ function calculate() {
   for (const character of expression) { if (/\d|\./.test(character)) number += character; else { values.push(Number(number)); number = ''; while (operators.length && ('*/'.includes(operators.at(-1) || '') || '+-'.includes(character) && '+-'.includes(operators.at(-1) || ''))) apply(); operators.push(character) } }
   values.push(Number(number)); while (operators.length) apply()
   const result = values[0]
-  if (!Number.isFinite(result) || result <= 0 || result > 999999999.99) throw new Error('金额必须在 ¥0.01～¥999,999,999.99 之间')
-  amount.value = result.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')
+  if (!Number.isFinite(result) || result <= 0 || result > 999999999.99) throw new Error('金额必须在 0.01～999,999,999.99 元之间')
+  amount.value = formatYuan(Math.round(result * 100))
 }
-async function loadForEdit(id: number) {
+async function loadForEdit(id: string) {
   await ledger.refresh()
-  const result = await request<{ transaction: { type: EntryType; originalAmountCents: number; accountId?: number; fromAccountId?: number; toAccountId?: number; occurredAt: string; note?: string } }>(`/api/app/transactions/${id}`)
+  const result = await request<{ transaction: { type: EntryType; originalAmountCents: number; accountId?: string; fromAccountId?: string; toAccountId?: string; occurredAt: string; note?: string } }>(`/api/app/transactions/${id}`)
   const transaction = result.transaction
   if (!['EXPENSE', 'INCOME', 'TRANSFER'].includes(transaction.type)) throw new Error('还款流水不能从此处编辑')
-  editingId.value = id; type.value = transaction.type; amount.value = (transaction.originalAmountCents / 100).toFixed(2); note.value = transaction.note || ''; dateTime.value = transaction.occurredAt.slice(0, 16)
+  editingId.value = id; type.value = transaction.type; amount.value = formatYuan(transaction.originalAmountCents); note.value = transaction.note || ''; dateTime.value = transaction.occurredAt.slice(0, 16)
   const from = transaction.fromAccountId ?? transaction.accountId
   accountIndex.value = Math.max(0, accounts.value.findIndex(account => account.id === from))
   toIndex.value = Math.max(0, accounts.value.findIndex(account => account.id === transaction.toAccountId))
 }
 onLoad(async query => {
-  const routeId = Number(query?.id || 0)
+  const routeId = stringId(query?.id)
   try {
     if (routeId) await loadForEdit(routeId)
     else {
       if (!ledger.state.accounts.length) await ledger.refresh()
-      const lastId = uni.getStorageSync('last-entry-account')
+      const lastId = stringId(uni.getStorageSync('last-entry-account'))
       accountIndex.value = Math.max(0, accounts.value.findIndex(account => account.id === lastId))
     }
     initialValue.value = snapshot()
@@ -136,7 +137,7 @@ async function save() {
     <view class="entry-content">
       <view class="screen-nav"><button class="back nav-side" aria-label="返回" @click="back">‹</button><text class="page-title">{{ isEdit ? '编辑记账' : '新增记账' }}</text><view class="nav-side" /></view>
       <view class="entry-type"><button v-for="option in typeOptions" :key="option.value" :disabled="saving" :class="{ active: type === option.value, 'income-active': type === 'INCOME' && type === option.value }" @click="setType(option.value)">{{ option.label }}</button></view>
-      <view class="amount-panel"><text class="amount-label">{{ type === 'TRANSFER' ? '转账金额' : '记账金额' }}</text><view class="amount-display"><text class="currency">¥</text><text :class="['amount-value', { 'amount-placeholder': !amount, 'long-amount': amount.length > 10 }]">{{ amount || '输入金额' }}</text></view><button class="calculation-line" aria-label="计算结果" @click="appendKey('=')">支持 + − × ÷ 连续计算<text v-if="/[+−×÷]/.test(amount)"> · 点此计算</text></button><view v-if="formError" class="inline-error">{{ formError }}</view></view>
+      <view class="amount-panel"><text class="amount-label">{{ type === 'TRANSFER' ? '转账金额' : '记账金额' }}</text><view class="amount-display"><text :class="['amount-value', { 'amount-placeholder': !amount, 'long-amount': amount.length > 10 }]">{{ amount || '输入金额' }}</text></view><button class="calculation-line" aria-label="计算结果" @click="appendKey('=')">支持 + − × ÷ 连续计算<text v-if="/[+−×÷]/.test(amount)"> · 点此计算</text></button><view v-if="formError" class="inline-error">{{ formError }}</view></view>
       <view class="fields-card">
         <button class="field-row" @click="openModal('account')"><text class="field-icon">{{ type === 'TRANSFER' ? '↗' : '◉' }}</text><text class="field-label">{{ type === 'TRANSFER' ? '转出账户' : '资金账户' }}</text><text class="field-value">{{ accounts[accountIndex]?.name || '请选择' }}</text><text class="arrow">›</text></button>
         <button v-if="type === 'TRANSFER'" class="field-row" @click="openModal('to')"><text class="field-icon">↘</text><text class="field-label">转入账户</text><text class="field-value">{{ accounts[toIndex]?.name || '请选择' }}</text><text class="arrow">›</text></button>
@@ -152,7 +153,7 @@ async function save() {
       </view>
     </view>
     <CenterModal v-if="modal" :title="modal === 'note' ? '添加备注' : modal === 'date' ? '日期与时间' : modal === 'to' ? '选择转入账户' : '选择账户'" @close="modal = ''">
-      <template v-if="modal === 'account' || modal === 'to'"><view v-if="!accounts.length" class="list-empty">暂无资金账户<button class="text-button" @click="modal = ''; uni.navigateTo({ url: '/pages/account/account?kind=FUND' })">添加账户</button></view><view class="sheet-options"><button v-for="(account, index) in accounts" :key="account.id" :class="['sheet-option', { selected: index === (modal === 'to' ? toIndex : accountIndex) }]" @click="selectAccount(index)"><image class="account-icon" src="/static/prototype/funds-account.png" />{{ account.name }}</button></view></template>
+      <template v-if="modal === 'account' || modal === 'to'"><view v-if="!accounts.length" class="list-empty">暂无资金账户<button class="text-button" @click="modal = ''; uni.navigateTo({ url: '/pages/assets/assets' })">去资产页添加账户</button></view><view class="sheet-options"><button v-for="(account, index) in accounts" :key="account.id" :class="['sheet-option', { selected: index === (modal === 'to' ? toIndex : accountIndex) }]" @click="selectAccount(index)"><image class="account-icon" src="/static/prototype/funds-account.png" />{{ account.name }}</button></view></template>
       <template v-else-if="modal === 'date'"><view class="field"><label>日期</label><picker mode="date" :value="draftDate" @change="draftDate = $event.detail.value">{{ draftDate }}</picker></view><view class="field"><label>时间</label><picker mode="time" :value="draftTime" @change="draftTime = $event.detail.value">{{ draftTime }}</picker></view></template>
       <view v-else class="field"><textarea v-model="draftNote" maxlength="100" placeholder="写点说明..." :show-confirm-bar="false" /><text class="section-meta">{{ draftNote.length }} / 100</text></view>
       <template v-if="modal === 'date' || modal === 'note'" #actions><view class="sheet-actions"><button class="secondary-btn" @click="modal = ''">取消</button><button class="primary-btn" @click="confirmModal">确定</button></view></template>

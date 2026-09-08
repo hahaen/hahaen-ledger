@@ -8,12 +8,12 @@ import { request } from '../../utils/api'
 import { useLedger } from '../../stores/ledger'
 
 type Profile = {
-  userId: number
+  userId: string
   nickname: string
   createdAt?: string
   cumulativeDays: number
   avatarAuthorized: boolean
-  avatarFileId?: number
+  avatarFileId?: string
 }
 
 const ledger = useLedger()

@@ -47,6 +47,7 @@ H5 账号服务端会 trim 并转为小写，格式为 2–64 位小写字母/�
 | POST | `/api/app/accounts` | `name`、`kind`、资金账户 `balanceCents`，或信贷账户 `creditLimitCents`/`currentDebtCents`，可选 `includedInNetAsset` |
 | GET | `/api/app/accounts/{id}` | 当前用户账户详情 |
 | PUT | `/api/app/accounts/{id}` | 编辑名称、金额和净资产标识；账户类型不可修改 |
+| PUT | `/api/app/accounts/{id}/order` | `targetAccountId`、双方当前 `expectedSortOrder`/`targetExpectedSortOrder`、`idempotencyKey`；锁定并交换同类账户顺序 |
 | DELETE | `/api/app/accounts/{id}` | 写入删除审计字段并逻辑删除；当前没有独立停用状态 |
 | GET | `/api/app/accounts/{id}/transactions?type=&page=&pageSize=` | 账户流水分页，页大小服务端限制为 1–100 |
 | POST | `/api/app/accounts/{id}/repayments` | `fundAccountId`、`amountCents`、`idempotencyKey`；目标 `{id}` 必须为信贷账户 |

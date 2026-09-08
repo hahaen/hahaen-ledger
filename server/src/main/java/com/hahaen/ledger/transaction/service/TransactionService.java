@@ -426,15 +426,16 @@ public class TransactionService {
 
     private static boolean equals(Object left, Object right) { return left == null ? right == null : left.equals(right); }
     private static long value(Long value) { return value == null ? 0 : value; }
+    private static String stringId(Long value) { return value == null ? null : String.valueOf(value); }
 
     public static TransactionVO toVO(TransactionDetail value) {
-        return new TransactionVO(value.getId(), value.getTransactionNo(), value.getTransactionType(), value(value.getAmount()),
-                value(value.getOriginalAmount()), Integer.valueOf(1).equals(value.getHasRefund()), value.getAccountId(),
-                value.getFromAccountId(), value.getToAccountId(), value.getOccurredAt(), value.getNote(), "ACTIVE");
+        return new TransactionVO(String.valueOf(value.getId()), value.getTransactionNo(), value.getTransactionType(), value(value.getAmount()),
+                value(value.getOriginalAmount()), Integer.valueOf(1).equals(value.getHasRefund()), stringId(value.getAccountId()),
+                stringId(value.getFromAccountId()), stringId(value.getToAccountId()), value.getOccurredAt(), value.getNote(), "ACTIVE");
     }
 
     private static RefundVO toRefundVO(TransactionRefund value) {
-        return new RefundVO(value.getId(), value.getRefundNo(), value(value.getRefundAmount()), value.getCreatedAt());
+        return new RefundVO(String.valueOf(value.getId()), value.getRefundNo(), value(value.getRefundAmount()), value.getCreatedAt());
     }
 
     public record Scope(LocalDateTime start, LocalDateTime end) {}

@@ -1,0 +1,5 @@
+# API
+
+本迭代不修改 API 请求、响应结构或金额字段单位。前端继续按现有约定使用整数分字段（例如 `amountCents`、`balanceCents`、`netAssetsCents`）。
+
+状态：PASS（代码范围确认无 API 文件变更）。

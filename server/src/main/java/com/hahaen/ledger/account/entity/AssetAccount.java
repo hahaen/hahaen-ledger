@@ -19,6 +19,8 @@ public class AssetAccount extends BaseAuditEntity {
     private String accountName;
     @TableField("account_type")
     private String accountType;
+    @TableField("sort_order")
+    private Integer sortOrder;
     @TableField("total_limit_cent")
     private Long totalLimitCent;
     @TableField("current_debt_cent")

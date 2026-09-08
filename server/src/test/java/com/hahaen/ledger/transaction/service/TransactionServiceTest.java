@@ -33,6 +33,8 @@ class TransactionServiceTest {
             ignored.when(CurrentUser::id).thenReturn(7L);
             var result = service.create(new TransactionRequest("EXPENSE", 1_250L, 10L, null, null,
                     "2026-09-07T10:30", "午餐", "create-1"));
+            assertEquals("20", result.id());
+            assertEquals("10", result.accountId());
             assertEquals(1_250L, result.amountCents());
             assertEquals(8_750L, fund.getBalanceCent());
             verify(accounts).updateById(fund);

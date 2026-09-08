@@ -105,7 +105,7 @@ public class AppFileService {
         AppFile file = ownedFile(fileId);
         if (!"READY".equals(file.getStatus())) throw new BusinessException("FILE_NOT_READY", "文件尚未完成上传");
         try {
-            return new FileViewUrlVO(file.getId(), storage.presignedViewUrl(file.getObjectKey()), PRESIGNED_EXPIRES_SECONDS);
+            return new FileViewUrlVO(String.valueOf(file.getId()), storage.presignedViewUrl(file.getObjectKey()), PRESIGNED_EXPIRES_SECONDS);
         } catch (Exception ex) {
             throw new BusinessException("MINIO_UNAVAILABLE", "文件服务暂时不可用，请稍后重试");
         }
@@ -152,10 +152,10 @@ public class AppFileService {
 
     private FileUploadUrlVO uploadResponse(AppFile file) {
         if (!"UPLOADING".equals(file.getStatus())) {
-            return new FileUploadUrlVO(file.getId(), "", PRESIGNED_EXPIRES_SECONDS, file.getStatus());
+            return new FileUploadUrlVO(String.valueOf(file.getId()), "", PRESIGNED_EXPIRES_SECONDS, file.getStatus());
         }
         try {
-            return new FileUploadUrlVO(file.getId(), storage.presignedUploadUrl(file.getObjectKey()), PRESIGNED_EXPIRES_SECONDS, file.getStatus());
+            return new FileUploadUrlVO(String.valueOf(file.getId()), storage.presignedUploadUrl(file.getObjectKey()), PRESIGNED_EXPIRES_SECONDS, file.getStatus());
         } catch (Exception ex) {
             throw new BusinessException("MINIO_UNAVAILABLE", "文件服务暂时不可用，请稍后重试");
         }
@@ -196,7 +196,7 @@ public class AppFileService {
     }
 
     private static FileCompleteVO completeResponse(AppFile file) {
-        return new FileCompleteVO(file.getId(), file.getStatus(), file.getFileSize(), file.getContentType());
+        return new FileCompleteVO(String.valueOf(file.getId()), file.getStatus(), file.getFileSize(), file.getContentType());
     }
 
     private void markFailed(AppFile file, String failureCode) {

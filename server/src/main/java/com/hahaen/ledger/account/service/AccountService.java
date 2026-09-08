@@ -2,6 +2,7 @@ package com.hahaen.ledger.account.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.hahaen.ledger.account.dto.AccountRequest;
+import com.hahaen.ledger.account.dto.AccountOrderRequest;
 import com.hahaen.ledger.account.entity.AssetAccount;
 import com.hahaen.ledger.account.mapper.AssetAccountMapper;
 import com.hahaen.ledger.account.vo.AccountVO;
@@ -40,6 +41,7 @@ public class AccountService {
         account.setUserId(userId);
         account.setAccountName(name);
         account.setAccountType(type);
+        account.setSortOrder(nextSortOrder(userId, type));
         account.setIncludeNetAsset(Boolean.FALSE.equals(request.includedInNetAsset()) ? 0 : 1);
         applyAmounts(account, type, request.balanceCents(), request.creditLimitCents(), request.currentDebtCents());
         accountMapper.insert(account);
@@ -61,6 +63,37 @@ public class AccountService {
         applyAmounts(account, type, request.balanceCents(), request.creditLimitCents(), request.currentDebtCents());
         accountMapper.updateById(account);
         return toVO(account);
+    }
+
+    @Transactional
+    public List<AccountVO> reorder(long id, AccountOrderRequest request) {
+        long userId = CurrentUser.id();
+        if (id == request.targetAccountId()) return list();
+
+        AssetAccount first = ownedForUpdate(Math.min(id, request.targetAccountId()), userId);
+        AssetAccount second = ownedForUpdate(Math.max(id, request.targetAccountId()), userId);
+        AssetAccount source = id == first.getId() ? first : second;
+        AssetAccount target = request.targetAccountId() == first.getId() ? first : second;
+        if (!source.getAccountType().equals(target.getAccountType())) {
+            throw new BusinessException("ACCOUNT_ORDER_TYPE_MISMATCH", "只能调整同类账户顺序");
+        }
+
+        int sourceOrder = value(source.getSortOrder());
+        int targetOrder = value(target.getSortOrder());
+        boolean pending = sourceOrder == request.expectedSortOrder()
+                && targetOrder == request.targetExpectedSortOrder();
+        boolean alreadyApplied = sourceOrder == request.targetExpectedSortOrder()
+                && targetOrder == request.expectedSortOrder();
+        if (!pending && !alreadyApplied) {
+            throw new BusinessException("ACCOUNT_ORDER_CONFLICT", "账户顺序已变化，请重新选择");
+        }
+        if (pending) {
+            source.setSortOrder(targetOrder);
+            target.setSortOrder(sourceOrder);
+            accountMapper.updateById(source);
+            accountMapper.updateById(target);
+        }
+        return list();
     }
 
     @Transactional
@@ -125,6 +158,11 @@ public class AccountService {
         return value;
     }
 
+    private int nextSortOrder(long userId, String type) {
+        Integer max = accountMapper.selectMaxSortOrderForUpdate(userId, type);
+        return (max == null ? 0 : max) + 1;
+    }
+
     private static String validName(String input) {
         String name = input == null ? "" : input.trim();
         if (name.isEmpty() || name.codePointCount(0, name.length()) > 20) {
@@ -145,11 +183,15 @@ public class AccountService {
         boolean fund = "FUND".equals(account.getAccountType());
         long balance = fund ? value(account.getBalanceCent()) : value(account.getCurrentDebtCent());
         long limit = fund ? 0 : value(account.getTotalLimitCent());
-        return new AccountVO(account.getId(), account.getAccountName(), account.getAccountType(), balance, limit,
+        return new AccountVO(String.valueOf(account.getId()), account.getAccountName(), account.getAccountType(), value(account.getSortOrder()), balance, limit,
                 Integer.valueOf(1).equals(account.getIncludeNetAsset()), "ACTIVE");
     }
 
     private static long value(Long value) {
+        return value == null ? 0 : value;
+    }
+
+    private static int value(Integer value) {
         return value == null ? 0 : value;
     }
 }

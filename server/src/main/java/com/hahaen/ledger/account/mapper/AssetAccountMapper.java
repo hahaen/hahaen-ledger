@@ -18,9 +18,17 @@ public interface AssetAccountMapper extends BaseMapper<AssetAccount> {
     AssetAccount selectOwnedForUpdate(@Param("id") long id, @Param("userId") long userId);
 
     @Select("""
+            SELECT sort_order FROM asset_account
+             WHERE user_id = #{userId} AND account_type = #{accountType} AND deleted = 0
+             ORDER BY sort_order DESC, id DESC
+             LIMIT 1 FOR UPDATE
+            """)
+    Integer selectMaxSortOrderForUpdate(@Param("userId") long userId, @Param("accountType") String accountType);
+
+    @Select("""
             SELECT * FROM asset_account
              WHERE user_id = #{userId} AND deleted = 0
-             ORDER BY account_type ASC, account_name ASC, id ASC
+             ORDER BY account_type ASC, sort_order ASC, id ASC
             """)
     List<AssetAccount> selectActiveByUser(@Param("userId") long userId);
 }

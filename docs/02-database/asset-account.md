@@ -29,6 +29,7 @@
 | `user_id` | `BIGINT` | 无 | 是 | 所属用户ID，数据库外键关联 `app_user.id`；业务查询仍必须校验当前 Sa-Token 用户。 |
 | `account_name` | `VARCHAR(64)` | 无 | 是 | 账户名称；`CHECK` 限制去除首尾空白后为1至20个字符。数据库未建立唯一索引；当前 `AccountService` 在同一用户的有效账户范围内拒绝重名。 |
 | `account_type` | `VARCHAR(16)` | 无 | 是 | 账户类型：`FUND`资金账户、`CREDIT`信贷账户；不设置默认值，创建时必须显式选择类型。 |
+| `sort_order` | `INT` | 无 | 是 | 同一用户、同一账户类型内的展示顺序，数字越小越靠前；新账户取该类型当前最大值加一。 |
 | `total_limit_cent` | `BIGINT` | `NULL` | 否 | 信贷账户总额度，单位为分，非负；资金账户必须为 `NULL`。 |
 | `current_debt_cent` | `BIGINT` | `NULL` | 否 | 信贷账户当前欠款，单位为分，非负且不得大于总额度；资金账户必须为 `NULL`。 |
 | `balance_cent` | `BIGINT` | `NULL` | 否 | 资金账户余额，单位为分，非负；信贷账户必须为 `NULL`。 |
@@ -44,6 +45,8 @@
 
 - `PRIMARY KEY (id)`：保证账户ID唯一。
 - `idx_asset_account_user_type_deleted (user_id, account_type, deleted)`：支持按当前用户、账户类型和有效状态查询。
+- `idx_asset_account_user_type_deleted_order (user_id, account_type, deleted, sort_order, id)`：支持按账户类型和自定义顺序查询及新建账户追加时读取末尾账户。
+- 资产账户查询按 `account_type ASC, sort_order ASC, id ASC` 排序；V5 会把既有有效账户按迁移前的名称、ID顺序初始化 `sort_order`。
 - `fk_asset_account_user`：保证所属用户存在；当前单账本模型不在账户表重复保存账本字段。
 - `ck_asset_account_type`、`ck_asset_account_include_net_asset`、`ck_asset_account_deleted`：限制类型和标识取值。
 - `ck_asset_account_amounts_non_negative`：金额均不得为负数。
@@ -57,6 +60,7 @@
 - 变更：新增 `asset_account` 表。
 - 未修改 `V1__init_schema.sql` 或 `V2__create_app_file_table.sql`。
 - 当前工作区包含 V3 Migration、`AssetAccount` Entity 及账户 Service/Controller；本次审计没有可复核的数据库执行记录。需要在可用 MySQL 环境中通过应用/Flyway 执行后，再用 `flyway_schema_history`、`information_schema` 和 Entity 对照验收。
+- 顺序字段由 `V5__add_asset_account_sort_order.sql` 新增；V5 不修改历史 Migration，旧数据按稳定顺序回填，新增账户在同类型账户末尾追加。
 
 ## 6. 后续扩展建议
 

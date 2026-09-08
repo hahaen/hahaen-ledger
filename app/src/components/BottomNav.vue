@@ -12,5 +12,5 @@ onMounted(() => uni.hideTabBar({ animation: false }))
 function go(url: string) { uni.switchTab({ url }) }
 </script>
 <template>
-  <view class="bottom-nav" aria-label="主导航"><button v-for="item in items" :key="item.key" :class="['nav-item', { active: active === item.key }]" :aria-label="item.label" @click="go(`/pages/${item.path}`)"><text class="nav-icon">{{ item.icon }}</text><text>{{ item.label }}</text></button></view>
+  <view class="bottom-nav" aria-label="主导航"><button v-for="item in items" :key="item.key" :class="['nav-item', { active: active === item.key }]" :aria-label="item.label" @click="go(`/pages/${item.path}`)"><view :class="['nav-icon', `nav-icon-${item.key}`]"><text class="nav-glyph">{{ item.icon }}</text></view><text>{{ item.label }}</text></button></view>
 </template>

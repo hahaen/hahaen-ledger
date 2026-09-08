@@ -5,7 +5,7 @@ import { encryptPassword } from '../utils/passwordCrypto'
 import { useLedger } from '../stores/ledger'
 
 type CaptchaVO = { captchaId: string; image: string; expiresInSeconds: number }
-type LoginVO = { token: string; userId: number; nickname: string }
+type LoginVO = { token: string; userId: string; nickname: string }
 
 const props = withDefaults(defineProps<{ mode?: 'login' | 'register' }>(), { mode: 'login' })
 const account = ref('')
@@ -111,7 +111,11 @@ onMounted(loadCaptcha)
             <text class="auth-field-label">密码</text>
             <view class="auth-password-input">
               <input v-model="password" class="auth-input" :type="passwordVisible ? 'text' : 'password'" :password="!passwordVisible" :autocomplete="isLogin ? 'current-password' : 'new-password'" placeholder="请输入密码" @input="errorMessage = ''" />
-              <button class="auth-password-toggle" :aria-label="passwordVisible ? '隐藏密码' : '显示密码'" :title="passwordVisible ? '隐藏密码' : '显示密码'" @click="passwordVisible = !passwordVisible">{{ passwordVisible ? '◉' : '◌' }}</button>
+              <button class="auth-password-toggle" :aria-label="passwordVisible ? '隐藏密码' : '显示密码'" :title="passwordVisible ? '隐藏密码' : '显示密码'" @click="passwordVisible = !passwordVisible">
+                <view class="auth-password-eye" :class="{ visible: passwordVisible }" aria-hidden="true">
+                  <view class="auth-password-eye-pupil" />
+                </view>
+              </button>
             </view>
           </view>
         </view>
@@ -136,7 +140,6 @@ onMounted(loadCaptcha)
         <button class="auth-switch" @click="switchMode">{{ isLogin ? '还没有账号？去注册' : '已有账号？返回登录' }}</button>
       </view>
 
-      <text class="auth-footnote">{{ isLogin ? '微信小程序会自动完成微信登录，无需账号密码。' : '注册仅需要账号、密码和验证码，不收集昵称或头像。' }}</text>
     </view>
   </view>
 </template>
