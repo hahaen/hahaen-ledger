@@ -1,0 +1,58 @@
+[
+  {
+    "name": "home",
+    "width": 320,
+    "documentWidth": 320,
+    "pageWidth": 320,
+    "viewport": 320
+  },
+  {
+    "name": "calendar",
+    "width": 320,
+    "documentWidth": 320,
+    "pageWidth": 320,
+    "viewport": 320
+  },
+  {
+    "name": "entry",
+    "width": 320,
+    "documentWidth": 320,
+    "pageWidth": 320,
+    "viewport": 320
+  },
+  {
+    "name": "detail",
+    "width": 320,
+    "documentWidth": 320,
+    "pageWidth": 320,
+    "viewport": 320
+  },
+  {
+    "name": "home",
+    "width": 414,
+    "documentWidth": 414,
+    "pageWidth": 414,
+    "viewport": 414
+  },
+  {
+    "name": "calendar",
+    "width": 414,
+    "documentWidth": 414,
+    "pageWidth": 414,
+    "viewport": 414
+  },
+  {
+    "name": "entry",
+    "width": 414,
+    "documentWidth": 414,
+    "pageWidth": 414,
+    "viewport": 414
+  },
+  {
+    "name": "detail",
+    "width": 414,
+    "documentWidth": 414,
+    "pageWidth": 414,
+    "viewport": 414
+  }
+]

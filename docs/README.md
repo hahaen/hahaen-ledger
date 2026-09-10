@@ -46,3 +46,5 @@
 ## 文档维护要求
 
 新增重大功能、Bug、数据库、权限、基础设施或设计整改时，先在 `10-iterations` 建档，再修改代码；完成后同步规范区、审计矩阵和第三轮审计。命令记录必须来自真实执行，且不得包含密码、Token、AppSecret、Access Key 或永久签名 URL。
+
+本轮核心页面交付与验证见 [core-pages-prototype](10-iterations/2026/09/core-pages-prototype/README.md)，包含前后端回归和独立只读页面截图。

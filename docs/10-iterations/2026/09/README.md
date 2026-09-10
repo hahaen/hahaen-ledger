@@ -11,3 +11,18 @@
 ## 当前目录约定
 
 完整功能迭代应包含固定的 01–10 文件；只有 README 的目录表示目前只保留了索引说明或历史明细尚未恢复，不能据此推断功能已经完成。
+
+- [core-pages-prototype](core-pages-prototype/README.md)：首页/日历/记账/详情原型对齐、还款编辑和退款并发修复（2026-09-08）。
+
+- [flyway-v5-checksum](flyway-v5-checksum/README.md)：恢复已执行 V5 内容，修复启动校验失败并实际启动验证。
+
+- [home-static-month](home-static-month/README.md)：首页当前月份改为普通文字，移除刷新按钮。
+- [home-summary-layout-current-month](home-summary-layout-current-month/README.md)：修复首页日均消费金额布局，并核对当前月份动态取值。
+- [home-recent-list-design-alignment](home-recent-list-design-alignment/README.md)：对齐首页最近记账日期行和列表底色。
+- [transaction-detail-header-alignment](transaction-detail-header-alignment/README.md)：账单详情页顶部导航与新增记账页对齐。
+- [transaction-detail-delete-modal](transaction-detail-delete-modal/README.md)：账单详情删除确认弹窗与系统样式统一。
+- [transaction-refund-modal-design](transaction-refund-modal-design/README.md)：账单详情退款弹窗按参考稿与系统样式对齐。
+- `transaction-refund-modal-design` 后续补充退款记录删除闭环：删除成功后立即移除记录并回算详情，刷新失败不回显旧数据。
+- [transaction-edit-type-lock](transaction-edit-type-lock/README.md)：账单详情编辑沿用原账单类型，不再显示新增记账的顶部类型切换。
+- [calendar-records-scroll](calendar-records-scroll/README.md)：日历页固定上半部分，仅让记账记录区域独立滚动（2026-09-10）。
+- [account-records-scroll](account-records-scroll/README.md)：资金账户和信贷账户详情固定筛选区，仅让日期与流水区域独立滚动（2026-09-10）。

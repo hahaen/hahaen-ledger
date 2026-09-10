@@ -1,4 +1,4 @@
-cd-- 为资产账户增加同类型展示顺序；旧数据按原有名称、ID顺序初始化。
+-- 为资产账户增加同类型展示顺序；旧数据按原有名称、ID顺序初始化。
 
 ALTER TABLE asset_account
   ADD COLUMN sort_order INT NOT NULL DEFAULT 0 COMMENT '同类账户展示顺序，数字越小越靠前' AFTER account_type;

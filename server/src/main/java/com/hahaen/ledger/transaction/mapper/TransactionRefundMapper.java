@@ -37,4 +37,7 @@ public interface TransactionRefundMapper extends BaseMapper<TransactionRefund> {
              WHERE id = #{id} AND deleted = 0
             """)
     TransactionRefund selectActiveById(@Param("id") long id);
+
+    @Select("SELECT * FROM transaction_refund WHERE id = #{id} AND deleted = 0 FOR UPDATE")
+    TransactionRefund selectActiveByIdForUpdate(@Param("id") long id);
 }

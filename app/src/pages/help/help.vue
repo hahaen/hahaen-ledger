@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { backToLedger } from '../../utils/entry'
 
 const openFaq = ref('quick-start')
 
@@ -14,15 +15,6 @@ function toggleFaq(id: string) {
   openFaq.value = openFaq.value === id ? '' : id
 }
 
-function showPrivacy() {
-  uni.showModal({
-    title: '隐私说明',
-    content: '哈记账只收集完成记账和账户管理所需的信息。账单内容用于生成你的收支和资产数据，不会用于广告推荐。头像授权为可选操作；拒绝授权不影响基础记账功能。数据导出与删除能力将在后续版本开放。',
-    confirmText: '我知道了',
-    showCancel: false,
-  })
-}
-
 function showReserved(message: string) {
   uni.showToast({ title: message, icon: 'none' })
 }
@@ -32,7 +24,7 @@ function showReserved(message: string) {
   <view class="help-page">
     <scroll-view scroll-y class="help-scroll">
       <view class="help-nav">
-        <button class="help-back" aria-label="返回我的" @click="uni.navigateBack()">‹</button>
+        <button class="help-back" aria-label="返回我的" @click="backToLedger">‹</button>
         <text class="help-title">关于与帮助</text>
         <view class="help-nav-side" />
       </view>
@@ -46,7 +38,7 @@ function showReserved(message: string) {
       </view>
 
       <view class="about-section">
-        <view class="about-heading"><view><text class="section-kicker">QUICK START</text><text class="about-section-title">三步，开始看懂生活</text></view><text class="section-meta">01 / 03</text></view>
+        <view class="about-heading"><view><text class="section-kicker">QUICK START</text><text class="about-section-title">三步，开始看懂生活</text></view></view>
         <view class="help-cards">
           <view class="help-card"><text class="help-card-icon mint">＋</text><text class="help-card-title">记下一笔</text><text class="help-card-copy">3 秒完成记录</text></view>
           <view class="help-card"><text class="help-card-icon peach">◷</text><text class="help-card-title">看懂变化</text><text class="help-card-copy">日历查看趋势</text></view>
@@ -65,14 +57,14 @@ function showReserved(message: string) {
       </view>
 
       <view class="about-section">
-        <view class="about-heading"><view><text class="section-kicker">YOUR DATA</text><text class="about-section-title">数据与隐私</text></view></view>
+        <view class="about-heading"><view><text class="section-kicker">YOUR DATA</text><text class="about-section-title">数据</text></view></view>
         <view class="about-settings">
-          <button class="about-setting" @click="showPrivacy"><text class="about-setting-icon">♡</text><view class="about-setting-copy"><text>隐私说明</text><text>只为记账服务，数据去向清晰可见</text></view><text class="setting-arrow">›</text></button>
-          <view class="about-setting"><text class="about-setting-icon">↗</text><view class="about-setting-copy"><text>数据导出 / 删除</text><text>首版暂未开放，不会生成不可用操作</text></view><text class="about-status">暂未开放</text></view>
+          <view class="about-setting"><text class="about-setting-icon">↗</text><view class="about-setting-copy"><text>数据导出</text><text>首版暂未开放，不会生成不可用操作</text></view><text class="about-status">暂未开放</text></view>
+          <view class="about-setting"><text class="about-setting-icon">↙</text><view class="about-setting-copy"><text>数据导入</text><text>首版暂未开放，不会生成不可用操作</text></view><text class="about-status">暂未开放</text></view>
         </view>
       </view>
 
-      <view class="about-note"><text class="about-note-icon">✦</text><view class="about-note-copy"><text>需要反馈？</text><text>告诉我们哪里还可以更好，帮助哈记账变得更顺手。</text></view><button class="about-feedback" @click="showReserved('反馈入口已预留，感谢你的建议')">反馈建议</button></view>
+      <view class="about-note"><text class="about-note-icon">✦</text><view class="about-note-copy"><text>需要反馈？</text><text>告诉我们哪里还可以更好，帮助哈记账变得更顺手。</text></view><button class="about-status" @click="showReserved('反馈暂未开放')">暂未开放</button></view>
       <view class="about-footer"><image src="/static/brand.png" mode="aspectFill" /><text>哈记账 · v1.0</text><text>简单记账，安心生活</text></view>
     </scroll-view>
   </view>

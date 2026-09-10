@@ -83,3 +83,7 @@ H5 账号服务端会 trim 并转为小写，格式为 2–64 位小写字母/�
 ## 维护规则
 
 接口变化必须同步 DTO/VO、`app/src/utils/api.ts` 或文件工具、页面 loading/失败重试、权限测试和对应迭代档案。没有真实接口联调证据时，只能记录 `PARTIAL`、`BLOCKED` 或 `NOT_RUN`。
+
+## 交易编辑与退款边界补充（2026-09-08）
+
+PUT transactions/{id} 不覆盖原创建 idempotencyKey；还款编辑在事务内先撤销旧影响再按恢复后的余额/欠款校验。退款幂等键重复但金额不同返回 IDEMPOTENCY_CONFLICT。删除退款取得原账单锁后必须重新锁定读取有效退款，防止等待期间已删除的记录再次扣款。occurredAt 年份限定 1000–9999，以匹配 MySQL DATETIME 范围。

@@ -16,3 +16,7 @@ Mockito/纯逻辑 Service 测试不能替代真实 MySQL Mapper、Flyway、事�
 ## 结果记录
 
 每条结果至少写命令、前提、实际输出、代码/文件定位和未覆盖范围；只有已执行且符合预期才可写 `PASS`，构建不能替代运行或业务验收。
+
+## 核心页面回归（2026-09-08）
+
+node --test tests/entry.test.mjs tests/page-flows.test.mjs 通过 9 项前端回归；mvn test 通过 24 项后端单测，交易测试 9 项。类型检查和双端构建通过。详见 [核心页面迭代](../10-iterations/2026/09/core-pages-prototype/README.md)，其中的只读视觉证据不能替代数据库事务和真实账务写入。

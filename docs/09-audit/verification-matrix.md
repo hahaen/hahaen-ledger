@@ -56,6 +56,22 @@
 3. Migration 文件存在不代表目标环境已经执行；必须在可用 MySQL 上补做 Flyway、`information_schema`、事务和并发验证。
 4. `application-prod.yml` 对 H5 RSA 私钥使用生成兜底，部署必须显式注入固定私钥；安全检查不能只依赖默认配置。
 
+## 2026-09-10 追加：退款记录删除失败修复
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 退款记录 DELETE 路径 | PASS（静态核对） | `TransactionController` 暴露 `/api/app/transactions/refunds/{refundId}`，前端调用路径一致 |
+| 后端退款软删除与金额回算 | PASS（单元测试） | `TransactionServiceTest.deleteRefundSoftDeletesAndRestoresExpenseImpact` 通过；覆盖退款 `deleted=1`、账单有效金额和支出账户余额 |
+| 前端删除后状态 | PASS（回归测试） | `page-flows.test.mjs` 新增场景通过；DELETE 成功后立即移除记录，详情刷新失败不回显旧记录，`saving=false`；详情首次生命周期不发送空账单 ID 请求 |
+| 删除失败反馈与影响行数 | PASS（静态核对） | 前端展示后端业务错误；后端 `updateById` 影响行数不是 1 时抛出失败，不误报删除成功 |
+| 前端类型检查 | PASS | `pnpm run typecheck` exit 0 |
+| H5 生产构建 | PASS | `pnpm run build:h5` 完成 |
+| 微信小程序生产构建 | PASS | `pnpm run build:mp-weixin` 完成 |
+| Java 测试 | PASS | `mvn test`，26 tests，0 failures/errors/skipped |
+| 真实登录态退款删除 | NOT_RUN | 当前未取得有效登录态；需在真实 H5/微信环境验证数据库事务和账户余额 |
+| MySQL/Flyway 实际对照 | BLOCKED | 当前无可用 3306 监听，未执行真实库验证 |
+
+
 ## 2026-09-08 追加：资产新增弹窗设计对齐
 
 | 范围 | 证据 | 状态 |
@@ -163,3 +179,115 @@
 | 删除确认弹窗视觉 | `account.vue` 自定义圆角弹窗与 `account-delete-*` 样式 | PASS（静态核对） |
 | 逻辑删除行为 | 确认按钮继续调用 `ledger.deleteAccount` | PASS（静态核对） |
 | 有效会话视觉验收 | 未取得有效登录态截图证据 | NOT_RUN |
+
+## 2026-09-08 核心页面原型与流程修复
+
+| 项目 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 前端金额、日期及保存/竞态回归 | PASS | 9 项 Node tests |
+| 后端交易/退款回归 | PASS | mvn test 24 项，交易 9 项 |
+| 类型检查、H5/微信构建 | PASS | 临时本地 API 地址，非生产部署 |
+| 页面截图、320/414 横向溢出 | PASS | core-pages-prototype/evidence；独立只读测试数据 |
+| 资产和我的页面保护 | PASS | git diff 两页面无输出 |
+| 真实核心账务闭环 | PARTIAL | 代码/单测完成，认证后的端到端未验证 |
+| 登录后真实账务操作 | BLOCKED | 无可用测试登录会话/账号 |
+| MySQL 并发、Flyway、Redis、MinIO、微信工具 | NOT_RUN | 不用构建或 Mockito 代替 |
+
+详情见 [迭代记录](../10-iterations/2026/09/core-pages-prototype/README.md)。最终已执行验证无 FAIL 项。
+
+## V5 启动校验修复（2026-09-08）
+
+PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221；mvn test package 25 项测试通过。实际 DEV 启动验证 5 个迁移全部通过、Schema 保持 V5 且无需迁移、应用成功启动；临时 18080 未登录账户接口返回 401，验证后停止实例。未执行 repair 或修改数据库历史。记录：docs/10-iterations/2026/09/flyway-v5-checksum/README.md。
+
+## 账单详情顶部对齐（2026-09-09）
+
+| 范围 | 证据 | 状态 |
+| --- | --- | --- |
+| 顶部导航规格 | `app/src/prototype.scss` 将 `.detail-page .screen-nav` 纳入新增记账共用的紧凑导航选择器组 | PASS |
+| 类型检查 | `app`: `pnpm run typecheck` exit 0 | PASS |
+| H5 生产构建 | 临时注入本地 API 地址后 `pnpm run build:h5` exit 0 | PASS |
+| 只读视觉夹具 | 详情页与新增记账页均显示紧凑页头 | PASS |
+| 真实登录态验收 | 原开发地址被认证页拦截，未取得有效会话 | BLOCKED |
+
+## 账单详情删除弹窗样式统一（2026-09-09）
+
+| 范围 | 证据 | 状态 |
+| --- | --- | --- |
+| 账单删除确认弹窗 | `app/src/pages/detail/detail.vue` 复用账户详情页圆角弹层结构与危险确认按钮 | PASS（静态核对） |
+| 退款删除确认弹窗 | 账单详情页退款记录删除复用同一确认弹层，并保留原退款 DELETE 接口 | PASS（静态核对） |
+| 删除业务/API/数据库 | 本次未修改既有删除接口、后端和数据库 | PASS（范围核对） |
+| 前端类型检查 | `app`: `pnpm run typecheck` exit 0 | PASS |
+| H5 生产构建 | 临时注入本地 API 地址后 `pnpm run build:h5` 完成 | PASS |
+| 微信小程序生产构建 | 临时注入本地 API 地址后 `pnpm run build:mp-weixin` 完成 | PASS（仅构建） |
+| 只读视觉夹具交互 | 打开账单详情删除弹层并点击取消，未执行写入 | PASS |
+| 有效登录态视觉验收 | 未取得有效会话截图 | NOT_RUN |
+
+## 首页交互修正（2026-09-08）
+
+首页“当前年/月 · 日均消费”为普通文字，不提供月份选择；最近记账右侧不显示刷新按钮。年月与查询范围在加载时按当前日期更新。类型检查、H5 构建 PASS。档案：docs/10-iterations/2026/09/home-static-month/README.md。
+
+首页摘要布局修正（2026-09-09）：PASS。日均消费金额已覆盖金额组件的 `inline-flex`，在标题下方独占一行；本月支出/收入按内容宽度排列，避免两列被拉得过远；月份仍由 `localDateTime()` 动态生成并传入首页摘要接口。类型检查、H5 构建和独立只读视觉核对通过。档案：docs/10-iterations/2026/09/home-summary-layout-current-month/README.md。
+
+首页最近记账设计稿对齐（2026-09-09）：PASS。日期标题恢复设计稿边距和字号，日期汇总保持单行右对齐；最近记账滚动容器、内容层和账单行统一为 `#f9fcfb` 浅薄荷底色。类型检查、H5 构建和独立只读视觉核对通过。档案：docs/10-iterations/2026/09/home-recent-list-design-alignment/README.md。
+
+## 2026-09-09 追加：账单详情退款弹窗设计对齐
+
+| 范围 | 证据 | 状态 |
+| --- | --- | --- |
+| 退款弹层结构 | `app/src/pages/detail/detail.vue` 使用退款专用弹层，包含把手、说明、金额输入和取消/确认双按钮 | PASS（静态核对） |
+| 系统视觉样式 | `app/src/prototype.scss` 使用现有 30px 圆角、薄荷绿确认色、浅色取消色、阴影和安全区规则 | PASS（静态核对） |
+| 默认退款金额 | `openRefund()` 回填 `inputYuan(effectiveCents)`，避免千分位文本直接提交 | PASS（静态核对） |
+| 退款后详情金额 | 主金额显示 `effectiveCents`，不再重复渲染“当前有效金额”行 | PASS（静态核对） |
+| 退款记录区 | 增加 `REFUND RECORD` 英文眉标题，并按系统暖色退款卡片展示累计退款和明细 | PASS（静态核对） |
+| 退款业务/API/数据库 | 本次未修改退款接口、整数分、幂等、后端、数据库 | PASS（范围核对） |
+| 前端回归测试 | `node --test tests/entry.test.mjs tests/page-flows.test.mjs`，15/15 | PASS |
+| 前端类型检查 | `pnpm run typecheck` exit 0 | PASS |
+| H5/微信小程序生产构建 | 两个构建均输出 `DONE Build complete.` | PASS |
+| 本机视觉夹具 | Codex 内置浏览器访问本机服务返回 `ERR_BLOCKED_BY_CLIENT` | BLOCKED |
+| 真实登录态退款验收 | 未取得有效登录态，未执行真实退款写入 | NOT_RUN |
+## 编辑记账类型固定（2026-09-09）
+
+| 范围 | 证据 | 状态 |
+| --- | --- | --- |
+| 编辑态类型回填与固定 | `app/src/pages/entry/entry.vue` 的 `loadForEdit()` 回填类型，`setType()` 拒绝编辑态切换 | PASS（静态核对） |
+| 编辑态类型切换器 | 模板仅在 `!isEdit` 时渲染 `.entry-type` | PASS（静态核对） |
+| 新增态类型切换 | 新增态 `setType('TRANSFER')` 回归用例通过 | PASS |
+| 前端回归 | `node --test tests/page-flows.test.mjs tests/entry.test.mjs`，15/15 passed | PASS |
+| 前端类型检查 | `app`: `pnpm run typecheck` exit 0 | PASS |
+| H5 生产构建 | 临时注入本地 API 地址后 `pnpm run build:h5` exit 0 | PASS |
+| 微信小程序生产构建 | 临时注入本地 API 地址后 `pnpm run build:mp-weixin` exit 0 | PASS |
+| 真实详情到编辑操作 | 未取得有效登录账单会话及微信开发者工具证据 | BLOCKED |
+
+编辑页类型提示补充：编辑数据加载成功后，在标题下方显示“当前账单类型：{类型}记账”；15/15 回归、类型检查、H5 和微信小程序构建均通过，真实登录态操作仍为 BLOCKED。
+
+还款类型提示样式补充：编辑页还款类型提示底色统一为既有还款样式的 `#fff4ed`，文字使用既有负债色。
+
+放弃修改弹窗补充：编辑页已移除平台原生 `uni.showModal`，改用系统统一的自定义圆角确认弹层，并保留未保存内容保护逻辑。
+
+## 2026-09-10 追加：日历页固定上半部分与账单独立滚动
+
+| 范围 | 证据 | 状态 |
+| --- | --- | --- |
+| 日历上半部分固定 | `app/src/prototype.scss`：`.calendar-page` 使用 `height:100vh`、`overflow:hidden`；页头、月历卡片和日期标题 `flex-shrink:0` | PASS（静态核对） |
+| 账单记录独立滚动 | `app/src/pages/calendar/calendar.vue` 使用 `scroll-view scroll-y`；`.calendar-transaction-list` 使用 `flex:1;height:0;min-height:0;overflow-y:auto` | PASS（静态核对） |
+| 布局回归测试 | `node --test tests/calendar-layout.test.mjs tests/page-flows.test.mjs tests/entry.test.mjs`，19/19 | PASS |
+| 前端类型检查 | `app`: `pnpm run typecheck` exit 0 | PASS |
+| H5 生产构建 | 临时注入本地 API 地址后 `pnpm run build:h5` 输出 `DONE Build complete.` | PASS |
+| 独立只读运行时滚动 | 页面 `scrollTop=0`；记录滚动节点 `scrollTop=159.33`，日历页上半部分未移动 | PASS |
+| PNG 截图证据 | 本次未生成可提交截图文件 | NOT_RUN |
+| 微信开发者工具人工验收 | 本次未执行 | NOT_RUN |
+
+## 2026-09-10 追加：账户详情固定筛选与流水独立滚动
+
+| 范围 | 证据 | 状态 |
+| --- | --- | --- |
+| 固定账户详情头部 | `app/src/prototype.scss`：`.account-page` 使用 `height:100vh`、`overflow:hidden`；导航和账户卡片 `flex-shrink:0` | PASS（静态核对） |
+| 固定五项筛选按钮 | `app/src/pages/account/account.vue`：`.filter-row` 位于 `.account-record-list` 之前；筛选查询逻辑未改变 | PASS（静态核对） |
+| 日期/笔数与流水独立滚动 | `.account-record-list` 包含日期分组、笔数和 `TransactionRow`，使用 `scroll-view scroll-y` | PASS（静态核对） |
+| 日期分组标题吸顶 | `app/src/prototype.scss`：`.account-record-list .date-heading` 使用 `position:sticky;top:0;z-index:2` | PASS（静态核对） |
+| 布局回归测试 | `node --test tests/account-layout.test.mjs tests/calendar-layout.test.mjs tests/page-flows.test.mjs tests/entry.test.mjs`，20/20 | PASS |
+| 前端类型检查 | `app`: `pnpm run typecheck` exit 0 | PASS |
+| H5 生产构建 | 临时注入本地 API 地址后 `pnpm run build:h5` 输出 `DONE Build complete.` | PASS |
+| 独立只读运行时滚动 | 页面 `scrollTop=0`；资金账户流水滚动节点 `scrollTop=47.33`，账户卡片和筛选按钮未移动 | PASS |
+| PNG 截图证据 | 本次未生成可提交截图文件 | NOT_RUN |
+| 微信开发者工具人工验收 | 本次未执行 | NOT_RUN |

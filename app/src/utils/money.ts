@@ -1,6 +1,19 @@
 export type MoneyCents = number | string | null | undefined
 
-export function cents(value: string | number): number { const text = String(value).trim(); if (!/^\d+(\.\d{1,2})?$/.test(text)) throw new Error('金额格式不正确'); const n = Number(text); if (!Number.isFinite(n) || n <= 0 || n > 999999999.99) throw new Error('金额必须在 0.01～999,999,999.99 元之间'); return Math.round(n * 100) }
+export function cents(value: string | number): number {
+  const text = String(value).trim()
+  if (!/^\d+(\.\d{1,2})?$/.test(text)) throw new Error('金额格式不正确')
+  const [whole, fraction = ''] = text.split('.')
+  const result = Number(whole) * 100 + Number(fraction.padEnd(2, '0'))
+  if (!Number.isSafeInteger(result) || result <= 0 || result > 99999999999) throw new Error('金额必须在 0.01～999,999,999.99 元之间')
+  return result
+}
+
+/** 输入框使用无分组符的金额，不能复用带千分位的展示文本。 */
+export function inputYuan(value: number): string {
+  const fraction = Math.abs(value % 100)
+  return `${Math.trunc(value / 100)}${fraction ? '.' + String(fraction).padStart(2, '0') : ''}`
+}
 
 function normalizeCents(value: MoneyCents): number {
   if (value === null || value === undefined) return 0

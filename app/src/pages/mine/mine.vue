@@ -26,8 +26,8 @@ const loggingOut = ref(false)
 const loggedIn = computed(() => Boolean(ledger.state.token))
 const nickname = computed(() => profile.value?.nickname || ledger.state.user?.nickname || '账本主人')
 const avatarStatus = computed(() => {
-  if (uploading.value) return '正在上传头像…'
-  return loggedIn.value ? (profile.value?.avatarAuthorized ? '头像已设置 · 数据随时可用' : '头像未设置 · 可继续使用') : '登录后同步你的头像和记账数据'
+  if (uploading.value) return '正在上传…'
+  return loggedIn.value ? (profile.value?.avatarAuthorized ? '资料已设置 · 数据随时可用' : '') : '登录后同步你的资料和记账数据'
 })
 const avatarActionText = computed(() => {
   if (!loggedIn.value) return '登录'
@@ -140,7 +140,6 @@ onShow(loadProfile)
     <view class="profile-card">
       <view class="profile-avatar-button" @click="handleAvatarClick">
         <image :src="avatarUrl" mode="aspectFill" />
-        <view v-if="loggedIn && !uploading" class="avatar-edit-badge">↗</view>
         <!-- #ifdef H5 -->
         <input class="avatar-file-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" @change="chooseAvatar" />
         <!-- #endif -->
@@ -150,9 +149,6 @@ onShow(loadProfile)
         <text v-if="loading || avatarStatus" class="profile-status">{{ loading ? '正在加载个人资料…' : avatarStatus }}</text>
       </view>
       <button v-if="!loggedIn" class="text-button" @click="openLogin">{{ avatarActionText }}</button>
-      <!-- #ifdef H5 -->
-      <button v-else class="text-button" :disabled="uploading" @click="handleAvatarClick">{{ uploading ? '上传中' : profile?.avatarAuthorized ? '更换头像' : '设置头像' }}</button>
-      <!-- #endif -->
     </view>
 
     <view class="days-card">

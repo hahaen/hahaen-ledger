@@ -35,8 +35,8 @@ onLaunch(async () => {
       // 只有根路径需要补到首页；业务页、详情页和认证页保持浏览器当前路由。
       if (currentPath === '/') uni.reLaunch({ url: '/pages/index/index' })
     } catch {
-      ledger.clearSession()
-      if (!isAuthPage) uni.reLaunch({ url: '/pages/auth/login/login' })
+      // 网络故障不代表会话失效；401 由 API 封装清除登录态。
+      if (!ledger.state.token && !isAuthPage) uni.reLaunch({ url: '/pages/auth/login/login' })
     }
   } else if (!isAuthPage) {
     uni.reLaunch({ url: '/pages/auth/login/login' })

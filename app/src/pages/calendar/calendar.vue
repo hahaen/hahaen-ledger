@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onPullDownRefresh } from '@dcloudio/uni-app'
 import BottomNav from '../../components/BottomNav.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import TransactionRow from '../../components/TransactionRow.vue'
 import MonthPicker from '../../components/MonthPicker.vue'
 import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import { request } from '../../utils/api'
-import { Summary, Transaction, TransactionType, useLedger } from '../../stores/ledger'
+import { Transaction, TransactionType, useLedger } from '../../stores/ledger'
 import { localDateTime } from '../../utils/money'
 
 type CalendarDay = { date: string; day: number; currentMonth: boolean; today: boolean; hasRecords: boolean; expenseCents: number; incomeCents: number; balanceCents: number }
@@ -22,10 +22,21 @@ const detail = ref<DayDetail | null>(null)
 const loading = ref(false)
 const error = ref(false)
 const dayError = ref(false)
+const dayLoading = ref(false)
+let daySequence = 0
 const monthOpen = ref(false)
 const monthTransactions = ref<Transaction[]>([])
 const typeOrder: TransactionType[] = ['EXPENSE', 'INCOME', 'TRANSFER', 'REPAYMENT']
-const dayTypes = (date: string) => typeOrder.filter(type => monthTransactions.value.some(row => row.occurredAt.startsWith(date) && row.type === type))
+const typesByDate = computed(() => {
+  const map = new Map<string, Set<TransactionType>>()
+  for (const row of monthTransactions.value) {
+    const date = row.occurredAt.slice(0, 10)
+    if (!map.has(date)) map.set(date, new Set())
+    map.get(date)!.add(row.type)
+  }
+  return map
+})
+const dayTypes = (date: string) => typeOrder.filter(type => typesByDate.value.get(date)?.has(type))
 const dotClass = (type: TransactionType) => ({ EXPENSE: 'expense-dot', INCOME: 'income-dot', TRANSFER: 'neutral-dot', REPAYMENT: 'repayment-dot' }[type])
 let requestSequence = 0
 const monthKey = computed(() => `${cursor.value.getFullYear()}-${String(cursor.value.getMonth() + 1).padStart(2, '0')}`)
@@ -38,18 +49,22 @@ async function loadMonth() {
   if (!ledger.state.token) return
   const sequence = ++requestSequence
   loading.value = true
+  detail.value = null
+  ++daySequence
+  dayLoading.value = false
+  dayError.value = false
   error.value = false
   try {
     const [result, summary] = await Promise.all([
       request<CalendarMonth>(`/api/app/calendar?year=${monthKey.value.slice(0, 4)}&month=${monthKey.value.slice(5, 7)}`),
-      request<Summary>(`/api/app/home/summary?month=${monthKey.value}`),
+      ledger.refresh(monthKey.value),
     ])
     if (sequence !== requestSequence) return
     days.value = result.days
     monthTransactions.value = summary.transactions
     const current = result.days.filter(day => day.currentMonth)
     const today = localDateTime().slice(0, 10)
-    selected.value = current.some(day => day.date === today) ? today : current.find(day => day.hasRecords)?.date || current[0]?.date || ''
+    selected.value = current.some(day => day.date === selected.value) ? selected.value : current.some(day => day.date === today) ? today : current.find(day => day.hasRecords)?.date || current[0]?.date || ''
     await loadDay(selected.value, sequence)
   } catch {
     if (sequence === requestSequence) error.value = true
@@ -60,20 +75,23 @@ async function loadMonth() {
 
 async function loadDay(date: string, sequence = requestSequence) {
   if (!date) return
+  const dayRequest = ++daySequence
+  dayLoading.value = true
+  detail.value = null
   dayError.value = false
   try {
     const result = await request<DayDetail>(`/api/app/calendar/${date}`)
-    if (sequence === requestSequence && selected.value === date) detail.value = result
+    if (sequence === requestSequence && dayRequest === daySequence && selected.value === date) detail.value = result
   } catch {
-    if (sequence === requestSequence && selected.value === date) { detail.value = null; dayError.value = true }
-  }
+    if (sequence === requestSequence && dayRequest === daySequence && selected.value === date) { detail.value = null; dayError.value = true }
+  } finally { if (dayRequest === daySequence) dayLoading.value = false }
 }
 
 function moveMonth(delta: number) {
   cursor.value = new Date(cursor.value.getFullYear(), cursor.value.getMonth() + delta, 1)
   void loadMonth()
 }
-function today() { cursor.value = new Date(); void loadMonth() }
+function today() { selected.value = localDateTime().slice(0, 10); cursor.value = new Date(); void loadMonth() }
 function selectDay(day: CalendarDay) {
   if (!day.currentMonth) { cursor.value = new Date(`${day.date}T00:00:00`); void loadMonth(); return }
   selected.value = day.date
@@ -82,6 +100,7 @@ function selectDay(day: CalendarDay) {
 function open(id: string) { uni.navigateTo({ url: `/pages/detail/detail?id=${id}` }) }
 
 onShow(() => { void loadMonth() })
+onPullDownRefresh(async () => { try { await loadMonth() } finally { uni.stopPullDownRefresh() } })
 </script>
 
 <template>
@@ -94,10 +113,10 @@ onShow(() => { void loadMonth() })
       <view v-else-if="error" class="list-empty">暂时无法加载月历<button class="text-button" @click="loadMonth">重试</button></view>
       <view v-else class="calendar-grid"><button v-for="day in visibleDays" :key="day.date" :class="['calendar-cell', { muted: !day.currentMonth, selected: selected === day.date, today: day.today }]" :disabled="!day.currentMonth" :aria-label="day.date" :aria-pressed="selected === day.date" @click="selectDay(day)"><text class="day-num">{{ day.day }}</text><view class="calendar-dots"><text v-for="type in dayTypes(day.date)" :key="type" :class="['calendar-dot', dotClass(type)]" /></view></button></view>
       <view class="calendar-legend"><view><text class="calendar-dot expense-dot" />支出</view><view><text class="calendar-dot income-dot" />收入</view><view><text class="calendar-dot neutral-dot" />转账</view><view><text class="calendar-dot repayment-dot" />还款</view></view>
-      <view class="day-summary"><view><text>当日支出</text><MoneyDisplay class="day-total expense" :value="detail?.expenseCents" /></view><view><text>当日收入</text><MoneyDisplay class="day-total income" :value="detail?.incomeCents" /></view><view><text>当日结余</text><MoneyDisplay class="day-total" :value="detail?.balanceCents" /></view></view>
+      <view v-if="!loading && !dayLoading && !error && !dayError && detail" class="day-summary"><view><text>当日支出</text><MoneyDisplay class="day-total expense" :value="detail?.expenseCents" /></view><view><text>当日收入</text><MoneyDisplay class="day-total income" :value="detail?.incomeCents" /></view><view><text>当日结余</text><MoneyDisplay class="day-total" :value="detail?.balanceCents" /></view></view>
     </view>
     <view class="date-heading calendar-date"><view><text class="date-title">{{ selectedTitle }}</text><text class="date-week">{{ selectedWeek }}</text></view><text class="section-meta">{{ detail?.transactions.length || 0 }} 笔</text></view>
-    <view class="transaction-list"><view v-if="dayError" class="list-empty">暂时无法加载当天账单<button class="text-button" @click="loadDay(selected)">重试</button></view><view v-else-if="!detail?.transactions.length" class="list-empty">这一天还没有记账记录</view><template v-else><TransactionRow v-for="transaction in detail.transactions" :key="transaction.id" :transaction="transaction" @open="open" /></template></view>
+    <scroll-view scroll-y :show-scrollbar="false" class="calendar-transaction-list transaction-list"><view v-if="loading || dayLoading" class="list-empty">正在加载当天账单…</view><view v-else-if="error" class="list-empty">请先重试加载月历</view><view v-else-if="dayError" class="list-empty">暂时无法加载当天账单<button class="text-button" @click="loadDay(selected)">重试</button></view><view v-else-if="!detail?.transactions.length" class="list-empty">这一天还没有记账记录</view><template v-else><TransactionRow v-for="transaction in detail.transactions" :key="transaction.id" :transaction="transaction" @open="open" /></template></scroll-view>
     <BottomNav active="calendar" />
     <MonthPicker v-if="monthOpen" :value="monthKey" @close="monthOpen = false" @select="cursor = new Date($event + '-01T00:00:00'); monthOpen = false; loadMonth()" />
   </view>

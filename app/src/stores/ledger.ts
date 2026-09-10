@@ -36,6 +36,16 @@ export type Summary = {
   balanceCents: number
   transactions: Transaction[]
 }
+export type TransactionPayload = {
+  type: TransactionType
+  amountCents: number
+  occurredAt: string
+  accountId?: string
+  fromAccountId?: string
+  toAccountId?: string
+  note?: string
+  idempotencyKey?: string
+}
 export type TransactionPage = { items: Transaction[]; total: number; page: number; pageSize: number }
 export type AssetOverview = {
   totalAssetsCents: number
@@ -89,23 +99,29 @@ export function useLedger() {
         request<Summary>(`/api/app/home/summary?month=${encodeURIComponent(month)}`),
         request<Account[]>('/api/app/accounts'),
       ])
-      if (sequence !== refreshSequence) return
+      if (sequence !== refreshSequence) return summary
       state.summary = summary
       state.transactions = summary.transactions || []
       state.accounts = accounts
+      return summary
     } finally {
       if (sequence === refreshSequence) state.loading = false
     }
   }
 
-  async function createTransaction(payload: Record<string, unknown>) {
-    await request<Transaction>('/api/app/transactions', { method: 'POST', data: payload })
-    await refresh()
+  async function refreshAfterWrite() {
+    try { await refresh(state.summary?.month) }
+    catch { uni.showToast({ title: '操作已成功，数据刷新失败，请返回后重试刷新', icon: 'none' }) }
   }
 
-  async function updateTransaction(id: string, payload: Record<string, unknown>) {
+  async function createTransaction(payload: TransactionPayload) {
+    await request<Transaction>('/api/app/transactions', { method: 'POST', data: payload })
+    await refreshAfterWrite()
+  }
+
+  async function updateTransaction(id: string, payload: TransactionPayload) {
     await request<Transaction>(`/api/app/transactions/${id}`, { method: 'PUT', data: payload })
-    await refresh()
+    await refreshAfterWrite()
   }
 
   async function createAccount(payload: Record<string, unknown>) {
@@ -133,7 +149,7 @@ export function useLedger() {
 
   async function deleteTransaction(id: string) {
     await request<void>(`/api/app/transactions/${id}`, { method: 'DELETE' })
-    await refresh()
+    await refreshAfterWrite()
   }
 
   function clearSession() {

@@ -118,8 +118,9 @@ public class TransactionService {
             throw new BusinessException("REFUNDED_TRANSACTION_IMMUTABLE", "已有退款的账单不能修改类型或账户");
         }
         Map<Long, AssetAccount> accounts = lockAccounts(userId, unionAccountIds(transaction, type, request));
-        validateAccountShape(type, request, accounts);
         applyImpact(transaction, transaction.getAmount(), accounts, -1);
+        // 新还款金额基于撤销旧流水后的余额和欠款校验。
+        validateAccountShape(type, request, accounts);
         transaction.setTransactionType(type);
         transaction.setOriginalAmount(amount);
         transaction.setAmount(amount - refunded);
@@ -129,7 +130,7 @@ public class TransactionService {
         transaction.setToAccountId(request.toAccountId());
         transaction.setOccurredAt(parseOccurredAt(request.occurredAt()));
         transaction.setNote(validNote(request.note()));
-        if (request.idempotencyKey() != null) transaction.setIdempotencyKey(normalizeIdempotencyKey(request.idempotencyKey()));
+        // 创建幂等键标识原始创建请求，编辑不能覆盖它。
         transactionMapper.updateById(transaction);
         applyImpact(transaction, transaction.getAmount(), accounts, 1);
         return toVO(transaction);
@@ -176,6 +177,7 @@ public class TransactionService {
             TransactionRefund existing = refundMapper.selectByIdempotency(transactionId, key);
             if (existing != null) {
                 if (Integer.valueOf(1).equals(existing.getDeleted())) throw new BusinessException("IDEMPOTENCY_CONFLICT", "幂等键已被已删除退款占用");
+                if (existing.getRefundAmount() != amount) throw new BusinessException("IDEMPOTENCY_CONFLICT", "幂等键已用于其他退款金额");
                 return toRefundVO(existing);
             }
         }
@@ -206,11 +208,16 @@ public class TransactionService {
         if (refund == null) throw new BusinessException("REFUND_NOT_FOUND", "退款记录不存在");
         TransactionDetail transaction = transactionMapper.selectOwnedForUpdate(refund.getTransactionId(), userId);
         if (transaction == null) throw new BusinessException("REFUND_NOT_FOUND", "退款记录不存在");
+        // 等待原账单锁期间，另一请求可能已经删除退款；锁内重新读取避免重复扣款。
+        refund = refundMapper.selectActiveByIdForUpdate(refundId);
+        if (refund == null) throw new BusinessException("REFUND_NOT_FOUND", "退款记录不存在");
         Map<Long, AssetAccount> accounts = lockAccounts(userId, idsOf(transaction));
         AssetAccount account = account(accounts, transaction.getAccountId());
         requireFund(account);
         AuditSupport.markDeleted(refund);
-        refundMapper.updateById(refund);
+        if (refundMapper.updateById(refund) != 1) {
+            throw new BusinessException("REFUND_NOT_FOUND", "退款记录不存在或已被删除");
+        }
         long activeRefunded = refundMapper.sumActiveAmount(transaction.getId());
         transaction.setAmount(transaction.getOriginalAmount() - activeRefunded);
         transaction.setHasRefund(1);
@@ -401,7 +408,11 @@ public class TransactionService {
         if (value == null || value.isBlank()) throw new BusinessException("DATE_INVALID", "记账时间不能为空");
         String normalized = value.trim();
         if (normalized.length() == 16) normalized += ":00";
-        try { return LocalDateTime.parse(normalized, DATE_TIME); }
+        try {
+            LocalDateTime result = LocalDateTime.parse(normalized, DATE_TIME);
+            if (result.getYear() < 1000 || result.getYear() > 9999) throw new BusinessException("DATE_INVALID", "记账年份必须在1000至9999之间");
+            return result;
+        }
         catch (DateTimeParseException ex) { throw new BusinessException("DATE_INVALID", "记账时间格式不正确"); }
     }
 

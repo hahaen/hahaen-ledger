@@ -12,14 +12,15 @@ const accounts = [
   { id: 2, name: '微信', kind: 'FUND', balanceCents: 428000, creditLimitCents: 0, includedInNetAsset: true, status: 'ACTIVE' },
   { id: 3, name: '现金', kind: 'FUND', balanceCents: 232000, creditLimitCents: 0, includedInNetAsset: true, status: 'ACTIVE' },
   { id: 4, name: '花呗', kind: 'CREDIT', balanceCents: 252000, creditLimitCents: 1000000, includedInNetAsset: true, status: 'ACTIVE' },
-]
+].map(row => ({ ...row, id: String(row.id), sortOrder: row.id }))
 const transactions = [
+  { id: 6, type: 'REPAYMENT', amountCents: 20000, fromAccountId: 1, toAccountId: 4, occurredAt: '2026-09-14T10:00:00', note: '还款编辑验收' },
   { id: 1, type: 'TRANSFER', amountCents: 10000, fromAccountId: 2, toAccountId: 1, occurredAt: '2026-09-15T15:30:00', note: '日常资金转入' },
   { id: 2, type: 'EXPENSE', amountCents: 3200, accountId: 2, occurredAt: '2026-09-15T12:20:00', note: '午餐' },
   { id: 3, type: 'EXPENSE', amountCents: 600, accountId: 3, occurredAt: '2026-09-15T08:41:00', note: '地铁出行' },
   { id: 4, type: 'EXPENSE', amountCents: 8990, accountId: 2, occurredAt: '2026-09-14T18:26:00', note: '晚餐' },
   { id: 5, type: 'INCOME', amountCents: 850000, accountId: 1, occurredAt: '2026-09-14T09:00:00', note: '9月工资' },
-].map(row => ({ ...row, originalAmountCents: row.amountCents, hasRefund: false, transactionNo: `VISUAL-${row.id}`, status: 'ACTIVE' }))
+].map(row => ({ ...row, id: String(row.id), accountId: row.accountId == null ? undefined : String(row.accountId), fromAccountId: row.fromAccountId == null ? undefined : String(row.fromAccountId), toAccountId: row.toAccountId == null ? undefined : String(row.toAccountId), originalAmountCents: row.amountCents, hasRefund: false, transactionNo: `VISUAL-${row.id}`, status: 'ACTIVE' }))
 const totals = rows => {
   const sum = type => rows.filter(row => row.type === type).reduce((total, row) => total + row.amountCents, 0)
   return { expenseCents: sum('EXPENSE'), incomeCents: sum('INCOME'), balanceCents: sum('INCOME') - sum('EXPENSE') }
@@ -47,9 +48,9 @@ const server = createServer(async (req, res) => {
       json({ month: `${year}-${String(month).padStart(2, '0')}`, days }); return
     }
     if (pathname.startsWith('/api/app/calendar/')) { const date = pathname.split('/').pop(), rows = transactions.filter(row => row.occurredAt.startsWith(date)); json({ date, ...totals(rows), transactions: rows }); return }
-    if (/^\/api\/app\/transactions\/\d+$/.test(pathname)) { json({ transaction: transactions.find(row => row.id === Number(pathname.split('/').pop())), refundedCents: 0, effectiveCents: transactions.find(row => row.id === Number(pathname.split('/').pop()))?.amountCents, refunds: [] }); return }
-    if (/^\/api\/app\/accounts\/\d+\/transactions$/.test(pathname)) { const id = Number(pathname.split('/')[4]); const rows = transactions.filter(row => [row.accountId, row.fromAccountId, row.toAccountId].includes(id) && (!url.searchParams.get('type') || row.type === url.searchParams.get('type'))); json({ items: rows, total: rows.length, page: 1, pageSize: 20 }); return }
-    if (/^\/api\/app\/accounts\/\d+$/.test(pathname)) { json(accounts.find(row => row.id === Number(pathname.split('/').pop()))); return }
+    if (/^\/api\/app\/transactions\/\d+$/.test(pathname)) { json({ transaction: transactions.find(row => row.id === pathname.split('/').pop()), refundedCents: 0, effectiveCents: transactions.find(row => row.id === pathname.split('/').pop())?.amountCents, refunds: [] }); return }
+    if (/^\/api\/app\/accounts\/\d+\/transactions$/.test(pathname)) { const id = pathname.split('/')[4]; const rows = transactions.filter(row => [row.accountId, row.fromAccountId, row.toAccountId].includes(id) && (!url.searchParams.get('type') || row.type === url.searchParams.get('type'))); json({ items: rows, total: rows.length, page: 1, pageSize: 20 }); return }
+    if (/^\/api\/app\/accounts\/\d+$/.test(pathname)) { json(accounts.find(row => row.id === pathname.split('/').pop())); return }
     json(null, 404); return
   }
   try {

@@ -43,20 +43,21 @@
 .about-setting-copy { min-width:0; flex:1; }
 .about-setting-copy > text:first-child { display:block; font-size:13px; }
 .about-setting-copy > text:last-child { display:block; margin-top:4px; color:var(--muted); font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.about-status { flex:0 0 auto; padding:4px 7px; border-radius:6px; color:#a38b7c; background:#fff5ed; font-size:10px; }
+.about-status { display:flex; flex:0 0 auto; min-height:0; align-items:center; justify-content:center; padding:4px 7px; border:0; border-radius:6px; outline:0; color:#a38b7c; background:#fff5ed; box-shadow:none; font-size:10px; line-height:normal; appearance:none; -webkit-appearance:none; }
+.about-status::after { display:none; border:0; }
 .about-note { margin-top:22px; padding:14px; display:flex; align-items:center; gap:10px; border-radius:14px; background:#f1faf7; border:1px solid #dff0eb; }
 .about-note-icon { width:32px; height:32px; flex:0 0 auto; display:grid; place-items:center; border-radius:10px; color:#6cb2a5; background:#dff2ef; font-size:16px; }
 .about-note-copy { min-width:0; flex:1; }
 .about-note-copy > text:first-child { font-size:12px; }
 .about-note-copy > text:last-child { margin:4px 0 0; color:#72978f; font-size:10px; line-height:1.45; }
-.about-feedback { flex:0 0 auto; min-height:34px; padding:0 10px; border-radius:9px; color:var(--primary-dark); background:#fff; font-size:11px; font-weight:700; }
 .about-footer { padding:24px 0 8px; display:flex; flex-direction:column; align-items:center; gap:6px; color:#a2b5b0; font-size:10px; }
 .about-footer image { width:24px; height:24px; border-radius:8px; object-fit:cover; opacity:.82; }
 .help-page { height:100vh; padding-top:var(--status-bar-height, 0px); }
 .help-scroll { height:100%; }
-.help-nav { position:sticky; z-index:3; top:0; display:flex; align-items:center; justify-content:space-between; min-height:62px; padding:8px 16px; border-bottom:1px solid rgba(224,232,228,.7); background:rgba(247,248,247,.96); }
-.help-back { width:40px; min-height:44px; color:#455651; font-size:30px; text-align:left; }
-.help-nav-side { width:40px; }.help-title { font-weight:700; }.about-hero-title,.about-hero-copy,.about-section-title { display:block; }
+.help-nav { position:sticky; z-index:3; top:0; display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:44px; margin:0 -16px 10px; padding:2px 16px; border-bottom:1px solid rgba(224,232,228,.7); background:rgba(247,248,247,.96); }
+.help-back { width:40px; min-height:36px; padding:0; border:0; border-radius:0; outline:0; color:#455651; background:transparent; box-shadow:none; font-size:24px; text-align:left; appearance:none; -webkit-appearance:none; }
+.help-back::after { display:none; border:0; }
+.help-nav-side { width:40px; flex-shrink:0; }.help-title { flex:1; font-size:16px; font-weight:700; text-align:center; }.about-hero-title,.about-hero-copy,.about-section-title { display:block; }
 .about-hero-title,.about-section-title,.help-card-title,.about-setting-copy > text:first-child,.about-note-copy > text:first-child { font-weight:700; }
 .about-faq-answer { display:block; }.faq-plus { display:block; }.about-note-copy > text:last-child { display:block; }
 .about-setting-copy { flex:1; }.about-setting-copy > text:last-child { max-width:100%; }
