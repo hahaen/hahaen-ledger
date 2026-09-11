@@ -18,7 +18,7 @@
 | 登录/注册密码显隐控件 | `app/src/components/AuthPage.vue`、`app/src/prototype.scss`；本机 H5 登录/注册页均可点击共享组件右侧 CSS 小眼睛切换掩码/明文 | PASS（页面级验证） |
 | 登录/注册页说明文字 | `AuthPage.vue` 已移除微信自动登录与注册资料说明文字，仅保留认证字段和操作入口 | PASS（静态核对） |
 | 微信小程序认证 | `app/src/stores/ledger.ts` 调用 `/api/app/auth/login`；当前后端无该路径 | FAIL（接口不匹配） |
-| H5 头像链路 | `FileController`、`AppFileService`、`MinioStorageService`、`utils/file.ts` | PARTIAL（代码存在；真实对象上传未在本次执行） |
+| H5 头像链路 | `FileController`、`AppFileService`、`MinioStorageService`、`utils/file.ts` | PARTIAL（文件头识别实际 JPEG/PNG/WebP/GIF 类型，不信任文件名/MIME；真实对象上传未在本次执行） |
 | 账单附件 | Schema 预留 `TRANSACTION_ATTACHMENT`，当前业务页面/Service 未开放 | NOT_RUN |
 | 底部导航设计稿对齐 | `app/src/prototype.scss`；本机只读视觉服务资产页 4 个导航项等宽 103px，导航整体和按钮均无边框/圆角/阴影，页面截图核对为连续白色底栏 | PARTIAL（视觉截图未持久化到 `app/tests/evidence/`） |
 
@@ -39,6 +39,66 @@
 | H5 有效会话刷新 | 未取得真实会话；未执行多路由刷新回归 | NOT_RUN |
 | 微信开发者工具人工验收 | 未执行 | NOT_RUN |
 | 320/375/414 逐区域设计截图 | 当前工作区未找到 `app/tests/evidence/*.png`；仅有视觉服务脚本和日志 | NOT_RUN |
+
+## 2026-09-12 追加：头像真实图片类型识别
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 文件名/MIME 与真实内容不一致 | PASS（前端回归） | 文件名及声明为 PNG、JPEG 文件头的样例会申请 `image/jpeg`，与后端文件头校验一致。 |
+| 支持格式与安全边界 | PASS（静态+回归） | 仅接受 JPEG、PNG、GIF、WebP 的固定文件头；未知或伪造内容仍拒绝。 |
+| 前端回归、类型检查、H5/微信构建 | PASS | `node --test tests/page-flows.test.mjs` 24/24、`pnpm run typecheck`、H5/微信生产构建均完成。 |
+| 真实 MinIO 上传 | NOT_RUN | 尚未取得可安全使用的 H5 登录态及可用 MinIO/CORS。 |
+
+## 2026-09-12 追加：头像仅在资料保存后生效
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 上传完成与头像关联 | PASS（单元） | 文件完成和同图复用只返回 READY；不更新 `app_user.avatar_file_url`。 |
+| 保存关联的归属校验 | PASS（单元） | `PUT /api/app/user/profile` 的可选 `avatarFileId` 必须属于当前用户、为 AVATAR、READY 且未删除，才在资料事务中保存对象 Key。 |
+| 个人中心交互 | PASS（前端回归） | 选择后暂存文件 ID 并立即本地预览；资料 PUT 仍只在保存时发起。我的页顶部头像为纯展示，个人中心仍由设置列表入口进入。 |
+| 后端与前端验证 | PASS | Maven 37/37、前端回归 25/25、类型检查、H5/微信生产构建均已执行成功。 |
+
+## 2026-09-12 追加：我的页头像仅展示
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 顶部头像交互 | PASS（前端回归） | 头像没有点击事件；不跳转个人中心、不预览，也不触发选择、上传。 |
+| 个人中心入口 | PASS（静态+回归） | 设置列表中的个人中心入口仍保留，资料管理能力未改变。 |
+| 前端验证 | PASS | 页面回归 26/26、`pnpm run typecheck`、临时设置本地 API 地址后的 H5/微信小程序构建均通过。 |
+| 真实设备预览 | NOT_RUN | 未使用真实登录态或微信开发者工具。 |
+
+完整档案：[mine-avatar-preview-only](../10-iterations/2026/09/mine-avatar-preview-only/README.md)。
+
+## 2026-09-12 追加：个人中心头像立即本地预览
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 选择后立即本地预览 | PASS（前端流程回归） | 页面上传成功后采用返回的短时 `viewUrl`。 |
+| 保存前不更新资料 | PASS（前端流程回归） | 选择阶段资料请求列表为空，未发起 `PUT /api/app/user/profile`。 |
+| 保存时关联头像 | PASS（前端流程回归） | 仅资料保存请求携带 `avatarFileId`。 |
+| TypeScript 与双端构建 | PASS | `pnpm run typecheck` 与临时注入本地 API 地址后的 H5/微信小程序生产构建均成功。 |
+| 数据库/Flyway | PASS（范围核对） | 无 Schema、Flyway、Entity 或资料保存事务变更。 |
+| 真实 H5/MinIO 登录态 | NOT_RUN | 未执行真实文件上传或资料写入。 |
+
+## 2026-09-12 追加：个人中心返回“我的”页
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 顶部返回与保存成功返回 | PASS（前端流程回归） | 页面只调用 `uni.switchTab({ url: '/pages/mine/mine' })`，不再引用通用返回函数。 |
+| 数据库/Flyway | PASS（范围核对） | 无数据库、接口或后端变更。 |
+| TypeScript 与双端构建 | PASS | `pnpm run typecheck` 与临时注入本地 API 地址后的 H5/微信小程序生产构建均成功。 |
+| 真实 H5/微信路由操作 | NOT_RUN | 未使用真实会话或微信开发者工具。 |
+
+## 2026-09-12 追加：个人中心保存成功自动返回
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 项目成功弹层与自动返回 | PASS（前端流程回归） | 资料保存成功后仅显示项目统一圆角弹层，配置 500ms 后切换到“我的”页。 |
+| 成功提示唯一性 | PASS（前端流程回归） | 成功流程未调用系统 Toast，避免重复弹窗。 |
+| 保存失败不跳转 | PARTIAL | 既有 catch 保持页面和重试提示；本次未专门注入失败响应。 |
+| TypeScript 与双端构建 | PASS | `pnpm run typecheck` 与临时注入本地 API 地址后的 H5/微信小程序生产构建均成功。 |
+| 数据库/Flyway | PASS（范围核对） | 无数据库、接口或后端变更。 |
+| 真实 H5/微信操作 | NOT_RUN | 未使用真实会话或微信开发者工具。 |
 
 ## 2026-09-08 追加：H5 浏览器主应用图标
 
@@ -70,6 +130,51 @@
 | Java 测试 | PASS | `mvn test`，26 tests，0 failures/errors/skipped |
 | 真实登录态退款删除 | NOT_RUN | 当前未取得有效登录态；需在真实 H5/微信环境验证数据库事务和账户余额 |
 | MySQL/Flyway 实际对照 | BLOCKED | 当前无可用 3306 监听，未执行真实库验证 |
+
+## 2026-09-11 追加：累计记账天数按最早记账日统计
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 累计天数统计来源 | PASS（静态+单测） | `ProfileService` 使用当前用户最早 `transaction_detail.occurred_at` 的日期，不再使用 `app_user.created_at`。 |
+| 用户隔离与逻辑删除 | PASS（静态核对） | `TransactionDetailMapper.selectEarliestActiveOccurredAt` 限定 `user_id`、`deleted=0`。 |
+| 无账单和日期边界 | PASS | 无有效账单或未来最早日期返回 0；最早记账日按自然日含首日计算。`ProfileServiceTest` 3 项通过。 |
+| 后端回归 | PASS | `server: mvn test`，29 tests，0 failures/errors/skipped。 |
+| Schema/Flyway | PASS（范围核对） | 没有新增或修改 Migration。 |
+| 真实个人资料接口与历史账单数据 | NOT_RUN | 未取得有效会话，也未连接 MySQL 执行真实数据复核。 |
+
+## 2026-09-10 追加：首页重复加载请求修复
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| H5 首页首次加载调用链 | PASS（静态核对） | `App.vue` 已不在 H5 启动时调用 `ledger.refresh()`；`index.vue` 自动显示复用同月摘要，未命中时才通过 `onShow -> load -> ledger.refresh()` 加载 |
+| 单次刷新请求组成 | PASS（静态核对） | `ledger.refresh()` 的 `Promise.all` 仅各调用一次 `/api/app/home/summary` 与 `/api/app/accounts` |
+| 同月并发刷新合并 | PASS（回归测试） | `ledger.ts` 复用相同 `month` 的进行中 Promise；`node --test tests/page-flows.test.mjs` 验证仅产生一条账户和一条摘要请求 |
+| 首页重复加载回归测试 | PASS | `app`: `node --test tests/page-flows.test.mjs` 17/17；包含 H5 启动不预取、首页同月摘要复用和同月并发刷新合并断言 |
+| 前端类型检查 | PASS | `app`: `pnpm run typecheck` exit 0 |
+| H5 生产构建 | PASS | 临时注入本地 API 地址后 `pnpm run build:h5` exit 0；仅有既有 Sass legacy-js-api 弃用警告 |
+| 有效会话 Network 刷新验收 | NOT_RUN | 当前本机浏览器未取得可用测试会话，未将静态核对替代为运行时证据 |
+
+## 2026-09-11 追加：首页最近记账双月分段加载
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 首段范围与后续游标 | PASS | `HomeService.recentTransactions` 未传游标时查询当前月和上月；传入 `beforeMonth` 作为排他上界，连续返回更早两个月。`HomeServiceTest` 覆盖 `2026-09` 游标得到 `2026-07` 至 `2026-08`。 |
+| 查询归属与逻辑删除 | PASS（静态核对） | `TransactionDetailMapper.selectByPeriod` 与 `existsActiveBefore` 均限制 `user_id`、`deleted=0`；用户 ID 由 `CurrentUser` 获取。 |
+| 首页触底追加 | PASS | `page-flows.test.mjs` 覆盖首段请求、使用 `startMonth` 请求下一段、ID 去重和 `hasMore=false` 停止，18/18 通过。 |
+| 后端回归 | PASS | `server`: `mvn test`，27 tests，0 failures/errors/skipped。 |
+| 前端类型检查与构建 | PASS | `pnpm run typecheck`、H5/微信小程序生产构建完成；构建有既有 Sass legacy-js-api 弃用警告。 |
+| 真实登录态滑动联调 | NOT_RUN | 未取得有效测试会话，未执行网络面板和实际账单分页验证。 |
+
+## 2026-09-10 追加：退款逻辑删除标识修复
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 真实退款行根因 | PASS | 开发 MySQL 只读核对目标退款：`deleted_at` 已设置而 `deleted=0`，因此 `selectActiveByTransaction` 的 `deleted=0` 条件仍返回该行；库内同类不一致退款共 3 条。 |
+| 退款条件软删除 SQL | PASS（静态核对） | `TransactionRefundMapper.softDeleteById` 显式写入 `deleted=1` 及删除/更新审计字段，并以 `id AND deleted=0` 防止并发重复处理。 |
+| 账单级联退款删除 | PASS（静态核对） | `TransactionService.delete` 与 `deleteRefund` 均改用同一条件软删除方法。 |
+| 最后一笔退款后的交易标记 | PASS（单元测试） | `deleteRefund` 依据剩余有效退款回算 `hasRefund`；累计退款为 0 时置 0，交易行不显示“退”。 |
+| 后端回归 | PASS | `server`: `mvn test`，26 tests，0 failures/errors/skipped。 |
+| 已运行 8080 的真实 DELETE 复测 | NOT_RUN | 运行实例在修复编译前启动，未擅自重启或对用户账务重试写操作。 |
 
 
 ## 2026-09-08 追加：资产新增弹窗设计对齐
@@ -276,6 +381,63 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 | 独立只读运行时滚动 | 页面 `scrollTop=0`；记录滚动节点 `scrollTop=159.33`，日历页上半部分未移动 | PASS |
 | PNG 截图证据 | 本次未生成可提交截图文件 | NOT_RUN |
 | 微信开发者工具人工验收 | 本次未执行 | NOT_RUN |
+
+## 2026-09-11 追加：H5 退出登录后的路由访问限制
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 登录/注册公开白名单 | PASS | `app/src/utils/h5AuthGuard.ts` 与 `auth-guard.test.mjs` 覆盖登录页、注册页和业务页路径识别。 |
+| 无会话业务路由拦截 | PASS | 守卫监听 hash、popstate、pageshow；28/28 前端回归通过。 |
+| 手动退出后的 H5 跳转 | PASS（静态+回归） | `mine.vue` 在 H5 注销清理后 `reLaunch` 到登录页。 |
+| 微信小程序兼容 | PASS（构建） | 微信小程序生产构建通过，H5 守卫由条件编译隔离。 |
+| 前端类型检查与双端构建 | PASS | `vue-tsc`、H5 和微信小程序生产构建均 exit 0。 |
+| 真实 H5 登录态路由验收 | NOT_RUN | 未取得有效会话及浏览器运行证据。 |
+
+## 2026-09-11 追加：我的页退出登录弹窗设计对齐
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 自定义确认弹层 | PASS | `app/src/pages/mine/mine.vue` 已替换 `uni.showModal`，复用系统圆角面板、遮罩、提示条与取消/危险确认按钮。 |
+| 注销与重复提交保护 | PASS | `node --test tests/page-flows.test.mjs` 的新增用例验证确认后仅调用一次 `logout()`，完成后关闭弹层。 |
+| 前端回归、类型检查和双端构建 | PASS | 页面回归 19/19，`pnpm run typecheck`、H5 和微信小程序生产构建均 exit 0。 |
+| 只读运行时视觉验收 | BLOCKED | 内置浏览器访问本机视觉夹具返回 `ERR_BLOCKED_BY_CLIENT`，未生成截图。 |
+| 真实登录态注销 | NOT_RUN | 未在真实会话下执行注销。 |
+
+## 2026-09-11 追加：我的页个人中心设置行对齐
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 三项设置行视觉一致性 | PASS（静态核对） | 个人中心、关于与帮助、退出登录均使用 `button.setting-item` 和公共图标样式，避免平台组件渲染差异。 |
+| 关于与帮助与退出登录入口 | PASS（静态核对） | 关于与帮助继续调用 `openHelp`；退出登录继续使用 `logout-item`、`openLogout` 及既有确认流程。 |
+| 前端页面回归 | PASS | `node --test tests/page-flows.test.mjs`，20 tests passed；新增断言同时确认关于与帮助和退出登录的既有入口。 |
+| TypeScript 类型检查 | PASS | `pnpm run typecheck`，exit 0。 |
+
+## 2026-09-11 追加：个人中心资料与密码管理
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 个人中心页面与导航 | PASS（静态+视觉夹具） | `pages/profile/profile.vue` 已注册；我的页入口受登录态保护；主页面复用帮助页导航规格。 |
+| 头像、昵称、账号和密码 | PASS（静态+单测） | 保存资料时头像/昵称/账号均前端必填；未设置密码时密码框必填并随资料请求加密提交；`ProfileService` 使用当前 Sa-Token 用户；昵称/账号/密码均双端校验；已有账号不可修改；首次账号与密码同事务，唯一性由预检和现有 `uk_app_user_login_account` 保护。 |
+| 密码立即更新和保存成功返回 | PASS（前端流程） | `page-flows.test.mjs` 覆盖密码确认即时 PUT、资料 PUT 成功后显示返回我的弹层。 |
+| 头像 | PARTIAL | 新页复用既有 H5 上传与预览；未连接真实 MinIO，微信头像选择仍未开放。 |
+| 后端回归 | PASS | `server: mvn test`，34 tests，0 failures/errors/skipped。 |
+| 前端回归、类型检查与双端构建 | PASS | 21 项 Node 测试、`pnpm run typecheck`、H5 和微信小程序构建均成功。 |
+| 只读视觉验收 | PASS | 本机只读夹具 `/#/pages/profile/profile` 核对主页面和修改密码弹层；未提交写入。 |
+| Schema/Flyway | PASS（范围核对） | 复用 `app_user` 既有字段和唯一索引，没有 Migration 变更。 |
+| 真实登录态资料/密码写入、MinIO 上传、微信工具 | NOT_RUN | 未取得用于安全写入验证的真实会话，未将单测或夹具替代为真实环境证据。 |
+
+## 2026-09-11 追加：头像对象 Key、校验与去重
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 用户头像引用 | PASS（静态） | V6 将 `avatar_file_id` 回填并替换为只保存对象 Key 的 `avatar_file_url`；不保存可变 MinIO URL 前缀。 |
+| 上传内容校验和同图复用 | PASS（代码+单测） | 前端计算 SHA-256；后端核验实际对象大小、摘要、MIME/文件头；`AppFileServiceTest` 覆盖 READY 同摘要和无摘要历史当前头像均不插入新对象元数据。 |
+| 后端、前端与双端构建 | PASS | `mvn test` 36/36、页面回归 23/23、类型检查和 H5/微信生产构建均执行成功；H5 选择器修复后已再次构建。 |
+| H5 选择头像 | PASS（单元+构建） | 编译产物确认模板 file input 会被 uni-app 改写为文本输入；个人中心在点击手势中动态创建原生 file input，回归测试覆盖。 |
+| Flyway/MySQL 与真实 MinIO | NOT_RUN | 未在目标环境查询 schema/history 或执行对象 PUT、回读和同图复用。 |
+| H5 个人中心真实上传 | BLOCKED | 指定地址被无会话路由守卫重定向至登录页；没有可安全使用的登录态。 |
+
+完整档案：[avatar-object-key-dedup](../10-iterations/2026/09/avatar-object-key-dedup/README.md)。
 
 ## 2026-09-10 追加：账户详情固定筛选与流水独立滚动
 

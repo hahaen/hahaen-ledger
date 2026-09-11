@@ -3,43 +3,34 @@ import { onLaunch } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { useLedger } from './stores/ledger'
 import { setAuthExpiredHandler } from './utils/api'
+import { currentH5Path, H5_LOGIN_PATH, installH5AuthGuard, isH5AuthPath } from './utils/h5AuthGuard'
 const ledger = useLedger()
 const initialized = ref(false)
+
+// #ifdef H5
+const h5AuthGuard = installH5AuthGuard({
+  hasSession: () => Boolean(ledger.state.token),
+  redirectToLogin: () => uni.reLaunch({ url: H5_LOGIN_PATH }),
+})
+// #endif
 
 setAuthExpiredHandler(() => {
   ledger.clearSession()
   // #ifdef H5
-  const path = currentH5Path()
-  if (initialized.value && !isAuthPath(path)) uni.reLaunch({ url: '/pages/auth/login/login' })
+  if (initialized.value) h5AuthGuard.enforce()
   // #endif
 })
-
-// #ifdef H5
-function currentH5Path() {
-  return window.location.hash.replace(/^#/, '').split('?')[0] || '/'
-}
-
-function isAuthPath(path: string) {
-  return path === '/pages/auth/login/login' || path === '/pages/auth/register/register'
-}
-// #endif
 
 onLaunch(async () => {
   await ledger.restore()
   // #ifdef H5
-  const currentPath = currentH5Path()
-  const isAuthPage = isAuthPath(currentPath)
+  const currentPath = currentH5Path(window.location)
+  const isAuthPage = isH5AuthPath(currentPath)
   if (ledger.state.token) {
-    try {
-      await ledger.refresh()
-      // 只有根路径需要补到首页；业务页、详情页和认证页保持浏览器当前路由。
-      if (currentPath === '/') uni.reLaunch({ url: '/pages/index/index' })
-    } catch {
-      // 网络故障不代表会话失效；401 由 API 封装清除登录态。
-      if (!ledger.state.token && !isAuthPage) uni.reLaunch({ url: '/pages/auth/login/login' })
-    }
+    // 业务数据由当前页面加载，避免首页 onShow 与应用启动阶段重复请求。
+    if (currentPath === '/') uni.reLaunch({ url: '/pages/index/index' })
   } else if (!isAuthPage) {
-    uni.reLaunch({ url: '/pages/auth/login/login' })
+    h5AuthGuard.enforce()
   }
   // #endif
   // #ifdef MP-WEIXIN

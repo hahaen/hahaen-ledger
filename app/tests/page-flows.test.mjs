@@ -231,3 +231,272 @@ test('账单详情首次加载等待路由参数，避免 onShow 先发空 ID �
   assert.deepEqual(calls, ['/api/app/transactions/20'])
   assert.equal(page.id.value, '20')
 })
+
+test('H5 启动不预取首页数据，由首页 onShow 唯一触发首次刷新', async () => {
+  const appSource = await readFile(new URL('../src/App.vue', import.meta.url), 'utf8')
+  const h5Startup = appSource.match(/\/\/ #ifdef H5([\s\S]*?)\/\/ #endif/)[1]
+  assert.doesNotMatch(h5Startup, /ledger\.refresh\(/)
+
+  const homeSource = await readFile(new URL('../src/pages/index/index.vue', import.meta.url), 'utf8')
+  assert.match(homeSource, /onShow\(async \(\) => \{[\s\S]*?await load\(\)/)
+  assert.match(homeSource, /async function load\(force = false\)[\s\S]*?state\.summary\?\.month === month\.value/)
+  assert.match(homeSource, /async function load\(force = false\)[\s\S]*?ledger\.refresh\(month\.value\)/)
+  assert.match(homeSource, /async function load\(force = false\)[\s\S]*?ledger\.loadHomeRecentTransactions\(\)/)
+})
+
+test('同月并发刷新合并账户与摘要请求', async () => {
+  const requests = []
+  const ledgerModule = run(await readFile(new URL('../src/stores/ledger.ts', import.meta.url), 'utf8'), {
+    '../utils/api': { request: url => {
+      const pending = deferred()
+      requests.push({ url, pending })
+      return pending.promise
+    } },
+    '../utils/money': money,
+  })
+  const ledger = ledgerModule.useLedger()
+  const first = ledger.refresh('2026-09')
+  const second = ledger.refresh('2026-09')
+  assert.equal(requests.length, 2)
+  requests.find(item => item.url.includes('/home/summary'))?.pending.resolve({ month: '2026-09', transactions: [] })
+  requests.find(item => item.url.endsWith('/accounts'))?.pending.resolve([])
+  const [firstSummary, secondSummary] = await Promise.all([first, second])
+  assert.equal(firstSummary.month, '2026-09')
+  assert.equal(secondSummary.month, '2026-09')
+})
+
+test('首页最近记账首次加载当月和上月，并以月份游标追加更早记录', async () => {
+  const recentCalls = []
+  const summary = { month: '2026-09', dailyExpenseCents: 0, expenseCents: 0, incomeCents: 0, balanceCents: 0, transactions: [] }
+  const first = { id: '1', type: 'EXPENSE', amountCents: 100, occurredAt: '2026-09-10T12:00:00' }
+  const second = { id: '2', type: 'INCOME', amountCents: 200, occurredAt: '2026-07-10T12:00:00' }
+  const source = (await readFile(new URL('../src/pages/index/index.vue', import.meta.url), 'utf8')).match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
+  const page = run(source + '\nexport { load, loadMore, recentTransactions, recentStartMonth, hasMore, loadingMore };', {
+    '@dcloudio/uni-app': { onShow() {}, onPullDownRefresh() {} },
+    '../../components/BottomNav.vue': {}, '../../components/PageHeader.vue': {}, '../../components/TransactionRow.vue': {}, '../../components/MoneyDisplay.vue': {},
+    '../../stores/ledger': { useLedger: () => ({ state: { token: 'test-session' }, refresh: async () => summary, loadHomeRecentTransactions: async beforeMonth => {
+      recentCalls.push(beforeMonth)
+      return beforeMonth
+        ? { startMonth: '2026-06', endMonth: '2026-07', transactions: [first, second], hasMore: false }
+        : { startMonth: '2026-08', endMonth: '2026-09', transactions: [first], hasMore: true }
+    } }) },
+    '../../utils/money': money,
+  })
+  await page.load()
+  assert.deepEqual(recentCalls, [undefined])
+  assert.equal(page.recentStartMonth.value, '2026-08')
+  assert.equal(page.hasMore.value, true)
+  await page.loadMore()
+  assert.deepEqual(recentCalls, [undefined, '2026-08'])
+  assert.deepEqual(page.recentTransactions.value.map(item => item.id), ['1', '2'])
+  assert.equal(page.hasMore.value, false)
+  assert.equal(page.loadingMore.value, false)
+})
+
+test('我的页退出登录使用系统确认弹层并阻止重复提交', async () => {
+  const source = (await readFile(new URL('../src/pages/mine/mine.vue', import.meta.url), 'utf8')).match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
+  const pending = deferred()
+  let logoutCalls = 0
+  const events = { toasts: [] }
+  const page = run(source + '\nexport { openLogout, closeLogout, confirmLogout, logoutOpen, loggingOut };', {
+    '@dcloudio/uni-app': { onShow() {} },
+    '../../components/BottomNav.vue': {}, '../../components/PageHeader.vue': {},
+    '../../utils/file': { currentAvatar: async () => undefined, uploadAvatar: async () => ({}) },
+    '../../utils/api': { request: async () => ({}) },
+    '../../stores/ledger': { useLedger: () => ({ state: { token: 'test-session' }, logout: async () => { logoutCalls++; await pending.promise } }) },
+  }, { ...defaultUni, showToast: options => events.toasts.push(options) })
+
+  assert.doesNotMatch(source, /uni\.showModal/)
+  assert.match(await readFile(new URL('../src/pages/mine/mine.vue', import.meta.url), 'utf8'), /class="asset-create-backdrop"/)
+  page.openLogout()
+  assert.equal(page.logoutOpen.value, true)
+  const first = page.confirmLogout()
+  await page.confirmLogout()
+  assert.equal(logoutCalls, 1)
+  assert.equal(page.loggingOut.value, true)
+  pending.resolve()
+  await first
+  assert.equal(page.logoutOpen.value, false)
+  assert.equal(page.loggingOut.value, false)
+  assert.deepEqual(events.toasts, [{ title: '已退出登录', icon: 'none' }])
+})
+
+test('我的页三项设置使用相同的按钮行，关于帮助和退出登录保持既有入口', async () => {
+  const source = await readFile(new URL('../src/pages/mine/mine.vue', import.meta.url), 'utf8')
+  const profileCenter = source.match(/<button class="setting-item" aria-label="个人中心" @click="openProfile">([\s\S]*?)<\/button>/)?.[0]
+
+  assert.ok(profileCenter)
+  assert.match(profileCenter, /class="setting-icon setting-icon-profile">个<\/text>/)
+  const styles = await readFile(new URL('../src/prototype.scss', import.meta.url), 'utf8')
+  assert.match(styles, /\.setting-icon-profile \{ font-size:18px; \}/)
+  assert.match(source, /<button class="setting-item" @click="openHelp">/)
+  assert.match(source, /<button v-if="loggedIn" class="setting-item logout-item" :disabled="loggingOut" @click="openLogout">/)
+})
+
+test('我的页顶部头像为纯展示，不跳转、预览或触发更换照片', async () => {
+  const source = await readFile(new URL('../src/pages/mine/mine.vue', import.meta.url), 'utf8')
+  const avatar = source.match(/<view class="profile-avatar-button"[^>]*>[\s\S]*?<\/view>/)?.[0]
+
+  assert.ok(avatar)
+  assert.doesNotMatch(avatar, /@click|role=|aria-label=/)
+  assert.doesNotMatch(source, /previewImage|previewAvatar|handleAvatarClick|uploadAvatar|chooseAvatar/)
+  assert.match(source, /<button class="setting-item" aria-label="个人中心" @click="openProfile">/)
+})
+
+test('个人中心首次设置密码随资料保存提交，展示成功弹层 0.5 秒后自动返回我的页', async () => {
+  const hooks = {}
+  const requests = []
+  const tabSwitches = []
+  const toasts = []
+  const ledger = { state: { token: 'test-session', user: undefined } }
+  const fullSource = await readFile(new URL('../src/pages/profile/profile.vue', import.meta.url), 'utf8')
+  const source = fullSource.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
+  const page = run(source + '\nexport { loadProfile, openPassword, confirmPassword, saveProfile, nickname, loginAccount, savedAccount, firstPassword, passwordConfigured, passwordOpen, accountLocked };', {
+    '@dcloudio/uni-app': { onLoad: fn => { hooks.load = fn } },
+    '../../stores/ledger': { useLedger: () => ledger },
+    '../../utils/file': { currentAvatar: async () => null, uploadAvatar: async () => ({}) },
+    '../../utils/api': { request: async (url, options = {}) => {
+      requests.push({ url, options })
+      if (url === '/api/app/user/profile' && !options.method) return { userId: '7', nickname: '账本主人', loginAccount: '', passwordConfigured: false, avatarAuthorized: true }
+      return { userId: '7', nickname: '新昵称', loginAccount: 'first.user', passwordConfigured: true, avatarAuthorized: true }
+    } },
+    '../../utils/passwordCrypto': { encryptPassword: async value => `encrypted:${value}` },
+    '../../utils/entry': entryUtils,
+  }, { ...defaultUni, showToast: options => toasts.push(options), reLaunch() {}, switchTab: options => tabSwitches.push(options) })
+
+  await hooks.load()
+  page.nickname.value = '新昵称'
+  page.loginAccount.value = ' First.User '
+  page.firstPassword.value = 'password-8'
+  await page.saveProfile()
+  assert.deepEqual(requests[1], { url: '/api/app/user/profile', options: { method: 'PUT', data: { nickname: '新昵称', loginAccount: 'first.user', encryptedPassword: 'encrypted:password-8' } } })
+  assert.equal(page.passwordConfigured.value, true)
+  assert.equal(page.accountLocked.value, true)
+  assert.equal(page.passwordOpen.value, false)
+  assert.deepEqual(ledger.state.user, { id: '7', nickname: '新昵称' })
+  assert.deepEqual(tabSwitches, [{ url: '/pages/mine/mine' }])
+  assert.deepEqual(toasts, [])
+  assert.match(source, /saveSuccessOpen/)
+  assert.match(fullSource, /个人资料已更新，正在返回我的…/)
+  assert.match(source, /}, 500\)/)
+})
+
+test('个人中心新头像上传后立即本地预览，点击保存才关联为当前头像', async () => {
+  const requests = []
+  const source = (await readFile(new URL('../src/pages/profile/profile.vue', import.meta.url), 'utf8')).match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
+  const page = run(source + '\nexport { chooseAvatar, saveProfile, avatarUrl, pendingAvatar, avatarConfigured, nickname, loginAccount, passwordConfigured, saving };', {
+    '@dcloudio/uni-app': { onLoad() {} },
+    '../../stores/ledger': { useLedger: () => ({ state: { token: 'test-session' } }) },
+    '../../utils/file': { uploadAvatar: async () => ({ fileId: '18', viewUrl: 'new-avatar-preview', objectKey: 'avatars/7/new.jpg' }), currentAvatar: async () => null },
+    '../../utils/api': { request: async (url, options = {}) => {
+      requests.push({ url, options })
+      return { userId: '7', nickname: '新昵称', loginAccount: 'fixed.account', passwordConfigured: true, avatarAuthorized: true, avatarFileUrl: 'avatars/7/new.jpg' }
+    } },
+    '../../utils/passwordCrypto': { encryptPassword: async value => `encrypted:${value}` },
+    '../../utils/entry': entryUtils,
+  }, { ...defaultUni, showToast() {} })
+  const target = { files: [{}], value: 'selected-file' }
+
+  await page.chooseAvatar({ target })
+
+  assert.equal(page.avatarUrl.value, 'new-avatar-preview')
+  assert.equal(page.avatarConfigured.value, false)
+  assert.equal(page.pendingAvatar.value.fileId, '18')
+  assert.equal(requests.length, 0)
+  page.nickname.value = '新昵称'
+  page.loginAccount.value = 'fixed.account'
+  page.passwordConfigured.value = true
+  await page.saveProfile()
+
+  assert.equal(requests[0].options.data.avatarFileId, '18')
+  assert.equal(page.avatarUrl.value, 'new-avatar-preview')
+  assert.equal(page.pendingAvatar.value, null)
+  assert.equal(page.saving.value, false)
+})
+
+test('个人中心返回始终切换到我的页', async () => {
+  const tabSwitches = []
+  const source = (await readFile(new URL('../src/pages/profile/profile.vue', import.meta.url), 'utf8')).match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
+  const page = run(source + '\nexport { backToMine };', {
+    '@dcloudio/uni-app': { onLoad() {} },
+    '../../stores/ledger': { useLedger: () => ({ state: { token: 'test-session' } }) },
+    '../../utils/file': {}, '../../utils/api': {}, '../../utils/passwordCrypto': {},
+  }, { ...defaultUni, switchTab: options => tabSwitches.push(options) })
+
+  page.backToMine()
+
+  assert.deepEqual(tabSwitches, [{ url: '/pages/mine/mine' }])
+  assert.doesNotMatch(source, /backToLedger/)
+})
+
+test('相同头像命中 READY 时携带摘要并直接复用预览，不重复 PUT', async () => {
+  const calls = []
+  const source = await readFile(new URL('../src/utils/file.ts', import.meta.url), 'utf8')
+  const fileUtils = run(source, { './api': { request: async (url, options) => {
+    calls.push({ url, options })
+    if (url === '/api/app/files/upload-url') return { fileId: '18', uploadUrl: '', expiresInSeconds: 600, status: 'READY' }
+    return { fileId: '18', viewUrl: 'temporary-view-url', expiresInSeconds: 600, objectKey: 'avatars/7/existing.png' }
+  } } })
+  const file = {
+    name: 'avatar.png', type: 'image/png', size: 8,
+    arrayBuffer: async () => new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]).buffer,
+    slice: () => ({ arrayBuffer: async () => new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]).buffer }),
+  }
+
+  const result = await fileUtils.uploadAvatar(file)
+
+  assert.equal(calls.length, 2)
+  assert.match(calls[0].options.data.fileHash, /^[0-9a-f]{64}$/)
+  assert.deepEqual(calls.map(call => call.url), ['/api/app/files/upload-url', '/api/app/files/18/view-url'])
+  assert.equal(result.objectKey, 'avatars/7/existing.png')
+})
+
+test('头像扩展名或浏览器 MIME 错误时，以真实图片头的类型上传', async () => {
+  const calls = []
+  const source = await readFile(new URL('../src/utils/file.ts', import.meta.url), 'utf8')
+  const fileUtils = run(source, { './api': { request: async (url, options) => {
+    calls.push({ url, options })
+    if (url === '/api/app/files/upload-url') return { fileId: '19', uploadUrl: '', expiresInSeconds: 600, status: 'READY' }
+    return { fileId: '19', viewUrl: 'temporary-view-url', expiresInSeconds: 600, objectKey: 'avatars/7/existing.jpg' }
+  } } })
+  const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0]).buffer
+  const file = {
+    name: 'cat.png', type: 'image/png', size: 12,
+    arrayBuffer: async () => jpeg,
+    slice: () => ({ arrayBuffer: async () => jpeg }),
+  }
+
+  await fileUtils.uploadAvatar(file)
+
+  assert.equal(calls[0].options.data.contentType, 'image/jpeg')
+})
+
+test('个人中心头像按钮动态创建原生 H5 文件输入框', async () => {
+  const source = (await readFile(new URL('../src/pages/profile/profile.vue', import.meta.url), 'utf8')).match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
+  let clicks = 0
+  const picker = { type: '', accept: '', value: 'old', style: {}, addEventListener() {}, click: () => { clicks++ }, remove() {} }
+  const previousDocument = globalThis.document
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: { createElement: tag => {
+    assert.equal(tag, 'input')
+    return picker
+  }, body: { appendChild: input => assert.equal(input, picker) } } })
+  try {
+    const page = run(source + '\nexport { handleAvatarClick, avatarFileInput, uploading, saving };', {
+      '@dcloudio/uni-app': { onLoad() {} },
+      '../../stores/ledger': { useLedger: () => ({ state: { token: 'test-session' } }) },
+      '../../utils/file': {}, '../../utils/api': {}, '../../utils/passwordCrypto': {}, '../../utils/entry': {},
+    })
+    page.handleAvatarClick()
+    page.handleAvatarClick()
+
+    assert.equal(picker.type, 'file')
+    assert.equal(picker.accept, 'image/jpeg,image/png,image/webp,image/gif')
+    assert.equal(picker.value, '')
+    assert.equal(clicks, 2)
+    assert.equal(page.avatarFileInput.value.type, 'file')
+  } finally {
+    Object.defineProperty(globalThis, 'document', { configurable: true, value: previousDocument })
+  }
+  assert.match(source, /document\.createElement\('input'\)/)
+  assert.doesNotMatch(source, /profile-avatar-file-input/)
+})

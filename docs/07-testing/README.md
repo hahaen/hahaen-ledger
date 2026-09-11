@@ -20,3 +20,11 @@ Mockito/纯逻辑 Service 测试不能替代真实 MySQL Mapper、Flyway、事�
 ## 核心页面回归（2026-09-08）
 
 node --test tests/entry.test.mjs tests/page-flows.test.mjs 通过 9 项前端回归；mvn test 通过 24 项后端单测，交易测试 9 项。类型检查和双端构建通过。详见 [核心页面迭代](../10-iterations/2026/09/core-pages-prototype/README.md)，其中的只读视觉证据不能替代数据库事务和真实账务写入。
+
+## 个人中心（2026-09-11）
+
+`ProfileServiceTest` 覆盖当前用户昵称更新、已设账号不可改、首次资料保存时账号与密码同写及重复账号拒绝；前端 `page-flows.test.mjs` 覆盖首次密码随资料保存请求提交和成功返回弹层。实际命令及限制见 [profile-center-management](../10-iterations/2026/09/profile-center-management/README.md)。
+
+## 头像对象 Key 与去重（2026-09-11）
+
+`AppFileServiceTest` 覆盖同一用户、同一 SHA-256 的已就绪头像直接复用既有对象 Key 且不插入新文件元数据。该单测不替代真实 MySQL/Flyway、MinIO PUT、服务端回读和 H5 已登录会话验证；这些项目必须保持独立证据。

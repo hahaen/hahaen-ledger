@@ -66,6 +66,14 @@ public class TransactionService {
                 month.plusMonths(1).atDay(1).atStartOfDay());
     }
 
+    public List<TransactionDetail> activeInPeriod(long userId, LocalDateTime start, LocalDateTime end) {
+        return transactionMapper.selectByPeriod(userId, start, end);
+    }
+
+    public boolean hasActiveBefore(long userId, LocalDateTime before) {
+        return transactionMapper.existsActiveBefore(userId, before);
+    }
+
     @Transactional
     public TransactionVO create(TransactionRequest request) {
         long userId = CurrentUser.id();
@@ -124,7 +132,7 @@ public class TransactionService {
         transaction.setTransactionType(type);
         transaction.setOriginalAmount(amount);
         transaction.setAmount(amount - refunded);
-        transaction.setHasRefund(refunded > 0 || Integer.valueOf(1).equals(transaction.getHasRefund()) ? 1 : 0);
+        transaction.setHasRefund(refunded > 0 ? 1 : 0);
         transaction.setAccountId(request.accountId());
         transaction.setFromAccountId(request.fromAccountId());
         transaction.setToAccountId(request.toAccountId());
@@ -145,7 +153,9 @@ public class TransactionService {
         applyImpact(transaction, transaction.getAmount(), accounts, -1);
         for (TransactionRefund refund : refundMapper.selectActiveByTransaction(id)) {
             AuditSupport.markDeleted(refund);
-            refundMapper.updateById(refund);
+            if (refundMapper.softDeleteById(refund) != 1) {
+                throw new BusinessException("REFUND_NOT_FOUND", "退款记录不存在或已被删除");
+            }
         }
         AuditSupport.markDeleted(transaction);
         transactionMapper.updateById(transaction);
@@ -215,12 +225,12 @@ public class TransactionService {
         AssetAccount account = account(accounts, transaction.getAccountId());
         requireFund(account);
         AuditSupport.markDeleted(refund);
-        if (refundMapper.updateById(refund) != 1) {
+        if (refundMapper.softDeleteById(refund) != 1) {
             throw new BusinessException("REFUND_NOT_FOUND", "退款记录不存在或已被删除");
         }
         long activeRefunded = refundMapper.sumActiveAmount(transaction.getId());
         transaction.setAmount(transaction.getOriginalAmount() - activeRefunded);
-        transaction.setHasRefund(1);
+        transaction.setHasRefund(activeRefunded > 0 ? 1 : 0);
         transactionMapper.updateById(transaction);
         adjustFund(account, "EXPENSE".equals(transaction.getTransactionType()) ? -refund.getRefundAmount() : refund.getRefundAmount());
         accountMapper.updateById(account);

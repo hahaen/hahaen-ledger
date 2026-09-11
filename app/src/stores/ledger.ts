@@ -36,6 +36,12 @@ export type Summary = {
   balanceCents: number
   transactions: Transaction[]
 }
+export type HomeRecentTransactions = {
+  startMonth: string
+  endMonth: string
+  transactions: Transaction[]
+  hasMore: boolean
+}
 export type TransactionPayload = {
   type: TransactionType
   amountCents: number
@@ -65,6 +71,7 @@ type State = {
 const state = reactive<State>({ token: '', accounts: [], transactions: [], loading: false })
 let restored = false
 let refreshSequence = 0
+let pendingRefresh: { month: string; promise: Promise<Summary> } | undefined
 
 export function useLedger() {
   async function restore() {
@@ -92,21 +99,32 @@ export function useLedger() {
   }
 
   async function refresh(month = localDateTime().slice(0, 7)) {
+    if (pendingRefresh?.month === month) return pendingRefresh.promise
     const sequence = ++refreshSequence
     state.loading = true
-    try {
-      const [summary, accounts] = await Promise.all([
-        request<Summary>(`/api/app/home/summary?month=${encodeURIComponent(month)}`),
-        request<Account[]>('/api/app/accounts'),
-      ])
-      if (sequence !== refreshSequence) return summary
-      state.summary = summary
-      state.transactions = summary.transactions || []
-      state.accounts = accounts
-      return summary
-    } finally {
-      if (sequence === refreshSequence) state.loading = false
-    }
+    const promise = (async () => {
+      try {
+        const [summary, accounts] = await Promise.all([
+          request<Summary>(`/api/app/home/summary?month=${encodeURIComponent(month)}`),
+          request<Account[]>('/api/app/accounts'),
+        ])
+        if (sequence !== refreshSequence) return summary
+        state.summary = summary
+        state.transactions = summary.transactions || []
+        state.accounts = accounts
+        return summary
+      } finally {
+        if (sequence === refreshSequence) state.loading = false
+      }
+    })()
+    pendingRefresh = { month, promise }
+    try { return await promise }
+    finally { if (pendingRefresh?.promise === promise) pendingRefresh = undefined }
+  }
+
+  async function loadHomeRecentTransactions(beforeMonth?: string) {
+    const query = beforeMonth ? `?beforeMonth=${encodeURIComponent(beforeMonth)}` : ''
+    return request<HomeRecentTransactions>(`/api/app/home/recent-transactions${query}`)
   }
 
   async function refreshAfterWrite() {
@@ -174,5 +192,5 @@ export function useLedger() {
     // #endif
   }
 
-  return { state, restore, login, refresh, logout, clearSession, createTransaction, updateTransaction, createAccount, reorderAccounts, deleteAccount, deleteTransaction, localDateTime }
+  return { state, restore, login, refresh, loadHomeRecentTransactions, logout, clearSession, createTransaction, updateTransaction, createAccount, reorderAccounts, deleteAccount, deleteTransaction, localDateTime }
 }

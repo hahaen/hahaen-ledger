@@ -22,22 +22,29 @@
 | POST | `/api/app/auth/h5/register` | 注册 H5 账号；请求含 `account`、`encryptedPassword`、`captchaId`、`captchaCode` |
 | POST | `/api/app/auth/h5/login` | 登录 H5 账号并返回 `token`、`userId`、`nickname` |
 | POST | `/api/app/auth/logout` | 注销当前会话 |
-| GET | `/api/app/user/profile` | 返回当前用户资料、创建时间、累计记账天数和头像状态 |
+| GET | `/api/app/user/profile` | 返回当前用户资料、创建时间、从最早有效账单业务日期起算的累计记账天数、头像状态和 `passwordConfigured`；没有有效账单时天数为 0 |
+| PUT | `/api/app/user/profile` | 更新当前用户昵称和首次登录账号；首次无密码时请求还须含 RSA-OAEP 密文 `encryptedPassword`；选择新头像时额外传已完成上传的 `avatarFileId` |
+| PUT | `/api/app/user/profile/password` | 更新当前用户密码；请求含 RSA-OAEP 加密后的 `encryptedPassword`，首次设置账号时同时传 `loginAccount` |
 
 当前后端没有 `/api/app/auth/login`。前端 `ledger.login()` 的小程序分支仍调用该旧路径，因此微信自动登录暂不能标记为接口闭环。
 
 H5 账号服务端会 trim 并转为小写，格式为 2–64 位小写字母/数字/`.`/`_`/`-`；客户端提交的是 RSA-OAEP 加密后的 `encryptedPassword`，解密后的密码要求 8–64 个字符且 UTF-8 不超过 72 字节。验证码校验成功后一次性消费，注册成功不会自动返回会话。
+
+`GET /user/profile` 额外返回 `loginAccount` 和不含敏感信息的 `passwordConfigured`。已设置账号时资料更新接口只接受相同账号，任何改写均返回“账号已设置，不能修改”。账号和密码均为空的用户，须在首次资料保存时一并提供账号和加密密码，服务端在同一事务中写入；已有密码仍通过独立密码接口即时更新。服务端以当前会话用户过滤，并在应用层预检后由 `app_user.uk_app_user_login_account` 唯一索引兜底重复账号。资料和密码接口均不接受 `userId`。
 
 ### 首页、日历与资产
 
 | 方法 | 路径 | 当前用途 |
 | --- | --- | --- |
 | GET | `/api/app/home/summary?month=YYYY-MM` | 月度支出、收入、结余、日均支出和当月账单 |
+| GET | `/api/app/home/recent-transactions?beforeMonth=YYYY-MM` | 首页最近记账的双月分段查询；首次省略参数，后续以返回起始月作为排他游标 |
 | GET | `/api/app/calendar?year=&month=` | 返回 42 格月历及每日收支标记 |
 | GET | `/api/app/calendar/{date}` | 返回单日支出、收入、结余和账单 |
 | GET | `/api/app/assets/overview` | 返回总资产、总负债、净资产及账户列表 |
 
 首页日均支出当前按当月截至今天（含今天）或已结束月份天数作分母；未来月份分母为 0。转账和还款可出现在账单列表，但不计入收入/支出汇总。
+
+最近记账首次返回业务时区当前月与上月。响应字段 `startMonth`、`endMonth` 标识本段覆盖范围，`hasMore` 表示这两个月之前是否仍有当前用户的未删除账单；后续请求把 `startMonth` 作为 `beforeMonth`，服务端按排他上界返回更早的连续两个月。
 
 ### 账户
 
@@ -72,13 +79,15 @@ H5 账号服务端会 trim 并转为小写，格式为 2–64 位小写字母/�
 
 | 方法 | 路径 | 当前用途 |
 | --- | --- | --- |
-| POST | `/api/app/files/upload-url` | 创建文件元数据并返回短时效 PUT URL；当前业务页面仅使用 `AVATAR` |
-| POST | `/api/app/files/{fileId}/complete` | 校验对象并确认文件 |
+| POST | `/api/app/files/upload-url` | 创建文件元数据并返回短时效 PUT URL；`fileHash` 为必传 SHA-256；同摘要已就绪头像直接返回 `READY`，前端不再 PUT |
+| POST | `/api/app/files/{fileId}/complete` | 校验对象大小、SHA-256、声明 MIME 与图片文件头后确认文件为 READY，不替换当前头像 |
 | GET | `/api/app/files/{fileId}/view-url` | 当前用户文件的短时效预览 URL |
 | GET | `/api/app/files/avatar/view-url` | 当前用户头像预览 URL |
 | DELETE | `/api/app/files/{fileId}` | 删除对象并逻辑删除元数据 |
 
 账单附件的数据库枚举已预留 `TRANSACTION_ATTACHMENT`，但当前业务 Service/前端不应把它当成首版可用能力。
+
+资料响应的 `avatarFileUrl` 是稳定的 MinIO 对象 Key，不是完整 URL；页面只能通过头像预览接口取得短时效 `viewUrl`。文件预览响应同时返回当前用户自己的 `objectKey`，用于刷新前端资料状态，不能拿它拼接 MinIO 地址。
 
 ## 维护规则
 

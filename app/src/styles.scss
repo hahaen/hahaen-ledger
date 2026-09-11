@@ -62,3 +62,30 @@
 .about-faq-answer { display:block; }.faq-plus { display:block; }.about-note-copy > text:last-child { display:block; }
 .about-setting-copy { flex:1; }.about-setting-copy > text:last-child { max-width:100%; }
 @media (max-width:340px) { .help-card { min-width:0; padding-left:6px; padding-right:6px; }.help-card-copy { white-space:normal; }.about-note { flex-wrap:wrap; }.about-feedback { margin-left:42px; } }
+
+/* 个人中心沿用关于与帮助的页头和系统圆角弹层。 */
+.profile-page { min-height:100vh; padding-bottom:calc(100px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,#f5faf8 0%,var(--background) 42%); }
+.profile-nav { margin-bottom:16px; }
+.profile-loading, .profile-error { min-height:180px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--muted); font-size:12px; text-align:center; }
+.profile-error { color:#b06f61; }
+.profile-content { padding-bottom:12px; }
+.profile-hero { position:relative; overflow:hidden; min-height:142px; padding:20px; border:1px solid rgba(73,173,156,.13); border-radius:20px; color:#164f48; background:linear-gradient(135deg,#e5f6f1 0%,#f7fcfa 72%); box-shadow:0 8px 22px rgba(73,173,156,.08); }
+.profile-eyebrow { position:relative; z-index:1; display:block; color:#83b7ad; font-size:9px; font-weight:750; letter-spacing:.16em; }
+.profile-hero-title { position:relative; z-index:1; display:block; margin-top:11px; font-size:22px; font-weight:700; letter-spacing:-.05em; }
+.profile-hero-copy { position:relative; z-index:1; display:block; margin-top:7px; color:#65938b; font-size:12px; line-height:1.65; }
+.profile-orbit { position:absolute; border-radius:50%; pointer-events:none; }.profile-orbit-one { width:142px; height:142px; right:-37px; top:0; border:1px solid rgba(73,173,156,.2); }.profile-orbit-two { width:88px; height:88px; right:-4px; top:31px; background:rgba(191,229,220,.25); }
+.profile-form-card { overflow:hidden; margin-top:20px; border:1px solid #edf1ef; border-radius:18px; background:#fff; box-shadow:0 7px 18px rgba(49,76,71,.05); }
+.profile-avatar-row { width:100%; min-height:76px; display:flex; align-items:center; gap:12px; padding:12px 14px; border-bottom:1px solid var(--divider); text-align:left; background:#fff; }
+.profile-avatar-row image { width:48px; height:48px; flex:0 0 auto; border-radius:16px; background:#edf8f5; }
+.profile-avatar-copy { min-width:0; flex:1; }.profile-avatar-copy > text:first-child { display:block; font-size:14px; font-weight:700; }.profile-avatar-copy > text:last-child { display:block; margin-top:2px; color:var(--muted); font-size:11px; }
+.profile-required { margin-left:4px; color:#c38a72; font-size:9px; font-weight:600; }
+.profile-field { padding:14px; border-bottom:1px solid var(--divider); }.profile-field:last-child { border-bottom:0; }
+.profile-field-label-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }.profile-field-label { display:block; color:#52655f; font-size:12px; font-weight:700; }.profile-field-lock { color:#a1aaa7; font-size:10px; }
+.profile-field-input { width:100%; height:43px; margin-top:9px; padding:0 11px; border:1px solid #deebe7; border-radius:11px; color:var(--text); background:#f9fcfb; font-size:14px; }.profile-field-input.disabled { color:#98a3a0; background:#f3f5f4; }.profile-password-field, .profile-password-input { display:flex; align-items:center; width:100%; height:43px; margin-top:9px; padding-left:11px; border:1px solid #deebe7; border-radius:11px; background:#f9fcfb; box-sizing:border-box; }.profile-password-input { height:46px; margin:16px 0 5px; padding-left:13px; border-color:#dcebe7; border-radius:12px; background:#f8fcfa; }.profile-password-text { min-width:0; flex:1; height:100%; padding:0; border:0; color:var(--text); background:transparent; font-size:14px; }.profile-password-field .auth-password-toggle, .profile-password-input .auth-password-toggle { margin-right:3px; }
+.profile-field-tip { display:block; margin-top:7px; color:#91a49f; font-size:10px; line-height:1.55; }
+.profile-actions { position:fixed; z-index:5; bottom:0; left:0; right:0; display:flex; gap:9px; padding:12px 16px calc(14px + env(safe-area-inset-bottom)); border-top:1px solid rgba(224,232,228,.86); background:rgba(255,255,255,.96); box-shadow:0 -9px 22px rgba(39,77,70,.07); }
+.profile-password-action, .profile-save-action { flex:1; min-width:0; height:47px; border-radius:13px; font-size:14px; font-weight:700; }.profile-password-action { color:#46756c; background:#edf8f5; }.profile-save-action { color:#fff; background:var(--primary); box-shadow:0 8px 15px rgba(73,173,156,.2); }
+.profile-password-modal { padding-bottom:18px; }.profile-password-confirm { color:#fff; background:var(--primary); }
+.profile-success-modal { align-items:center; text-align:center; }.profile-success-icon { width:42px; height:42px; display:grid; place-items:center; margin:6px auto 11px; border-radius:50%; color:#fff; background:var(--primary); font-size:23px; font-weight:700; box-shadow:0 7px 14px rgba(73,173,156,.22); }.profile-success-modal .account-delete-copy { margin-top:7px; }
+@media (min-width:431px) { .profile-actions { left:50%; right:auto; width:430px; transform:translateX(-50%); } }
+@media (max-width:340px) { .profile-hero { padding:17px; }.profile-hero-title { font-size:20px; }.profile-actions { gap:7px; padding-left:10px; padding-right:10px; } }

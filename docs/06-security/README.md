@@ -7,6 +7,7 @@
 - H5 使用账号、RSA-OAEP 加密后的密码、一次性 Redis 图形验证码和服务端 BCrypt 哈希；会话由 Sa-Token 管理，客户端通过 `X-Auth-Token` 传递。
 - 验证码 Key 使用 `haji:auth:captcha:` 前缀，TTL 为 300 秒，校验时一次性消费。
 - H5 登录失败统一返回“账号或密码错误”类业务信息，并写入登录审计；日志不得出现密码、Token、私钥或微信 `open_id`。
+- 个人中心资料和密码更新只从当前 Sa-Token 会话取得用户；账号一经设置即不可改。首次账号与密码在同一事务中写入，账号经格式校验、应用层预检及 `app_user` 唯一索引保护；新密码仅接收 RSA-OAEP 密文，服务端解密后使用 BCrypt 哈希，日志不记录密码或密文。
 - 当前后端没有微信登录 Controller 路径，前端小程序分支调用旧 `/api/app/auth/login`；在该接口补齐前不能宣称微信认证已安全闭环。
 
 ## 数据归属与 IDOR
@@ -19,7 +20,7 @@
 
 ## 文件与配置
 
-MinIO 密钥只在后端配置，浏览器只获得短时效上传/预览 URL。文件元数据必须绑定当前用户，删除和预览要再次校验归属并过滤逻辑删除。当前只应开放 `AVATAR`；`TRANSACTION_ATTACHMENT` 只是 Schema 预留。
+MinIO 密钥只在后端配置，浏览器只获得短时效上传/预览 URL。文件元数据必须绑定当前用户，删除和预览要再次校验归属并过滤逻辑删除。`app_user.avatar_file_url` 仅保存稳定对象 Key，绝不保存完整 MinIO URL 或签名参数。头像确认时服务端重新读取对象并核验大小、SHA-256、MIME 与图片文件头；相同用户同摘要的已就绪头像复用已有对象。当前只应开放 `AVATAR`；`TRANSACTION_ATTACHMENT` 只是 Schema 预留。
 
 生产环境必须显式提供固定 H5 RSA 私钥、数据库/Redis/MinIO 凭证、CORS 和微信配置；配置文件中的生成兜底不能作为生产安全控制。Redis Key 统一以 `haji:` 开头，不含环境名，不执行清库命令。
 

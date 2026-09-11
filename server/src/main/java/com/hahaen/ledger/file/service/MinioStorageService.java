@@ -2,6 +2,7 @@ package com.hahaen.ledger.file.service;
 
 import io.minio.MinioClient;
 import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.GetObjectArgs;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.RemoveObjectArgs;
@@ -10,6 +11,7 @@ import io.minio.StatObjectResponse;
 import io.minio.http.Method;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -20,6 +22,8 @@ public class MinioStorageService {
     public String presignedUploadUrl(String objectKey) throws Exception { ensureBucket(); return client.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().method(Method.PUT).bucket(bucket).object(objectKey).expiry(10, TimeUnit.MINUTES).build()); }
     public String presignedViewUrl(String objectKey) throws Exception { return client.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().method(Method.GET).bucket(bucket).object(objectKey).expiry(10, TimeUnit.MINUTES).build()); }
     public StatObjectResponse statObject(String objectKey) throws Exception { return client.statObject(StatObjectArgs.builder().bucket(bucket).object(objectKey).build()); }
+    /** The caller must close the returned stream. */
+    public InputStream getObject(String objectKey) throws Exception { return client.getObject(GetObjectArgs.builder().bucket(bucket).object(objectKey).build()); }
     public void removeObject(String objectKey) throws Exception { client.removeObject(RemoveObjectArgs.builder().bucket(bucket).object(objectKey).build()); }
     public String bucketName() { return bucket; }
     public boolean bucketExists() throws Exception { return client.bucketExists(BucketExistsArgs.builder().bucket(bucket).build()); }

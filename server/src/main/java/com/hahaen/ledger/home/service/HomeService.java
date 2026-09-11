@@ -2,6 +2,7 @@ package com.hahaen.ledger.home.service;
 
 import com.hahaen.ledger.common.exception.BusinessException;
 import com.hahaen.ledger.common.security.CurrentUser;
+import com.hahaen.ledger.home.vo.HomeRecentTransactionsVO;
 import com.hahaen.ledger.home.vo.HomeSummaryVO;
 import com.hahaen.ledger.transaction.entity.TransactionDetail;
 import com.hahaen.ledger.transaction.service.TransactionService;
@@ -32,6 +33,19 @@ public class HomeService {
         int denominator = dailyAverageDays(month, today);
         return new HomeSummaryVO(month.toString(), denominator == 0 ? 0 : dailyExpense / denominator,
                 expense, income, income - expense, transactions.stream().map(TransactionService::toVO).toList());
+    }
+
+    public HomeRecentTransactionsVO recentTransactions(String beforeMonth) {
+        YearMonth exclusiveEnd = beforeMonth == null || beforeMonth.isBlank()
+                ? YearMonth.now(BUSINESS_ZONE).plusMonths(1)
+                : parseMonth(beforeMonth);
+        YearMonth start = exclusiveEnd.minusMonths(2);
+        long userId = CurrentUser.id();
+        List<TransactionDetail> transactions = transactionService.activeInPeriod(userId, start.atDay(1).atStartOfDay(),
+                exclusiveEnd.atDay(1).atStartOfDay());
+        return new HomeRecentTransactionsVO(start.toString(), exclusiveEnd.minusMonths(1).toString(),
+                transactions.stream().map(TransactionService::toVO).toList(),
+                transactionService.hasActiveBefore(userId, start.atDay(1).atStartOfDay()));
     }
 
     static int dailyAverageDays(YearMonth month, LocalDate today) {

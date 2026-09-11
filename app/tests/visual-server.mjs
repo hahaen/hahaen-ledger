@@ -35,7 +35,7 @@ const server = createServer(async (req, res) => {
     if (pathname === '/api/app/home/summary') { json({ month: url.searchParams.get('month'), dailyExpenseCents: 8640, expenseCents: 259200, incomeCents: 850000, balanceCents: 590800, transactions }); return }
     if (pathname === '/api/app/accounts') { json(accounts); return }
     if (pathname === '/api/app/assets/overview') { json({ totalAssetsCents: 1520000, totalLiabilitiesCents: 252000, netAssetsCents: 1268000, accounts }); return }
-    if (pathname === '/api/app/user/profile') { json({ userId: 1, nickname: '账本主人', cumulativeDays: 28, avatarAuthorized: false }); return }
+    if (pathname === '/api/app/user/profile') { json({ userId: '1', nickname: '账本主人', loginAccount: 'visual.user', passwordConfigured: true, cumulativeDays: 28, avatarAuthorized: false }); return }
     if (pathname === '/api/app/calendar') {
       const year = Number(url.searchParams.get('year')), month = Number(url.searchParams.get('month'))
       const first = new Date(year, month - 1, 1), start = new Date(year, month - 1, 1 - first.getDay())

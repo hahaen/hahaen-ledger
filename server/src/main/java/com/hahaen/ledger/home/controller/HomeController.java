@@ -2,6 +2,7 @@ package com.hahaen.ledger.home.controller;
 
 import com.hahaen.ledger.common.response.ApiResponse;
 import com.hahaen.ledger.home.service.HomeService;
+import com.hahaen.ledger.home.vo.HomeRecentTransactionsVO;
 import com.hahaen.ledger.home.vo.HomeSummaryVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,5 +19,10 @@ public class HomeController {
     @GetMapping("/summary")
     public ApiResponse<HomeSummaryVO> summary(@RequestParam(required = false) String month) {
         return ApiResponse.ok(homeService.summary(month));
+    }
+
+    @GetMapping("/recent-transactions")
+    public ApiResponse<HomeRecentTransactionsVO> recentTransactions(@RequestParam(required = false) String beforeMonth) {
+        return ApiResponse.ok(homeService.recentTransactions(beforeMonth));
     }
 }

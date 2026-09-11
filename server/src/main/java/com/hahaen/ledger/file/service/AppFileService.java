@@ -15,9 +15,14 @@ import com.hahaen.ledger.user.mapper.AppUserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -30,6 +35,7 @@ public class AppFileService {
     private final AppUserMapper userMapper;
     private final MinioStorageService storage;
 
+    @Transactional
     public FileUploadUrlVO createUploadUrl(FileUploadUrlRequest request) {
         long userId = CurrentUser.id();
         validateUpload(request);
@@ -41,6 +47,11 @@ public class AppFileService {
         if (existing != null) {
             if (!sameUpload(existing, request)) throw new BusinessException("FILE_IDEMPOTENCY_CONFLICT", "文件幂等键已用于其他文件");
             return uploadResponse(existing);
+        }
+
+        AppFile duplicate = findDuplicateAvatar(userId, normalizeHash(request.fileHash()));
+        if (duplicate != null) {
+            return uploadResponse(duplicate);
         }
 
         AppFile file = new AppFile();
@@ -68,6 +79,7 @@ public class AppFileService {
         }
     }
 
+    @Transactional
     public FileCompleteVO complete(long fileId) {
         AppFile file = ownedFile(fileId);
         if ("READY".equals(file.getStatus())) return completeResponse(file);
@@ -82,16 +94,12 @@ public class AppFileService {
                 markFailed(file, "FILE_CONTENT_TYPE_MISMATCH");
                 throw new BusinessException("FILE_CONTENT_TYPE_MISMATCH", "文件类型校验失败");
             }
+            verifyObjectContent(file);
             file.setStorageEtag(object.etag());
             file.setUploadedAt(LocalDateTime.now());
             file.setStatus("READY");
             file.setFailureCode(null);
             fileMapper.updateById(file);
-            AppUser user = userMapper.selectById(CurrentUser.id());
-            if (user != null) {
-                user.setAvatarFileId(file.getId());
-                userMapper.updateById(user);
-            }
             return completeResponse(file);
         } catch (BusinessException ex) {
             throw ex;
@@ -105,7 +113,7 @@ public class AppFileService {
         AppFile file = ownedFile(fileId);
         if (!"READY".equals(file.getStatus())) throw new BusinessException("FILE_NOT_READY", "文件尚未完成上传");
         try {
-            return new FileViewUrlVO(String.valueOf(file.getId()), storage.presignedViewUrl(file.getObjectKey()), PRESIGNED_EXPIRES_SECONDS);
+            return new FileViewUrlVO(String.valueOf(file.getId()), storage.presignedViewUrl(file.getObjectKey()), PRESIGNED_EXPIRES_SECONDS, file.getObjectKey());
         } catch (Exception ex) {
             throw new BusinessException("MINIO_UNAVAILABLE", "文件服务暂时不可用，请稍后重试");
         }
@@ -113,8 +121,15 @@ public class AppFileService {
 
     public FileViewUrlVO currentAvatarViewUrl() {
         AppUser user = userMapper.selectById(CurrentUser.id());
-        if (user == null || user.getAvatarFileId() == null) return null;
-        return viewUrl(user.getAvatarFileId());
+        if (user == null || user.getAvatarFileUrl() == null || user.getAvatarFileUrl().isBlank()) return null;
+        AppFile file = fileMapper.selectOne(new LambdaQueryWrapper<AppFile>()
+                .eq(AppFile::getUserId, CurrentUser.id())
+                .eq(AppFile::getBusinessType, "AVATAR")
+                .eq(AppFile::getObjectKey, user.getAvatarFileUrl())
+                .eq(AppFile::getStatus, "READY")
+                .eq(AppFile::getDeleted, 0));
+        if (file == null) return null;
+        return viewUrl(file.getId());
     }
 
     public void delete(long fileId) {
@@ -129,8 +144,8 @@ public class AppFileService {
             AuditSupport.markDeleted(file);
             fileMapper.markDeleted(file, CurrentUser.id());
             AppUser user = userMapper.selectById(CurrentUser.id());
-            if (user != null && file.getId().equals(user.getAvatarFileId())) {
-                user.setAvatarFileId(null);
+            if (user != null && file.getObjectKey().equals(user.getAvatarFileUrl())) {
+                user.setAvatarFileUrl(null);
                 userMapper.updateById(user);
             }
         } catch (Exception ex) {
@@ -168,12 +183,13 @@ public class AppFileService {
         if (!SetOfTypes.ALLOWED.contains(contentType)) throw new BusinessException("FILE_TYPE_NOT_ALLOWED", "头像仅支持 JPG、PNG、WEBP 或 GIF");
         if (request.fileSize() <= 0 || request.fileSize() > MAX_FILE_SIZE) throw new BusinessException("FILE_SIZE_NOT_ALLOWED", "头像大小需大于 0 且不超过 10MB");
         String hash = request.fileHash();
-        if (hash != null && !hash.isBlank() && !hash.matches("[0-9a-fA-F]{64}")) throw new BusinessException("FILE_HASH_INVALID", "文件摘要格式不正确");
+        if (hash == null || !hash.matches("[0-9a-fA-F]{64}")) throw new BusinessException("FILE_HASH_INVALID", "文件摘要格式不正确");
     }
 
     private static boolean sameUpload(AppFile file, FileUploadUrlRequest request) {
         return file.getFileSize().equals(request.fileSize())
                 && file.getContentType().equalsIgnoreCase(request.contentType().trim())
+                && Objects.equals(normalizeHash(file.getFileHash()), normalizeHash(request.fileHash()))
                 && "AVATAR".equalsIgnoreCase(request.businessType());
     }
 
@@ -203,6 +219,98 @@ public class AppFileService {
         file.setStatus("FAILED");
         file.setFailureCode(failureCode);
         fileMapper.updateById(file);
+    }
+
+    private void verifyObjectContent(AppFile file) throws Exception {
+        ObjectContent content = readObjectContent(file.getObjectKey());
+        if (content.size() != file.getFileSize()) {
+            markFailed(file, "FILE_SIZE_MISMATCH");
+            throw new BusinessException("FILE_SIZE_MISMATCH", "文件大小校验失败");
+        }
+        if (!normalizeHash(file.getFileHash()).equals(content.hash())) {
+            markFailed(file, "FILE_HASH_MISMATCH");
+            throw new BusinessException("FILE_HASH_MISMATCH", "文件完整性校验失败");
+        }
+        if (!matchesImageMagic(file.getContentType(), content.prefix())) {
+            markFailed(file, "FILE_SIGNATURE_INVALID");
+            throw new BusinessException("FILE_SIGNATURE_INVALID", "文件内容不是声明的图片类型");
+        }
+    }
+
+    private AppFile findDuplicateAvatar(long userId, String hash) {
+        AppFile duplicate = fileMapper.selectOne(new LambdaQueryWrapper<AppFile>()
+                .eq(AppFile::getUserId, userId)
+                .eq(AppFile::getBusinessType, "AVATAR")
+                .eq(AppFile::getFileHash, hash)
+                .eq(AppFile::getStatus, "READY")
+                .eq(AppFile::getDeleted, 0));
+        if (duplicate != null) return duplicate;
+
+        AppUser user = userMapper.selectById(userId);
+        if (user == null || user.getAvatarFileUrl() == null || user.getAvatarFileUrl().isBlank()) return null;
+        AppFile legacyCurrentAvatar = fileMapper.selectOne(new LambdaQueryWrapper<AppFile>()
+                .eq(AppFile::getUserId, userId)
+                .eq(AppFile::getBusinessType, "AVATAR")
+                .eq(AppFile::getObjectKey, user.getAvatarFileUrl())
+                .isNull(AppFile::getFileHash)
+                .eq(AppFile::getStatus, "READY")
+                .eq(AppFile::getDeleted, 0));
+        if (legacyCurrentAvatar == null) return null;
+        try {
+            if (!hash.equals(readObjectContent(legacyCurrentAvatar.getObjectKey()).hash())) return null;
+            legacyCurrentAvatar.setFileHash(hash);
+            fileMapper.updateById(legacyCurrentAvatar);
+            return legacyCurrentAvatar;
+        } catch (Exception ex) {
+            throw new BusinessException("MINIO_UNAVAILABLE", "文件服务暂时不可用，请稍后重试");
+        }
+    }
+
+    private ObjectContent readObjectContent(String objectKey) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] prefix = new byte[12];
+        int prefixLength = 0;
+        long bytesRead = 0;
+        try (InputStream input = storage.getObject(objectKey)) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                digest.update(buffer, 0, read);
+                if (prefixLength < prefix.length) {
+                    int copyLength = Math.min(prefix.length - prefixLength, read);
+                    System.arraycopy(buffer, 0, prefix, prefixLength, copyLength);
+                    prefixLength += copyLength;
+                }
+                bytesRead += read;
+            }
+        }
+        return new ObjectContent(bytesRead, hex(digest.digest()), Arrays.copyOf(prefix, prefixLength));
+    }
+
+    private static boolean matchesImageMagic(String contentType, byte[] bytes) {
+        return switch (contentType) {
+            case "image/jpeg" -> bytes.length >= 3
+                    && (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xD8 && (bytes[2] & 0xFF) == 0xFF;
+            case "image/png" -> bytes.length >= 8
+                    && (bytes[0] & 0xFF) == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47
+                    && bytes[4] == 0x0D && bytes[5] == 0x0A && bytes[6] == 0x1A && bytes[7] == 0x0A;
+            case "image/gif" -> bytes.length >= 6
+                    && ((bytes[0] == 'G' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == '8' && bytes[4] == '7' && bytes[5] == 'a')
+                    || (bytes[0] == 'G' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == '8' && bytes[4] == '9' && bytes[5] == 'a'));
+            case "image/webp" -> bytes.length >= 12
+                    && bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F'
+                    && bytes[8] == 'W' && bytes[9] == 'E' && bytes[10] == 'B' && bytes[11] == 'P';
+            default -> false;
+        };
+    }
+
+    private static String hex(byte[] bytes) {
+        StringBuilder value = new StringBuilder(bytes.length * 2);
+        for (byte current : bytes) value.append(String.format("%02x", current));
+        return value.toString();
+    }
+
+    private record ObjectContent(long size, String hash, byte[] prefix) {
     }
 
     private static final class SetOfTypes {

@@ -12,6 +12,12 @@ import java.util.List;
 @Mapper
 public interface TransactionDetailMapper extends BaseMapper<TransactionDetail> {
     @Select("""
+            SELECT MIN(occurred_at) FROM transaction_detail
+             WHERE user_id = #{userId} AND deleted = 0
+            """)
+    LocalDateTime selectEarliestActiveOccurredAt(@Param("userId") long userId);
+
+    @Select("""
             SELECT * FROM transaction_detail
              WHERE id = #{id} AND user_id = #{userId} AND deleted = 0
              FOR UPDATE
@@ -71,6 +77,14 @@ public interface TransactionDetailMapper extends BaseMapper<TransactionDetail> {
     List<TransactionDetail> selectByPeriod(@Param("userId") long userId,
                                            @Param("start") LocalDateTime start,
                                            @Param("end") LocalDateTime end);
+
+    @Select("""
+            SELECT EXISTS(
+                SELECT 1 FROM transaction_detail
+                 WHERE user_id = #{userId} AND deleted = 0 AND occurred_at < #{before}
+            )
+            """)
+    boolean existsActiveBefore(@Param("userId") long userId, @Param("before") LocalDateTime before);
 
     @Select("""
             SELECT * FROM transaction_detail

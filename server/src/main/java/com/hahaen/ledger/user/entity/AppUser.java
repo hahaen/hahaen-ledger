@@ -18,7 +18,11 @@ public class AppUser extends BaseAuditEntity {
     private String loginAccount;
     private String passwordHash;
     private String nickname;
-    private Long avatarFileId;
+    /**
+     * MinIO object key only.  It deliberately excludes the endpoint, bucket URL and any signed query
+     * parameters so a storage-domain change does not require rewriting user records.
+     */
+    private String avatarFileUrl;
     private String status;
     private LocalDateTime lastLoginAt;
     private String lastLoginIp;

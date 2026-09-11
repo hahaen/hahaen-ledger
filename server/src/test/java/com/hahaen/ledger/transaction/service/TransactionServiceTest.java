@@ -81,7 +81,7 @@ class TransactionServiceTest {
         when(refunds.selectActiveById(31L)).thenReturn(refund);
         when(refunds.selectActiveByIdForUpdate(31L)).thenReturn(refund);
         when(refunds.sumActiveAmount(20L)).thenReturn(0L);
-        when(refunds.updateById(refund)).thenReturn(1);
+        when(refunds.softDeleteById(refund)).thenReturn(1);
         when(transactions.selectOwnedForUpdate(20L, 7L)).thenReturn(bill);
         when(accounts.selectOwnedForUpdate(10L, 7L)).thenReturn(fund);
         try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
@@ -89,9 +89,10 @@ class TransactionServiceTest {
             new TransactionService(transactions, refunds, accounts).deleteRefund(31L);
             assertEquals(1, refund.getDeleted());
             assertEquals(1_000L, bill.getAmount());
-            assertEquals(1, bill.getHasRefund());
+            assertEquals(0, bill.getHasRefund());
             assertEquals(9_000L, fund.getBalanceCent());
-            verify(refunds).updateById(refund);
+            verify(refunds).softDeleteById(refund);
+            verify(refunds, never()).updateById(refund);
             verify(transactions).updateById(bill);
             verify(accounts).updateById(fund);
         }
