@@ -1,0 +1,21 @@
+services:
+  haji-server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    image: hahaen/haji-server:prod
+    container_name: haji-server
+    restart: unless-stopped
+    env_file:
+      - /home/hahaen/haji-prod.env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    expose:
+      - "8080"
+    networks:
+      - jenkins_default
+
+networks:
+  jenkins_default:
+    name: jenkins_default
+    external: true

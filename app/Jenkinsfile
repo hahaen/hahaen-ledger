@@ -1,0 +1,66 @@
+pipeline {
+    agent any
+
+    options {
+        disableConcurrentBuilds()
+        timestamps()
+    }
+
+    environment {
+        DEPLOY_HOST = '172.20.0.1'
+        DEPLOY_USER = 'jenkins-deploy'
+        DEPLOY_DIR = '/home/hahaen/hahaen-ledger'
+        GIT_REPOSITORY = 'https://gitee.com/jhahaen/hahaen-ledger.git'
+        NGINX_ROOT = '/home/hahaen/nginx/html'
+    }
+
+    stages {
+        stage('部署前端 H5') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'deploy-ssh-key',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    )
+                ]) {
+                    sh '''
+                        set -eu
+                        known_hosts="$(mktemp)"
+                        trap 'rm -f "$known_hosts"' EXIT
+                        ssh-keyscan -H "$DEPLOY_HOST" > "$known_hosts"
+                        chmod 600 "$SSH_KEY"
+
+                        ssh -o BatchMode=yes \\
+                            -o UserKnownHostsFile="$known_hosts" \\
+                            -o StrictHostKeyChecking=yes \\
+                            -i "$SSH_KEY" "$SSH_USER@$DEPLOY_HOST" \\
+                            "DEPLOY_DIR='$DEPLOY_DIR' GIT_REPOSITORY='$GIT_REPOSITORY' NGINX_ROOT='$NGINX_ROOT' bash -s" <<'REMOTE_SCRIPT'
+                        set -eu
+                        if [ ! -d "$DEPLOY_DIR/.git" ]; then
+                            mkdir -p "$(dirname "$DEPLOY_DIR")"
+                            git clone --branch main --single-branch "$GIT_REPOSITORY" "$DEPLOY_DIR"
+                        else
+                            git -C "$DEPLOY_DIR" fetch origin main
+                            git -C "$DEPLOY_DIR" merge --ff-only origin/main
+                        fi
+
+                        docker run --rm \\
+                            -v "$DEPLOY_DIR/app:/app" \\
+                            -w /app \\
+                            node:22-alpine sh -lc \\
+                            'corepack enable && corepack prepare pnpm@11 --activate && pnpm install --frozen-lockfile && pnpm run typecheck && pnpm run build:h5'
+
+                        test -d "$DEPLOY_DIR/app/dist/build/h5"
+                        install -d "$NGINX_ROOT"
+                        find "$NGINX_ROOT" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+                        cp -a "$DEPLOY_DIR/app/dist/build/h5/." "$NGINX_ROOT/"
+                        docker exec nginx nginx -t
+                        docker exec nginx nginx -s reload
+                        REMOTE_SCRIPT
+                    '''.stripIndent()
+                }
+            }
+        }
+    }
+}

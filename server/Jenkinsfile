@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+
+    options {
+        disableConcurrentBuilds()
+        timestamps()
+    }
+
+    environment {
+        DEPLOY_HOST = '172.20.0.1'
+        DEPLOY_USER = 'jenkins-deploy'
+        DEPLOY_DIR = '/home/hahaen/hahaen-ledger'
+        GIT_REPOSITORY = 'https://gitee.com/jhahaen/hahaen-ledger.git'
+    }
+
+    stages {
+        stage('haji-server') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'deploy-ssh-key',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    )
+                ]) {
+                    sh '''
+                        set -eu
+                        known_hosts="$(mktemp)"
+                        trap 'rm -f "$known_hosts"' EXIT
+                        ssh-keyscan -H "$DEPLOY_HOST" > "$known_hosts"
+                        chmod 600 "$SSH_KEY"
+
+                        ssh -o BatchMode=yes \\
+                            -o UserKnownHostsFile="$known_hosts" \\
+                            -o StrictHostKeyChecking=yes \\
+                            -i "$SSH_KEY" "$SSH_USER@$DEPLOY_HOST" \\
+                            "DEPLOY_DIR='$DEPLOY_DIR' GIT_REPOSITORY='$GIT_REPOSITORY' bash -s" <<'REMOTE_SCRIPT'
+                        set -eu
+                        if [ ! -d "$DEPLOY_DIR/.git" ]; then
+                            mkdir -p "$(dirname "$DEPLOY_DIR")"
+                            git clone --branch main --single-branch "$GIT_REPOSITORY" "$DEPLOY_DIR"
+                        else
+                            git -C "$DEPLOY_DIR" fetch origin main
+                            git -C "$DEPLOY_DIR" merge --ff-only origin/main
+                        fi
+
+                        test -f "$DEPLOY_DIR/docker-compose.prod.yml"
+                        test -f /home/hahaen/haji-prod.env
+                        cd "$DEPLOY_DIR"
+                        docker compose --env-file /home/hahaen/haji-prod.env \\
+                            -f docker-compose.prod.yml up -d --build haji-server
+                        docker compose --env-file /home/hahaen/haji-prod.env \\
+                            -f docker-compose.prod.yml ps haji-server
+                        REMOTE_SCRIPT
+                    '''.stripIndent()
+                }
+            }
+        }
+    }
+}

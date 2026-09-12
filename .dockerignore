@@ -1,0 +1,9 @@
+.git
+.idea
+.vscode
+app/node_modules
+app/dist
+server/target
+docs
+*.log
+data
