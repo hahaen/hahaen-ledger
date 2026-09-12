@@ -4,6 +4,14 @@
 
 ## 当前实现与静态核对
 
+## 2026-09-12：Jenkins 流水线兼容性修正
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| Gitee 分支参数与 Jenkinsfile 获取 | PARTIAL | `BRANCH=main` 后 Jenkins 已实际获取 `server/Jenkinsfile`；此前参数值为 `origin/main` 时产生重复 `origin/` 前缀，已改正。 |
+| Timestamper 依赖 | PARTIAL | 控制台实际报出 `Invalid option type \"timestamps\"`；已从 `server/Jenkinsfile`、`app/Jenkinsfile` 移除非必要 `timestamps()`，待重新提交和构建验证。 |
+| SSH、Docker Compose 与服务健康检查 | NOT_RUN | 流水线尚未解析并执行到部署阶段。 |
+
 ## 2026-09-12：数据库测试初始化基线
 
 | 范围 | 状态 | 证据/限制 |

@@ -2,6 +2,12 @@
 
 审计日期：2026-09-07。本次补充审计聚焦 H5 我的页、关于与帮助、用户累计天数、头像文件和退出登录，并追加首页、日历、资产三模块闭环；不把未执行的运行联调写成 PASS。
 
+## 2026-09-12 追加：Jenkins 流水线兼容性
+
+- Jenkins 已从 Gitee 实际获取 `server/Jenkinsfile`，证明分支参数和脚本路径可用；此前选择 `origin/main` 造成 Git 将其解释为 `refs/heads/origin/main`，已改为分支值 `main`。
+- 控制器未安装 Timestamper 插件，实际解析拒绝 `timestamps()`；前后端 Jenkinsfile 已删除该非必要选项，避免为了日志时间格式新增插件依赖。
+- 当前状态为 PARTIAL：修正尚待提交到 Gitee 并重新触发；SSH、Docker Compose 和健康检查尚未运行，不能视为部署成功。
+
 ## 本轮结论
 
 - 我的页与原型的个人卡片、累计天数、更多分组、关于与帮助、退出登录已落到 H5 页面。
