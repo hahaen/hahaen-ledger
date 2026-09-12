@@ -50,7 +50,7 @@ pipeline {
                             -f docker-compose.prod.yml up -d --build haji-server
                         docker compose --env-file /home/hahaen/haji-prod.env \\
                             -f docker-compose.prod.yml ps haji-server
-                        REMOTE_SCRIPT
+REMOTE_SCRIPT
                     '''.stripIndent()
                 }
             }
