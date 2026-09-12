@@ -9,7 +9,7 @@ pipeline {
         DEPLOY_HOST = '172.20.0.1'
         DEPLOY_USER = 'jenkins-deploy'
         DEPLOY_DIR = '/home/hahaen/hahaen-ledger'
-        GIT_REPOSITORY = 'https://gitee.com/jhahaen/hahaen-ledger.git'
+        GIT_REPOSITORY = 'https://gitee.com/ihahaen/hahaen-ledger.git'
         NGINX_ROOT = '/home/hahaen/nginx/html'
     }
 
