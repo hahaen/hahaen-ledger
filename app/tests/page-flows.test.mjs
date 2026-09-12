@@ -531,3 +531,16 @@ test('认证与个人中心账号仅保留英文字母和数字', async () => {
   assert.match(profileSource, /replace\(\/\[\^a-zA-Z0-9\]\/g, ''\)/)
   assert.match(profileSource, /仅支持 2-64 位英文字母或数字/)
 })
+
+test('认证页使用独立认证密码载荷，个人中心仍维持 RSA 密文密码字段', async () => {
+  const authSource = await readFile(new URL('../src/components/AuthPage.vue', import.meta.url), 'utf8')
+  const cryptoSource = await readFile(new URL('../src/utils/passwordCrypto.ts', import.meta.url), 'utf8')
+  const profileSource = await readFile(new URL('../src/pages/profile/profile.vue', import.meta.url), 'utf8')
+
+  assert.match(authSource, /encryptH5AuthPassword/)
+  assert.match(authSource, /\.\.\.await encryptH5AuthPassword\(password\.value\)/)
+  assert.match(cryptoSource, /compatibilityPassword: encodeHttpCompatibilityPassword\(password\)/)
+  assert.match(cryptoSource, /insecurePasswordAllowed/)
+  assert.doesNotMatch(cryptoSource, /plainPassword/)
+  assert.match(profileSource, /encryptPassword\(newPassword\.value\)/)
+})

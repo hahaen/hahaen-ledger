@@ -1,10 +1,60 @@
-# 将以下 location 放入现有 nginx.conf 的 server {} 中。
-# haji-server 与 nginx 位于 jenkins_default 网络，不能把它单独作为 server {} 使用。
-location /api/ {
-    proxy_pass http://haji-server:8080;
-    proxy_http_version 1.1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
+# 当前生产入口的完整 Nginx 虚拟主机示例。
+#
+# 使用方式：将本文件作为 http {} 上下文中的 include 文件（例如 /etc/nginx/conf.d/haji.conf）。
+# map 必须位于 http {}，不能嵌入 server {}；同一 Nginx 实例只能声明一次该 map。
+# nginx 容器必须加入外部 Docker 网络 jenkins_default，才能通过服务名解析 jenkins 和 haji-server。
+# Jenkins 还必须以 --prefix=/jenkins 启动；H5 生产环境的 VITE_API_BASE_URL 应配置为站点源站加 /haji-api。
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # 统一补齐 Jenkins 子路径末尾的斜杠，避免相对资源路径错误。
+    location = /jenkins {
+        return 301 /jenkins/;
+    }
+
+    # 不在 proxy_pass 后添加 /，以保留 /jenkins 前缀给使用 --prefix=/jenkins 的 Jenkins。
+    location /jenkins/ {
+        proxy_pass http://jenkins:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+        proxy_set_header X-Forwarded-Prefix /jenkins;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_read_timeout 90s;
+        proxy_send_timeout 90s;
+    }
+
+    # proxy_pass 末尾的 / 会移除公网 /haji-api/ 前缀：
+    # /haji-api/api/app/accounts 会转发为后端既有的 /api/app/accounts。
+    location /haji-api/ {
+        proxy_pass http://haji-server:8080/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # 其余请求交给 H5 静态资源；不存在的前端路由回退到入口页。
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
 }

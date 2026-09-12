@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { request } from '../utils/api'
-import { encryptPassword } from '../utils/passwordCrypto'
+import { encryptH5AuthPassword } from '../utils/passwordCrypto'
 import { useLedger } from '../stores/ledger'
 
 type CaptchaVO = { captchaId: string; image: string; expiresInSeconds: number }
@@ -55,7 +55,7 @@ async function submit() {
   submitting.value = true
   errorMessage.value = ''
   try {
-    const payload = { account: account.value.trim(), encryptedPassword: await encryptPassword(password.value), captchaId: captchaId.value, captchaCode: captcha.value.trim() }
+    const payload = { account: account.value.trim(), ...await encryptH5AuthPassword(password.value), captchaId: captchaId.value, captchaCode: captcha.value.trim() }
     if (isLogin.value) {
       const result = await request<LoginVO>('/api/app/auth/h5/login', { method: 'POST', data: payload })
       ledger.state.token = result.token

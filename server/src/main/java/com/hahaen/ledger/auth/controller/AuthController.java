@@ -28,7 +28,7 @@ public class AuthController {
 
     @GetMapping("/password-key")
     public ApiResponse<PasswordKeyVO> passwordKey() {
-        return ApiResponse.ok(new PasswordKeyVO(passwordCryptoService.publicKey()));
+        return ApiResponse.ok(new PasswordKeyVO(passwordCryptoService.publicKey(), authService.allowsInsecurePasswordOverHttp()));
     }
 
     @GetMapping("/captcha")
@@ -39,13 +39,13 @@ public class AuthController {
 
     @PostMapping("/h5/register")
     public ApiResponse<Void> register(@Valid @RequestBody H5AuthRequest request, HttpServletRequest servletRequest) {
-        authService.register(request, clientIp(servletRequest), servletRequest.getHeader("User-Agent"));
+        authService.register(request, clientIp(servletRequest), servletRequest.getHeader("User-Agent"), isSecureTransport(servletRequest));
         return ApiResponse.ok();
     }
 
     @PostMapping("/h5/login")
     public ApiResponse<LoginVO> login(@Valid @RequestBody H5AuthRequest request, HttpServletRequest servletRequest) {
-        return ApiResponse.ok(authService.login(request, clientIp(servletRequest), servletRequest.getHeader("User-Agent")));
+        return ApiResponse.ok(authService.login(request, clientIp(servletRequest), servletRequest.getHeader("User-Agent"), isSecureTransport(servletRequest)));
     }
 
     @PostMapping("/logout")
@@ -58,5 +58,11 @@ public class AuthController {
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) return forwarded.split(",", 2)[0].trim();
         return request.getRemoteAddr();
+    }
+
+    private static boolean isSecureTransport(HttpServletRequest request) {
+        if (request.isSecure()) return true;
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        return forwardedProto != null && "https".equalsIgnoreCase(forwardedProto.split(",", 2)[0].trim());
     }
 }

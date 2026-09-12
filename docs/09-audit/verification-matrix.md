@@ -2,7 +2,23 @@
 
 更新日期：2026-09-12。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
 
+## 2026-09-13：HTTP 临时认证兼容
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| HTTP 认证密码载荷 | PASS（代码+单测） | 认证页在浏览器不支持 Web Crypto 时，仅在后端显式允许下发送 `compatibilityPassword` 混淆载荷；请求 JSON 不使用明文字段。`H5AuthServiceTest` 4/4 覆盖开关关闭拒绝、HTTP 开启接受、HTTPS 拒绝和既有 RSA 注册。 |
+| HTTPS 与个人中心密码保护 | PASS（静态+回归） | HTTPS 继续使用 RSA-OAEP；个人中心继续仅提交 `encryptedPassword`。前端回归 30/30、类型检查和 H5 构建均完成。 |
+| 安全边界 | PARTIAL | HTTP 混淆不能防止中间人读取或篡改脚本/载荷，配置默认关闭，仅用于临时注册和登录；部署后必须关闭开关并启用 HTTPS。 |
+| 真实 HTTP/HTTPS 认证 | NOT_RUN | 未在服务器上打开开关、重启服务或取得真实浏览器会话验证。 |
+
 ## 当前实现与静态核对
+
+## 2026-09-13：Nginx 入口配置说明对齐
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| Jenkins、H5 与 API 路由示例 | PASS（静态） | `deploy/nginx/haji-api-location.conf.example` 已与最终入口统一：`/jenkins/` 保留 Jenkins 前缀，`/haji-api/` 去除公网前缀后访问后端 `/api/...`，其他路径回退 H5 `index.html`。 |
+| 真实 Nginx 生效验证 | NOT_RUN | 本次未在服务器执行 `nginx -t`、reload、Jenkins 登录页、H5 路由或 API 请求探针。 |
 
 ## 2026-09-12：Jenkins 流水线兼容性修正
 

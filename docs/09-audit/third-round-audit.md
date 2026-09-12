@@ -2,11 +2,24 @@
 
 审计日期：2026-09-07。本次补充审计聚焦 H5 我的页、关于与帮助、用户累计天数、头像文件和退出登录，并追加首页、日历、资产三模块闭环；不把未执行的运行联调写成 PASS。
 
+## 2026-09-13 追加：HTTP 临时认证兼容
+
+- H5 注册和登录在无 Web Crypto 的 HTTP 浏览器下可使用独立 `compatibilityPassword` 混淆载荷，前端请求 JSON 不再传递明文字段；浏览器具备 Web Crypto 或页面为 HTTPS 时仍使用既有 RSA-OAEP。
+- 服务端开关 `H5_ALLOW_INSECURE_PASSWORD_OVER_HTTP` 默认关闭，仅在明确开启且传输被识别为 HTTP 时解开兼容载荷，然后立即复用既有密码长度校验、BCrypt 哈希、验证码和审计流程。HTTPS 请求、关闭开关和双密码字段均拒绝。
+- PASS：认证定向单测 4/4、后端全量 43/43、前端流程 30/30、类型检查和 H5 生产构建。NOT_RUN：服务器实际重启、HTTP 注册/登录以及后续 HTTPS/RSA 端到端验证。
+- 该兼容载荷不是密码学加密，无法抵抗 HTTP 中间人；只可作为用户明确要求的临时过渡，部署 HTTPS 后必须关闭环境开关。完整档案：`docs/10-iterations/2026/09/http-temporary-auth-compatibility/`。
+
 ## 2026-09-12 追加：Jenkins 流水线兼容性
 
 - Jenkins 已从 Gitee 实际获取 `server/Jenkinsfile`，证明分支参数和脚本路径可用；此前选择 `origin/main` 造成 Git 将其解释为 `refs/heads/origin/main`，已改为分支值 `main`。
 - 控制器未安装 Timestamper 插件，实际解析拒绝 `timestamps()`；前后端 Jenkinsfile 已删除该非必要选项，避免为了日志时间格式新增插件依赖。
 - 当前状态为 PARTIAL：修正尚待提交到 Gitee 并重新触发；SSH、Docker Compose 和健康检查尚未运行，不能视为部署成功。
+
+## 2026-09-13 追加：Nginx 入口配置说明对齐
+
+- `deploy/nginx/haji-api-location.conf.example` 已同步为当前完整虚拟主机示例：`map` 在 `http {}` 上下文，Jenkins、`/haji-api/` 和 H5 SPA 路由位于同一个 `server {}`。
+- `/jenkins/` 代理保留路径前缀，匹配 Jenkins 的 `--prefix=/jenkins`；`/haji-api/` 使用带末尾 `/` 的 `proxy_pass`，因此浏览器的 `/haji-api/api/app/...` 会转成后端既有 `/api/app/...`。
+- PASS（静态）：仓库示例和部署档案已对齐。NOT_RUN：未执行服务器上的 `nginx -t`、reload 以及 Jenkins/H5/API 的真实 HTTP 验收。
 
 ## 本轮结论
 

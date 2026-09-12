@@ -9,7 +9,7 @@ import com.hahaen.ledger.user.entity.AppLoginLog;
 import com.hahaen.ledger.user.entity.AppUser;
 import com.hahaen.ledger.user.mapper.AppLoginLogMapper;
 import com.hahaen.ledger.user.mapper.AppUserMapper;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.MDC;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,11 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
 @Service
-@RequiredArgsConstructor
 public class H5AuthService {
     private static final Pattern ACCOUNT_PATTERN = Pattern.compile("[a-z0-9]{2,64}");
     private static final int MAX_PASSWORD_BYTES = 72;
@@ -33,13 +33,26 @@ public class H5AuthService {
     private final PasswordEncoder passwordEncoder;
     private final PasswordCryptoService passwordCryptoService;
     private final CaptchaService captchaService;
+    private final boolean allowInsecurePasswordOverHttp;
+
+    public H5AuthService(AppUserMapper userMapper, AppLoginLogMapper loginLogMapper, LoginAuditService loginAuditService,
+                         PasswordEncoder passwordEncoder, PasswordCryptoService passwordCryptoService, CaptchaService captchaService,
+                         @Value("${hahaen.auth.allow-insecure-password-over-http:false}") boolean allowInsecurePasswordOverHttp) {
+        this.userMapper = userMapper;
+        this.loginLogMapper = loginLogMapper;
+        this.loginAuditService = loginAuditService;
+        this.passwordEncoder = passwordEncoder;
+        this.passwordCryptoService = passwordCryptoService;
+        this.captchaService = captchaService;
+        this.allowInsecurePasswordOverHttp = allowInsecurePasswordOverHttp;
+    }
 
     @Transactional
-    public void register(H5AuthRequest request, String ip, String userAgent) {
+    public void register(H5AuthRequest request, String ip, String userAgent, boolean secureTransport) {
         String account = normalizeAccount(request.account());
         try {
             checkCaptcha(request, account, ip, userAgent);
-            String password = validPassword(passwordCryptoService.decrypt(request.encryptedPassword()));
+            String password = validPassword(resolvePassword(request, secureTransport));
             if (userMapper.selectCount(new LambdaQueryWrapper<AppUser>().eq(AppUser::getLoginAccount, account)) > 0) {
                 failure(account, ip, userAgent, "ACCOUNT_EXISTS");
                 throw new BusinessException("ACCOUNT_EXISTS", "账号已存在，请更换后重试");
@@ -57,11 +70,11 @@ public class H5AuthService {
     }
 
     @Transactional
-    public LoginVO login(H5AuthRequest request, String ip, String userAgent) {
+    public LoginVO login(H5AuthRequest request, String ip, String userAgent, boolean secureTransport) {
         String account = normalizeAccount(request.account());
         try {
             checkCaptcha(request, account, ip, userAgent);
-            String password = validPassword(passwordCryptoService.decrypt(request.encryptedPassword()));
+            String password = validPassword(resolvePassword(request, secureTransport));
             AppUser user = userMapper.selectOne(new LambdaQueryWrapper<AppUser>()
                     .eq(AppUser::getLoginAccount, account)
                     .eq(AppUser::getStatus, "ACTIVE"));
@@ -95,6 +108,35 @@ public class H5AuthService {
         }
     }
 
+    public boolean allowsInsecurePasswordOverHttp() {
+        return allowInsecurePasswordOverHttp;
+    }
+
+    private String resolvePassword(H5AuthRequest request, boolean secureTransport) {
+        boolean hasEncryptedPassword = hasText(request.encryptedPassword());
+        boolean hasCompatibilityPassword = hasText(request.compatibilityPassword());
+        if (hasEncryptedPassword == hasCompatibilityPassword) {
+            throw new BusinessException("PASSWORD_PAYLOAD_INVALID", "密码参数不正确，请重试");
+        }
+        if (hasEncryptedPassword) return passwordCryptoService.decrypt(request.encryptedPassword());
+        if (!allowInsecurePasswordOverHttp || secureTransport) {
+            throw new BusinessException("INSECURE_PASSWORD_DISABLED", "当前服务器未开启 HTTP 临时密码兼容");
+        }
+        return decodeHttpCompatibilityPassword(request.compatibilityPassword());
+    }
+
+    private static String decodeHttpCompatibilityPassword(String compatibilityPassword) {
+        try {
+            byte[] encoded = Base64.getDecoder().decode(compatibilityPassword);
+            byte[] key = "haji-http-temp-v1".getBytes(StandardCharsets.UTF_8);
+            if (encoded.length == 0 || encoded.length > 128) throw new IllegalArgumentException("兼容载荷长度不正确");
+            for (int index = 0; index < encoded.length; index += 1) encoded[index] ^= key[index % key.length];
+            return new String(encoded, StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            throw new BusinessException("PASSWORD_INVALID", "密码格式不正确，请重试");
+        }
+    }
+
     private static String normalizeAccount(String input) {
         String account = input == null ? "" : input.trim().toLowerCase(Locale.ROOT);
         if (!ACCOUNT_PATTERN.matcher(account).matches()) {
@@ -109,6 +151,10 @@ public class H5AuthService {
             throw new BusinessException("PASSWORD_INVALID", "密码需为 8-64 位字符");
         }
         return password;
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     private void success(AppUser user, String account, String ip, String userAgent) {

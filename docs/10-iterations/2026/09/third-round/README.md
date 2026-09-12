@@ -12,9 +12,17 @@
 
 本轮新增的 H5 我的页及会话持久化修复审计结论已同步到 `docs/09-audit/verification-matrix.md` 和 `docs/09-audit/third-round-audit.md`；未执行的真实基础设施联调仍按 BLOCKED/NOT_RUN 记录。
 
+## 2026-09-13 追加：HTTP 临时认证兼容
+
+H5 认证在浏览器缺少 Web Crypto 时，可以在服务端默认关闭的显式开关下提交 `compatibilityPassword` 混淆载荷；HTTPS 仍使用 RSA-OAEP，个人中心改密不参与 HTTP 兼容。定向后端测试 4/4、后端全量 43/43、前端流程 30/30、类型检查和 H5 构建均通过；真实服务器 HTTP/HTTPS 认证仍为 NOT_RUN。该载荷无法抵抗 HTTP 中间人，HTTPS 部署后必须关闭开关。详见 `../http-temporary-auth-compatibility/`。
+
 ## 本轮追加：Jenkins 流水线兼容性
 
 Jenkins 已确认能够从 Gitee 获取 `server/Jenkinsfile`。由于当前控制器未安装 Timestamper 插件，`timestamps()` 在 Declarative Pipeline 解析阶段失败；该非必要选项已从前后端流水线移除。重新提交并触发构建前，SSH、Docker Compose 和服务健康检查保持 NOT_RUN；详见 `../jenkins-compose-deployment/09-verification.md`。
+
+## 本轮追加：Nginx 入口配置说明对齐
+
+`deploy/nginx/haji-api-location.conf.example` 已同步为完整虚拟主机示例：`map` 放在 `http {}` 上下文；`/jenkins/` 保留前缀代理到 Jenkins；`/haji-api/` 去除公网前缀后代理到后端既有 `/api/...`；其他路径提供 H5 SPA 回退。仓库文本核对为 PASS（静态），服务器上的 `nginx -t`、reload 和真实 HTTP 访问尚未执行，状态为 NOT_RUN。
 
 ## 本轮追加：账单明细与退款数据库设计
 
