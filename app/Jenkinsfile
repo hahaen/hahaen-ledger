@@ -56,7 +56,7 @@ pipeline {
                         cp -a "$DEPLOY_DIR/app/dist/build/h5/." "$NGINX_ROOT/"
                         docker exec nginx nginx -t
                         docker exec nginx nginx -s reload
-                        REMOTE_SCRIPT
+REMOTE_SCRIPT
                     '''.stripIndent()
                 }
             }
