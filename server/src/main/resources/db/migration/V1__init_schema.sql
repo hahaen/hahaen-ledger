@@ -6,7 +6,7 @@ CREATE TABLE app_user (
   login_account VARCHAR(64) NULL COMMENT 'H5登录账号，账号密码认证使用，微信用户可为空',
   password_hash VARCHAR(255) NULL COMMENT '服务端密码哈希，仅保存哈希值，不保存明文密码或前端加密原文',
   nickname VARCHAR(40) NOT NULL DEFAULT '账本主人' COMMENT '用户昵称',
-  avatar_file_id BIGINT NULL COMMENT '头像文件ID，未授权或未上传头像时为空',
+  avatar_file_url VARCHAR(512) NULL COMMENT '头像对象Key，不含可变MinIO访问前缀，未设置时为空',
   status VARCHAR(16) NOT NULL DEFAULT 'ACTIVE' COMMENT '用户状态，ACTIVE正常，DISABLED停用',
   last_login_at DATETIME(3) NULL COMMENT '最近登录时间',
   last_login_ip VARCHAR(45) NULL COMMENT '最近登录IP地址，支持IPv4和IPv6',
@@ -29,7 +29,7 @@ CREATE TABLE app_user (
     OR
     (login_account IS NOT NULL AND password_hash IS NOT NULL)
   )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用用户表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='应用用户表';
 
 CREATE TABLE user_identity (
   id BIGINT NOT NULL COMMENT '用户身份记录ID',
@@ -44,7 +44,7 @@ CREATE TABLE user_identity (
   KEY idx_identity_user (user_id),
   CONSTRAINT fk_identity_user FOREIGN KEY (user_id) REFERENCES app_user (id),
   CONSTRAINT ck_user_identity_open_id CHECK (CHAR_LENGTH(TRIM(open_id)) > 0)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户第三方身份关联表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='用户第三方身份关联表';
 
 CREATE TABLE app_login_log (
   id BIGINT NOT NULL COMMENT '登录日志ID',
@@ -78,4 +78,4 @@ CREATE TABLE app_login_log (
     OR
     (login_result = 'FAILURE' AND failure_code IS NOT NULL)
   )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用登录日志表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='应用登录日志表';

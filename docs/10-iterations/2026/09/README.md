@@ -16,6 +16,8 @@
 
 - [flyway-v5-checksum](flyway-v5-checksum/README.md)：恢复已执行 V5 内容，修复启动校验失败并实际启动验证。
 
+- [database-initialization-adjustment](database-initialization-adjustment/README.md)：测试阶段重建数据库初始化基线，并统一 utf8mb4_general_ci。
+
 - [home-static-month](home-static-month/README.md)：首页当前月份改为普通文字，移除刷新按钮。
 - [home-summary-layout-current-month](home-summary-layout-current-month/README.md)：修复首页日均消费金额布局，并核对当前月份动态取值。
 - [home-recent-list-design-alignment](home-recent-list-design-alignment/README.md)：对齐首页最近记账日期行和列表底色。

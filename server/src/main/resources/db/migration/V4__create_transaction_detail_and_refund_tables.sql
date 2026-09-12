@@ -77,7 +77,7 @@ CREATE TABLE transaction_detail (
   CONSTRAINT ck_transaction_detail_deleted CHECK (
     deleted IS NULL OR deleted IN (0, 1)
   )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账单明细主表，保存支出、收入、转账和还款，不保存退款类型';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='账单明细主表，保存支出、收入、转账和还款，不保存退款类型';
 
 CREATE TABLE transaction_refund (
   id BIGINT NOT NULL COMMENT '退款记录ID',
@@ -110,4 +110,4 @@ CREATE TABLE transaction_refund (
   CONSTRAINT ck_transaction_refund_deleted CHECK (
     deleted IS NULL OR deleted IN (0, 1)
   )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账单退款记录关联表，每笔退款单独保存，不作为账单类型';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='账单退款记录关联表，每笔退款单独保存，不作为账单类型';

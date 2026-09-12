@@ -352,3 +352,11 @@ PASS：恢复首页最近记账日期行的设计稿边距、字号和单行收�
 
 - 开发 Profile 的文件日志目录为 `D:/github/log/haji`，生产 Profile 为 `/home/hahaen/log/haji`；控制台日志格式、级别和业务逻辑均保持不变。
 - PASS：Profile YAML 加载测试和后端全量测试均通过（41/41）。NOT_RUN：真实开发/生产环境的目录创建与文件写入，需在具备依赖服务和生产目录权限后验证。完整档案：`docs/10-iterations/2026/09/backend-log-directories/`。
+
+## 数据库测试初始化基线（2026-09-12）
+
+- 因开发数据库已清空，当前测试阶段所需的资产账户 `sort_order`、头像 `avatar_file_url` 和头像去重索引已直接写入现有基础迁移。
+- V1–V4 的业务表均显式使用 `utf8mb4` 和 `utf8mb4_general_ci`；开发与通用 Spring JDBC URL 已同步使用 `characterEncoding=utf8mb4` 和 `connectionCollation=utf8mb4_general_ci`。
+- PASS（静态）：当前测试基线的迁移目录、Entity、Service 和数据库文档已完成核对；`MigrationIntegrityTest` 1/1 通过。后续结构调整继续按新版本 Migration 管理。
+- NOT_RUN：本机 `information_schema` 当前未发现 `haji_dev`，尚未执行重新建库/建表后的 Flyway 和 `information_schema` 实际验收。
+- 完整档案：`docs/10-iterations/2026/09/database-initialization-adjustment/`。

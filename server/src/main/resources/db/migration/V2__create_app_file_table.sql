@@ -36,6 +36,7 @@ CREATE TABLE app_file (
   KEY idx_app_file_book_status (book_id, status, deleted),
   KEY idx_app_file_transaction_status (transaction_id, status, deleted),
   KEY idx_app_file_business_type (business_type, created_at),
+  KEY idx_app_file_user_avatar_hash (user_id, business_type, file_hash, status, deleted),
   CONSTRAINT fk_app_file_user FOREIGN KEY (user_id) REFERENCES app_user (id),
   CONSTRAINT ck_app_file_business_type CHECK (business_type IN ('AVATAR', 'TRANSACTION_ATTACHMENT')),
   CONSTRAINT ck_app_file_storage_provider CHECK (storage_provider = 'MINIO'),
@@ -54,8 +55,4 @@ CREATE TABLE app_file (
     OR
     (status IN ('UPLOADING', 'DELETING', 'DELETED') AND failure_code IS NULL)
   )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用文件元数据表';
-
-ALTER TABLE app_user
-  ADD CONSTRAINT fk_app_user_avatar_file
-  FOREIGN KEY (avatar_file_id) REFERENCES app_file (id);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='应用文件元数据表';

@@ -4,12 +4,22 @@
 
 ## 当前实现与静态核对
 
+## 2026-09-12：数据库测试初始化基线
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 当前 V1–V4 迁移目录 | PASS（静态） | V1–V4 保留为当前测试阶段重新初始化数据库的完整结构来源，后续结构变化仍可新增版本迁移。 |
+| 资产账户排序结构 | PASS（静态） | `sort_order` 和复合索引已写入当前资产账户建表脚本，新建基线不再执行旧数据回填。 |
+| 头像对象 Key 结构 | PASS（静态） | `avatar_file_url` 已写入当前用户建表脚本，头像去重索引已写入文件表建表脚本，旧头像外键逻辑已移除。 |
+| utf8mb4 排序规则 | PASS（静态） | V1–V4 显式声明 `utf8mb4_general_ci`；两个 Spring JDBC URL 也已统一。 |
+| haji_dev 实际重建 | NOT_RUN | 当前本机 MySQL 的 `information_schema.SCHEMATA` 未发现 `haji_dev`，尚未执行重新建库/建表和 Flyway 验收。 |
+
 | 范围 | 证据 | 状态 |
 | --- | --- | --- |
 | 文档目录全量清点 | `Get-ChildItem docs -Recurse -File`；当前审计覆盖 `docs/` 下全部文件（含本审计档案新增文件） | PASS |
 | 文档相对链接 | 当前审计脚本检查所有 Markdown 相对链接 | PASS |
 | 后端域与 Entity/Controller | `server/src/main/java/com/hahaen/ledger/{auth,user,file,account,asset,transaction,home,calendar}` | PASS（代码存在） |
-| V1–V5 Migration 文件 | `server/src/main/resources/db/migration/` | PASS（文件静态存在） |
+| V1–V4 Migration 文件 | `server/src/main/resources/db/migration/` | PASS（文件静态存在） |
 | V3/V4 Entity 与数据库字段 | `AssetAccount`、`TransactionDetail`、`TransactionRefund` 与对应 Migration | PASS（静态核对） |
 | 当前用户与逻辑删除过滤 | `CurrentUser`、各 Service/Mapper 查询和删除逻辑 | PARTIAL（静态代码通过；真实跨用户 DB 查询未跑） |
 | 账户名称规则 | V3 无数据库唯一索引；`AccountService.assertNameAvailable` 校验有效账户重名 | PARTIAL（存在并发唯一性竞态） |
@@ -216,7 +226,7 @@
 
 | 范围 | 证据 | 状态 |
 | --- | --- | --- |
-| 顺序字段与旧数据回填 | `V5__add_asset_account_sort_order.sql`；旧有效账户按类型和稳定名称/ID顺序回填 | PASS（静态核对） |
+| 顺序字段与初始化基线 | `V3__create_asset_account_table.sql`；`sort_order` 直接建表并默认 `0` | PASS（静态核对） |
 | 新建账户默认末尾 | `AccountService.create` 使用同类最大 `sort_order + 1` | PASS（静态核对） |
 | 同类账户换序接口 | `AccountController`、`AccountService.reorder`；当前用户、逻辑删除、类型和顺序冲突均校验 | PASS（静态核对） |
 | 长按换序交互 | `assets.vue` 的 `@longpress`、类型隔离显示和成功刷新逻辑 | PASS（静态核对） |
@@ -453,7 +463,7 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 
 | 范围 | 状态 | 证据/限制 |
 | --- | --- | --- |
-| 用户头像引用 | PASS（静态） | V6 将 `avatar_file_id` 回填并替换为只保存对象 Key 的 `avatar_file_url`；不保存可变 MinIO URL 前缀。 |
+| 用户头像引用 | PASS（静态） | V1 直接创建只保存对象 Key 的 `avatar_file_url`；不保存可变 MinIO URL 前缀。 |
 | 上传内容校验和同图复用 | PASS（代码+单测） | 前端计算 SHA-256；后端核验实际对象大小、摘要、MIME/文件头；`AppFileServiceTest` 覆盖 READY 同摘要和无摘要历史当前头像均不插入新对象元数据。 |
 | 后端、前端与双端构建 | PASS | `mvn test` 36/36、页面回归 23/23、类型检查和 H5/微信生产构建均执行成功；H5 选择器修复后已再次构建。 |
 | H5 选择头像 | PASS（单元+构建） | 编译产物确认模板 file input 会被 uni-app 改写为文本输入；个人中心在点击手势中动态创建原生 file input，回归测试覆盖。 |

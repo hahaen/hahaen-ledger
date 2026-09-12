@@ -46,7 +46,7 @@
 - `PRIMARY KEY (id)`：保证账户ID唯一。
 - `idx_asset_account_user_type_deleted (user_id, account_type, deleted)`：支持按当前用户、账户类型和有效状态查询。
 - `idx_asset_account_user_type_deleted_order (user_id, account_type, deleted, sort_order, id)`：支持按账户类型和自定义顺序查询及新建账户追加时读取末尾账户。
-- 资产账户查询按 `account_type ASC, sort_order ASC, id ASC` 排序；V5 会把既有有效账户按迁移前的名称、ID顺序初始化 `sort_order`。
+- 资产账户查询按 `account_type ASC, sort_order ASC, id ASC` 排序；初始化基线中的 `sort_order` 默认值为 `0`，新账户由 Service 按同类账户最大值加一分配。
 - `fk_asset_account_user`：保证所属用户存在；当前单账本模型不在账户表重复保存账本字段。
 - `ck_asset_account_type`、`ck_asset_account_include_net_asset`、`ck_asset_account_deleted`：限制类型和标识取值。
 - `ck_asset_account_amounts_non_negative`：金额均不得为负数。
@@ -58,9 +58,8 @@
 
 - 文件：`server/src/main/resources/db/migration/V3__create_asset_account_table.sql`
 - 变更：新增 `asset_account` 表。
-- 未修改 `V1__init_schema.sql` 或 `V2__create_app_file_table.sql`。
+- `sort_order` 已直接并入 `V3__create_asset_account_table.sql`，新建数据库不再需要单独的顺序迁移或旧数据回填。
 - 当前工作区包含 V3 Migration、`AssetAccount` Entity 及账户 Service/Controller；本次审计没有可复核的数据库执行记录。需要在可用 MySQL 环境中通过应用/Flyway 执行后，再用 `flyway_schema_history`、`information_schema` 和 Entity 对照验收。
-- 顺序字段由 `V5__add_asset_account_sort_order.sql` 新增；V5 不修改历史 Migration，旧数据按稳定顺序回填，新增账户在同类型账户末尾追加。
 
 ## 6. 后续扩展建议
 

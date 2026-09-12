@@ -7,6 +7,7 @@ CREATE TABLE asset_account (
   user_id BIGINT NOT NULL COMMENT '所属用户ID',
   account_name VARCHAR(64) NOT NULL COMMENT '账户名称，长度限制为1至20个字符，允许重复',
   account_type VARCHAR(16) NOT NULL COMMENT '账户类型，FUND资金账户，CREDIT信贷账户',
+  sort_order INT NOT NULL DEFAULT 0 COMMENT '同类账户展示顺序，数字越小越靠前',
   total_limit_cent BIGINT NULL COMMENT '总额度，单位为分；仅CREDIT信贷账户使用',
   current_debt_cent BIGINT NULL COMMENT '当前欠款，单位为分；仅CREDIT信贷账户使用',
   balance_cent BIGINT NULL COMMENT '余额，单位为分；仅FUND资金账户使用',
@@ -23,6 +24,7 @@ CREATE TABLE asset_account (
   deleted TINYINT NULL DEFAULT 0 COMMENT '删除标识，0存在1删除',
   PRIMARY KEY (id),
   KEY idx_asset_account_user_type_deleted (user_id, account_type, deleted),
+  KEY idx_asset_account_user_type_deleted_order (user_id, account_type, deleted, sort_order, id),
   CONSTRAINT fk_asset_account_user FOREIGN KEY (user_id) REFERENCES app_user (id),
   CONSTRAINT ck_asset_account_name CHECK (
     CHAR_LENGTH(TRIM(account_name)) BETWEEN 1 AND 20
@@ -57,4 +59,4 @@ CREATE TABLE asset_account (
       AND current_debt_cent <= total_limit_cent
     )
   )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='资产账户表，统一保存资金账户和信贷账户';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='资产账户表，统一保存资金账户和信贷账户';

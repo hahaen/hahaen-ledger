@@ -130,7 +130,7 @@ asset_account (1) ──< transaction_detail
 - 账单类型枚举、金额为整数分且范围合法、`amount <= original_amount`。
 - 类型与账户字段的必填/置空关系，转账/还款转出与转入账户不能相同。
 - `has_refund`、`deleted` 取值范围及空白编号/幂等键检查。
-- 所有表/字段中文注释和 InnoDB、utf8mb4 存储属性。
+- 所有表/字段中文注释和 InnoDB、utf8mb4/utf8mb4_general_ci 存储属性。
 
 ### Service 保证
 

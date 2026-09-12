@@ -12,15 +12,14 @@
 
 ## 当前 Migration 与业务表设计
 
-当前迁移目录包含 `V1__init_schema.sql`、`V2__create_app_file_table.sql`、`V3__create_asset_account_table.sql`、`V4__create_transaction_detail_and_refund_tables.sql` 和 `V5__add_asset_account_sort_order.sql`。V1–V5 是代码仓库中的正式结构定义；某个环境是否已成功执行，必须查询该环境的 `flyway_schema_history` 和 `information_schema`，本目录不把文件存在等同于数据库已落地。
+当前迁移目录包含 `V1__init_schema.sql`、`V2__create_app_file_table.sql`、`V3__create_asset_account_table.sql` 和 `V4__create_transaction_detail_and_refund_tables.sql`。V1–V4 是代码仓库中的正式结构定义；某个环境是否已成功执行，必须查询该环境的 `flyway_schema_history` 和 `information_schema`，本目录不把文件存在等同于数据库已落地。
 
 | 版本 | 当前表 | 用途 |
 | --- | --- | --- |
-| V1 | `app_user`、`user_identity`、`app_login_log` | 用户主数据、第三方身份和登录审计 |
-| V2 | `app_file` | MinIO 文件元数据和头像关联 |
-| V3 | `asset_account` | 资金账户与信贷账户 |
+| V1 | `app_user`、`user_identity`、`app_login_log` | 用户主数据、第三方身份和登录审计，用户表直接保存头像对象 Key |
+| V2 | `app_file` | MinIO 文件元数据和头像去重索引 |
+| V3 | `asset_account` | 资金账户与信贷账户及同类账户展示顺序 |
 | V4 | `transaction_detail`、`transaction_refund` | 四类账单和退款记录 |
-| V5 | `asset_account.sort_order` | 同类资产账户展示顺序 |
 
 - [`asset-account.md`](asset-account.md)：V3 统一资产账户表，区分资金账户和信贷账户，并说明数据库约束与当前 Service 校验的差异。
 - [`transaction-detail-refund.md`](transaction-detail-refund.md)：V4 账单明细主表与独立退款记录表，说明四类账单字段规则、当前实现和退款事务口径。
@@ -28,4 +27,4 @@
 
 ## 关联说明
 
-表分类和主表/关联表的判断见 [`table-classification.md`](table-classification.md)。新增字段时需要同时核对 Migration、Entity、DTO/VO、TypeScript、测试和迭代档案。
+表分类和主表/关联表的判断见 [`table-classification.md`](table-classification.md)。所有业务表统一使用 `utf8mb4` 字符集和 `utf8mb4_general_ci` 排序规则。新增字段时需要同时核对 Migration、Entity、DTO/VO、TypeScript、测试和迭代档案。
