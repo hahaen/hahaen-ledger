@@ -54,7 +54,7 @@ pipeline {
                         test -d "$NGINX_ROOT"
                         test -w "$NGINX_ROOT"
                         find "$NGINX_ROOT" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
-                        cp -a "$DEPLOY_DIR/app/dist/build/h5/." "$NGINX_ROOT/"
+                        cp -R "$DEPLOY_DIR/app/dist/build/h5/." "$NGINX_ROOT/"
                         docker exec nginx nginx -t
                         docker exec nginx nginx -s reload
 REMOTE_SCRIPT

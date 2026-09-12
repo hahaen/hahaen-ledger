@@ -363,6 +363,7 @@ PASS：恢复首页最近记账日期行的设计稿边距、字号和单行收�
 
 - 根因：H5 编译已完成，但流水线以 `jenkins-deploy` 用户对 root 所有的 `/home/hahaen/nginx/html` 执行 `install -d`。该命令会尝试设置目录权限，因非所有者而失败，静态产物未被删除或复制。
 - 修正：保留既有 ACL 写入模型，将该步骤改为 `test -d` 和 `test -w`，仅校验目录存在与可写，不再尝试改变权限。
+- 追加根因：目录预检修复已执行，但 `cp -a` 尝试保留 root 所有目标目录的时间戳，仍以 `Operation not permitted` 退出；改为不保留属性的 `cp -R`。
 - PARTIAL：代码差异与空白检查完成；推送后 Jenkins 重新部署、Nginx 重载和公网 H5/API 访问仍待实际验证。完整档案：`docs/10-iterations/2026/09/h5-static-deploy-permission/`。
 
 ## 数据库测试初始化基线（2026-09-12）

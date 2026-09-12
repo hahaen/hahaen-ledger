@@ -458,8 +458,8 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 | 范围 | 状态 | 证据/限制 |
 | --- | --- | --- |
 | H5 编译与产物检查 | PASS（Jenkins 构建日志） | `pnpm install`、类型检查和 `uni build -p h5 --mode production` 均完成；`dist/build/h5` 存在检查通过。 |
-| Nginx 静态目录发布 | FAIL（部署前修复） | `install -d /home/hahaen/nginx/html` 尝试修改 root 所有目录的权限，`jenkins-deploy` 收到 `Operation not permitted`，清空、复制和 Nginx 重载均未执行。 |
-| 修复后端到端 H5 发布 | NOT_RUN | 流水线改为只检查目录存在和可写；尚待推送到部署分支并在 Jenkins 重新构建验证。 |
+| Nginx 静态目录发布 | PARTIAL | 首次 `install -d` 失败已改为目录存在/可写检查；后续构建越过该步骤，但 `cp -a` 又因尝试保留 root 所有目标目录时间戳失败，现改为 `cp -R`。 |
+| 修复后端到端 H5 发布 | NOT_RUN | 尚待 Jenkins 拉取 `cp -R` 修复后重新构建，验证复制、Nginx 重载与公网访问。 |
 
 ## 2026-09-11 追加：个人中心资料与密码管理
 
