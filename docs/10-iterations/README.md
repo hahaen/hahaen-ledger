@@ -22,6 +22,11 @@
 
 历史档案可以记录当时的缺口，但不能将后续实现倒灌成当时已完成；共享环境执行过的 Migration 不修改、不删除，结构变化通过新的 Migration 记录。
 
+- [2026-09-12 后端日志目录](2026/09/backend-log-directories/README.md)：为 dev 与 prod Profile 配置独立的文件日志目录。
+
+- [2026-09-12 登录注册协议勾选与协议页面](2026/09/auth-legal-agreements/README.md)：登录与注册提交前同意协议，新增未登录可读的用户协议和隐私协议页面。
+- [2026-09-12 账号字符限制与注册昵称默认值](2026/09/account-alphanumeric-nickname-default/README.md)：账号仅限英文字母和数字，首次注册昵称默认使用账号。
+
 - [2026-09-08 核心页面原型与流程修复](2026/09/core-pages-prototype/README.md)：保留资产/我的页，补齐记账、还款编辑、退款及状态联动。
 - [2026-09 账单详情退款弹窗设计对齐](2026/09/transaction-refund-modal-design/README.md)：按参考稿统一退款弹层布局，保持既有退款业务链路。
 - 该迭代后续补充修复退款记录删除成功后的详情刷新和页面状态问题，详见同一档案的追加需求与验证记录。

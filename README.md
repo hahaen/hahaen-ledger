@@ -37,6 +37,8 @@ java -Dio.netty.noUnsafe=true -jar target/hahaen-ledger-server-1.0.0.jar
 
 `application.yml` 默认激活 `dev` Profile；如需切换环境，设置 `SPRING_PROFILES_ACTIVE`，例如生产环境设置为 `prod`。
 
+后端文件日志目录随 Profile 隔离：`dev` 写入 `D:/github/log/haji`，`prod` 写入 `/home/hahaen/log/haji`。应用进程须对对应目录具备创建和写入权限；控制台日志仍会保留。
+
 应用启动时 Flyway 自动执行 `server/src/main/resources/db/migration/`；当前开发阶段完整数据库初始化基线为唯一的 `V1__init_schema.sql`，不需要手工导入另一份 Schema。DEV 的 MinIO 原始 `9001` 是 Console，SDK/API 使用已验证的 `9000`。Swagger/OpenAPI 地址：`http://127.0.0.1:8080/swagger-ui.html`。
 
 ## 前端启动与构建

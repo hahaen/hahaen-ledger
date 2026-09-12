@@ -1,5 +1,6 @@
 export const H5_LOGIN_PATH = '/pages/auth/login/login'
 export const H5_REGISTER_PATH = '/pages/auth/register/register'
+export const H5_LEGAL_PATHS = ['/pages/legal/agreement/agreement', '/pages/legal/privacy/privacy'] as const
 
 type H5Location = { hash: string; pathname: string }
 type H5Window = {
@@ -21,7 +22,7 @@ export function currentH5Path(location: H5Location) {
 
 export function isH5AuthPath(path: string) {
   const normalizedPath = normalizePath(path)
-  return normalizedPath === H5_LOGIN_PATH || normalizedPath === H5_REGISTER_PATH
+  return normalizedPath === H5_LOGIN_PATH || normalizedPath === H5_REGISTER_PATH || H5_LEGAL_PATHS.includes(normalizedPath as typeof H5_LEGAL_PATHS[number])
 }
 
 export type H5AuthGuard = {

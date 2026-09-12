@@ -123,7 +123,7 @@ onPullDownRefresh(async () => { await load(true); uni.stopPullDownRefresh() })
       <view v-if="recentLoading" class="list-empty">正在加载账单…</view>
       <view v-else-if="recentLoadError && !groups.length" class="list-empty">暂时无法加载账单<button class="text-button" @click="retry">重试</button></view>
       <template v-else>
-        <view v-if="!groups.length" class="list-empty"><view class="empty-art" />暂无记账记录<button class="text-button" @click="newEntry">添加第一笔记账</button><button v-if="hasMore" class="text-button" @click="loadMore">加载更早账单</button></view>
+        <view v-if="!groups.length" class="list-empty"><view class="empty-art" />暂无记账记录<button v-if="hasMore" class="text-button" @click="loadMore">加载更早账单</button></view>
         <view v-for="group in groups" :key="group[0]" class="date-group">
           <view class="date-heading"><text class="date-title">{{ dateTitle(group[0]) }}</text><view class="date-flow"><MoneyDisplay class="income" prefix="收 " :value="dayTotal(group[1], 'INCOME')" /><MoneyDisplay class="expense" prefix="支 " :value="dayTotal(group[1], 'EXPENSE')" /></view></view>
           <TransactionRow v-for="transaction in group[1]" :key="transaction.id" :transaction="transaction" @open="open" />

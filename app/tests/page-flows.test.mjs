@@ -358,7 +358,7 @@ test('个人中心首次设置密码随资料保存提交，展示成功弹层 0
     '../../utils/api': { request: async (url, options = {}) => {
       requests.push({ url, options })
       if (url === '/api/app/user/profile' && !options.method) return { userId: '7', nickname: '账本主人', loginAccount: '', passwordConfigured: false, avatarAuthorized: true }
-      return { userId: '7', nickname: '新昵称', loginAccount: 'first.user', passwordConfigured: true, avatarAuthorized: true }
+      return { userId: '7', nickname: '新昵称', loginAccount: 'firstuser', passwordConfigured: true, avatarAuthorized: true }
     } },
     '../../utils/passwordCrypto': { encryptPassword: async value => `encrypted:${value}` },
     '../../utils/entry': entryUtils,
@@ -366,10 +366,10 @@ test('个人中心首次设置密码随资料保存提交，展示成功弹层 0
 
   await hooks.load()
   page.nickname.value = '新昵称'
-  page.loginAccount.value = ' First.User '
+  page.loginAccount.value = ' FirstUser '
   page.firstPassword.value = 'password-8'
   await page.saveProfile()
-  assert.deepEqual(requests[1], { url: '/api/app/user/profile', options: { method: 'PUT', data: { nickname: '新昵称', loginAccount: 'first.user', encryptedPassword: 'encrypted:password-8' } } })
+  assert.deepEqual(requests[1], { url: '/api/app/user/profile', options: { method: 'PUT', data: { nickname: '新昵称', loginAccount: 'firstuser', encryptedPassword: 'encrypted:password-8' } } })
   assert.equal(page.passwordConfigured.value, true)
   assert.equal(page.accountLocked.value, true)
   assert.equal(page.passwordOpen.value, false)
@@ -390,7 +390,7 @@ test('个人中心新头像上传后立即本地预览，点击保存才关联�
     '../../utils/file': { uploadAvatar: async () => ({ fileId: '18', viewUrl: 'new-avatar-preview', objectKey: 'avatars/7/new.jpg' }), currentAvatar: async () => null },
     '../../utils/api': { request: async (url, options = {}) => {
       requests.push({ url, options })
-      return { userId: '7', nickname: '新昵称', loginAccount: 'fixed.account', passwordConfigured: true, avatarAuthorized: true, avatarFileUrl: 'avatars/7/new.jpg' }
+      return { userId: '7', nickname: '新昵称', loginAccount: 'fixedaccount', passwordConfigured: true, avatarAuthorized: true, avatarFileUrl: 'avatars/7/new.jpg' }
     } },
     '../../utils/passwordCrypto': { encryptPassword: async value => `encrypted:${value}` },
     '../../utils/entry': entryUtils,
@@ -404,7 +404,7 @@ test('个人中心新头像上传后立即本地预览，点击保存才关联�
   assert.equal(page.pendingAvatar.value.fileId, '18')
   assert.equal(requests.length, 0)
   page.nickname.value = '新昵称'
-  page.loginAccount.value = 'fixed.account'
+  page.loginAccount.value = 'fixedaccount'
   page.passwordConfigured.value = true
   await page.saveProfile()
 
@@ -499,4 +499,35 @@ test('个人中心头像按钮动态创建原生 H5 文件输入框', async () =
   }
   assert.match(source, /document\.createElement\('input'\)/)
   assert.doesNotMatch(source, /profile-avatar-file-input/)
+})
+
+test('登录和注册均须先同意两份协议，且协议页可在未登录状态访问', async () => {
+  const source = await readFile(new URL('../src/components/AuthPage.vue', import.meta.url), 'utf8')
+  const guard = run(await readFile(new URL('../src/utils/h5AuthGuard.ts', import.meta.url), 'utf8'))
+  const pages = JSON.parse(await readFile(new URL('../src/pages.json', import.meta.url), 'utf8'))
+  const legalDocuments = await readFile(new URL('../src/constants/legalDocuments.ts', import.meta.url), 'utf8')
+
+  assert.match(source, /const agreementAccepted = ref\(false\)/)
+  assert.match(source, /agreementAccepted\.value/)
+  assert.match(source, /请先阅读并同意用户协议和隐私协议/)
+  assert.match(source, /openLegalDocument\('agreement'\)/)
+  assert.match(source, /openLegalDocument\('privacy'\)/)
+  assert.equal(guard.isH5AuthPath('/pages/legal/agreement/agreement'), true)
+  assert.equal(guard.isH5AuthPath('/pages/legal/privacy/privacy'), true)
+  assert.ok(pages.pages.some(page => page.path === 'pages/legal/agreement/agreement'))
+  assert.ok(pages.pages.some(page => page.path === 'pages/legal/privacy/privacy'))
+  assert.match(legalDocuments, /账号与认证信息/)
+  assert.match(legalDocuments, /安全与运行信息/)
+  assert.match(legalDocuments, /不会出售你的个人信息/)
+})
+
+test('认证与个人中心账号仅保留英文字母和数字', async () => {
+  const authSource = await readFile(new URL('../src/components/AuthPage.vue', import.meta.url), 'utf8')
+  const profileSource = await readFile(new URL('../src/pages/profile/profile.vue', import.meta.url), 'utf8')
+
+  assert.match(authSource, /\^\[a-zA-Z0-9\]\{2,64\}\$/)
+  assert.match(authSource, /replace\(\/\[\^a-zA-Z0-9\]\/g, ''\)/)
+  assert.match(profileSource, /\^\[a-z0-9\]\{2,64\}\$/)
+  assert.match(profileSource, /replace\(\/\[\^a-zA-Z0-9\]\/g, ''\)/)
+  assert.match(profileSource, /仅支持 2-64 位英文字母或数字/)
 })

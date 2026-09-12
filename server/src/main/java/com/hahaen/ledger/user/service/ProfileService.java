@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 @Service
 @RequiredArgsConstructor
 public class ProfileService {
-    private static final Pattern ACCOUNT_PATTERN = Pattern.compile("[a-z0-9][a-z0-9._-]{1,63}");
+    private static final Pattern ACCOUNT_PATTERN = Pattern.compile("[a-z0-9]{2,64}");
     private static final int MAX_PASSWORD_BYTES = 72;
 
     private final AppUserMapper userMapper;
@@ -159,7 +159,7 @@ public class ProfileService {
     private static String normalizeAccount(String value) {
         String account = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
         if (!ACCOUNT_PATTERN.matcher(account).matches()) {
-            throw new BusinessException("ACCOUNT_INVALID", "账号需为 2-64 位字母、数字或 ._- 组合");
+            throw new BusinessException("ACCOUNT_INVALID", "账号需为 2-64 位英文字母或数字");
         }
         return account;
     }

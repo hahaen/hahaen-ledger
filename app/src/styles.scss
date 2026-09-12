@@ -63,6 +63,29 @@
 .about-setting-copy { flex:1; }.about-setting-copy > text:last-child { max-width:100%; }
 @media (max-width:340px) { .help-card { min-width:0; padding-left:6px; padding-right:6px; }.help-card-copy { white-space:normal; }.about-note { flex-wrap:wrap; }.about-feedback { margin-left:42px; } }
 
+/* 登录协议勾选与协议正文页复用关于与帮助的导航、引导卡和内容卡层级。 */
+.auth-agreement { display:flex; align-items:flex-start; gap:7px; min-height:32px; padding:9px 2px 0; }
+.auth-agreement-check { width:17px; height:17px; min-height:17px; flex:0 0 auto; display:grid; place-items:center; margin-top:1px; padding:0; border:1.5px solid #b5c7c2; border-radius:5px; color:#fff; background:#fff; font-size:11px; font-weight:800; line-height:1; }
+.auth-agreement-check.checked { border-color:var(--primary); background:var(--primary); }
+.auth-agreement-copy { display:block; flex:1; color:#8b9693; font-size:10px; line-height:1.65; }
+.auth-agreement-link { display:inline; width:auto; min-height:0; padding:0; border:0; color:var(--primary-dark); background:transparent; font-size:10px; font-weight:700; line-height:1.65; vertical-align:baseline; }
+.auth-agreement-link::after { display:none; border:0; }
+.legal-page { background:linear-gradient(180deg,#f5faf8 0%,var(--background) 42%); }
+.legal-hero { min-height:172px; }
+.legal-version { display:flex; align-items:center; gap:7px; margin:13px 3px 0; color:#8ea49e; font-size:10px; }
+.legal-version-dot { width:6px; height:6px; border-radius:50%; background:var(--primary); box-shadow:0 0 0 4px rgba(73,173,156,.11); }
+.legal-section { margin-top:21px; }
+.legal-content-card { overflow:hidden; padding:15px 14px; border:1px solid #edf1ef; border-radius:16px; background:rgba(255,255,255,.95); box-shadow:0 6px 16px rgba(49,76,71,.045); }
+.legal-paragraph { display:block; color:#5e706b; font-size:12px; line-height:1.82; white-space:pre-wrap; }
+.legal-paragraph + .legal-paragraph { margin-top:11px; }
+.legal-list { display:flex; flex-direction:column; gap:11px; }
+.legal-paragraph + .legal-list { margin-top:12px; }
+.legal-list-item { display:flex; align-items:flex-start; gap:8px; color:#5e706b; font-size:12px; line-height:1.78; }
+.legal-list-index { width:18px; height:18px; flex:0 0 auto; display:grid; place-items:center; margin-top:2px; border-radius:6px; color:var(--primary-dark); background:#eaf7f3; font-size:10px; font-weight:750; line-height:1; }
+.legal-list-item > text:last-child { flex:1; min-width:0; }
+.legal-note { margin-top:22px; }
+@media (max-width:340px) { .auth-agreement { gap:6px; }.auth-agreement-copy, .auth-agreement-link { font-size:9px; }.legal-content-card { padding:13px 12px; }.legal-paragraph, .legal-list-item { font-size:11px; } }
+
 /* 个人中心沿用关于与帮助的页头和系统圆角弹层。 */
 .profile-page { min-height:100vh; padding-bottom:calc(100px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,#f5faf8 0%,var(--background) 42%); }
 .profile-nav { margin-bottom:16px; }

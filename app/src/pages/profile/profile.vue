@@ -15,7 +15,7 @@ type Profile = {
   avatarFileUrl?: string
 }
 
-const ACCOUNT_PATTERN = /^[a-z0-9][a-z0-9._-]{1,63}$/
+const ACCOUNT_PATTERN = /^[a-z0-9]{2,64}$/
 const ledger = useLedger()
 const avatarUrl = ref('/static/brand.png')
 const avatarConfigured = ref(false)
@@ -53,8 +53,12 @@ function validateProfile(): string | undefined {
 
 function validateAccount(): string | undefined {
   if (!normalizedAccount()) return '请输入账号'
-  if (!ACCOUNT_PATTERN.test(normalizedAccount())) return '账号需为 2-64 位字母、数字或 ._- 组合'
+  if (!ACCOUNT_PATTERN.test(normalizedAccount())) return '账号需为 2-64 位英文字母或数字'
   return undefined
+}
+
+function filterAccount() {
+  loginAccount.value = loginAccount.value.replace(/[^a-zA-Z0-9]/g, '')
 }
 
 function validatePassword(password: string): string | undefined {
@@ -266,8 +270,8 @@ onBeforeUnmount(() => {
         </view>
         <view class="profile-field">
           <view class="profile-field-label-row"><text class="profile-field-label">账号 <text class="profile-required">必填</text></text><text v-if="accountLocked" class="profile-field-lock">已设置，不可修改</text></view>
-          <input v-model="loginAccount" :disabled="accountLocked" maxlength="64" class="profile-field-input" :class="{ disabled: accountLocked }" placeholder="请输入登录账号" aria-label="账号" />
-          <text v-if="!accountLocked" class="profile-field-tip">首次设置后不可修改。</text>
+          <input v-model="loginAccount" :disabled="accountLocked" maxlength="64" class="profile-field-input" :class="{ disabled: accountLocked }" placeholder="请输入英文字母或数字" aria-label="账号" @input="filterAccount" />
+          <text v-if="!accountLocked" class="profile-field-tip">仅支持 2-64 位英文字母或数字，首次设置后不可修改。</text>
         </view>
         <view v-if="!passwordConfigured" class="profile-field">
           <text class="profile-field-label">密码 <text class="profile-required">必填</text></text>

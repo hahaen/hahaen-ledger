@@ -27,6 +27,8 @@ hahaen:
     secret-key: ${MINIO_SECRET_KEY}
     bucket: ${MINIO_BUCKET}
 logging:
+  file:
+    path: /home/hahaen/log/haji
   level:
     root: INFO
     com.hahaen.ledger: INFO

@@ -74,13 +74,13 @@ class ProfileServiceTest {
         AppUserMapper users = mock(AppUserMapper.class);
         TransactionDetailMapper transactions = mock(TransactionDetailMapper.class);
         AppUser user = activeUser();
-        user.setLoginAccount("fixed.account");
+        user.setLoginAccount("fixedaccount");
         when(users.selectOne(any())).thenReturn(user);
 
         try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
             current.when(CurrentUser::id).thenReturn(7L);
             BusinessException error = assertThrows(BusinessException.class,
-                    () -> service(users, transactions).updateProfile(new ProfileUpdateRequest("新昵称", "other.account", null, null)));
+                    () -> service(users, transactions).updateProfile(new ProfileUpdateRequest("新昵称", "otheraccount", null, null)));
             assertEquals("ACCOUNT_IMMUTABLE", error.getErrorCode());
         }
         verify(users, never()).updateById(any(AppUser.class));
@@ -91,7 +91,7 @@ class ProfileServiceTest {
         AppUserMapper users = mock(AppUserMapper.class);
         TransactionDetailMapper transactions = mock(TransactionDetailMapper.class);
         AppUser user = activeUser();
-        user.setLoginAccount("fixed.account");
+        user.setLoginAccount("fixedaccount");
         user.setPasswordHash("existing-hash");
         when(users.selectOne(any())).thenReturn(user);
         when(users.updateById(any(AppUser.class))).thenReturn(1);
@@ -102,13 +102,13 @@ class ProfileServiceTest {
             current.when(CurrentUser::id).thenReturn(7L);
             stp.when(StpUtil::isLogin).thenReturn(false);
             assertEquals("新昵称", service(users, transactions)
-                    .updateProfile(new ProfileUpdateRequest(" 新昵称 ", "fixed.account", null, null)).nickname());
+                    .updateProfile(new ProfileUpdateRequest(" 新昵称 ", "fixedaccount", null, null)).nickname());
         }
 
         ArgumentCaptor<AppUser> saved = ArgumentCaptor.forClass(AppUser.class);
         verify(users).updateById(saved.capture());
         assertEquals("新昵称", saved.getValue().getNickname());
-        assertEquals("fixed.account", saved.getValue().getLoginAccount());
+        assertEquals("fixedaccount", saved.getValue().getLoginAccount());
     }
 
     @Test
@@ -127,12 +127,12 @@ class ProfileServiceTest {
         try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
             current.when(CurrentUser::id).thenReturn(7L);
             new ProfileService(users, mock(AppFileMapper.class), transactions, encoder, crypto)
-                    .updatePassword(new ProfilePasswordUpdateRequest("encrypted", " First.User "));
+                    .updatePassword(new ProfilePasswordUpdateRequest("encrypted", " FirstUser "));
         }
 
         ArgumentCaptor<AppUser> saved = ArgumentCaptor.forClass(AppUser.class);
         verify(users).updateById(saved.capture());
-        assertEquals("first.user", saved.getValue().getLoginAccount());
+        assertEquals("firstuser", saved.getValue().getLoginAccount());
         assertEquals("hashed-password", saved.getValue().getPasswordHash());
     }
 
@@ -155,13 +155,13 @@ class ProfileServiceTest {
             current.when(CurrentUser::id).thenReturn(7L);
             stp.when(StpUtil::isLogin).thenReturn(false);
             assertEquals(true, new ProfileService(users, mock(AppFileMapper.class), transactions, encoder, crypto)
-                    .updateProfile(new ProfileUpdateRequest(" 新昵称 ", " First.User ", "encrypted", null))
+                    .updateProfile(new ProfileUpdateRequest(" 新昵称 ", " FirstUser ", "encrypted", null))
                     .passwordConfigured());
         }
 
         ArgumentCaptor<AppUser> saved = ArgumentCaptor.forClass(AppUser.class);
         verify(users).updateById(saved.capture());
-        assertEquals("first.user", saved.getValue().getLoginAccount());
+        assertEquals("firstuser", saved.getValue().getLoginAccount());
         assertEquals("hashed-password", saved.getValue().getPasswordHash());
     }
 
@@ -176,9 +176,27 @@ class ProfileServiceTest {
         try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
             current.when(CurrentUser::id).thenReturn(7L);
             BusinessException error = assertThrows(BusinessException.class,
-                    () -> service(users, transactions).updatePassword(new ProfilePasswordUpdateRequest("encrypted", "taken.user")));
+                    () -> service(users, transactions).updatePassword(new ProfilePasswordUpdateRequest("encrypted", "takenuser")));
             assertEquals("ACCOUNT_EXISTS", error.getErrorCode());
         }
+        verify(users, never()).updateById(any(AppUser.class));
+    }
+
+    @Test
+    void rejectsChineseAndPunctuationWhenSettingTheFirstAccount() {
+        AppUserMapper users = mock(AppUserMapper.class);
+        TransactionDetailMapper transactions = mock(TransactionDetailMapper.class);
+        when(users.selectOne(any())).thenReturn(activeUser());
+
+        try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
+            current.when(CurrentUser::id).thenReturn(7L);
+            for (String account : new String[]{"中文账号", "first.user", "first-user", "first_user"}) {
+                BusinessException error = assertThrows(BusinessException.class,
+                        () -> service(users, transactions).updatePassword(new ProfilePasswordUpdateRequest("encrypted", account)));
+                assertEquals("ACCOUNT_INVALID", error.getErrorCode());
+            }
+        }
+
         verify(users, never()).updateById(any(AppUser.class));
     }
 
@@ -188,7 +206,7 @@ class ProfileServiceTest {
         AppFileMapper files = mock(AppFileMapper.class);
         TransactionDetailMapper transactions = mock(TransactionDetailMapper.class);
         AppUser user = activeUser();
-        user.setLoginAccount("fixed.account");
+        user.setLoginAccount("fixedaccount");
         user.setPasswordHash("existing-hash");
         AppFile avatar = new AppFile();
         avatar.setId(18L);
@@ -207,7 +225,7 @@ class ProfileServiceTest {
             current.when(CurrentUser::id).thenReturn(7L);
             stp.when(StpUtil::isLogin).thenReturn(false);
             service(users, files, transactions).updateProfile(
-                    new ProfileUpdateRequest("新昵称", "fixed.account", null, "18"));
+                    new ProfileUpdateRequest("新昵称", "fixedaccount", null, "18"));
         }
 
         ArgumentCaptor<AppUser> saved = ArgumentCaptor.forClass(AppUser.class);

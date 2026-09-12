@@ -28,6 +28,8 @@ hahaen:
     secret-key: rootroot
     bucket: haji-dev
 logging:
+  file:
+    path: D:/github/log/haji
   level:
     root: INFO
     com.hahaen.ledger: INFO

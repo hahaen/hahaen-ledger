@@ -1,6 +1,6 @@
 # 当前验证矩阵
 
-更新日期：2026-09-08。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
+更新日期：2026-09-12。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
 
 ## 当前实现与静态核对
 
@@ -15,8 +15,12 @@
 | 账户名称规则 | V3 无数据库唯一索引；`AccountService.assertNameAvailable` 校验有效账户重名 | PARTIAL（存在并发唯一性竞态） |
 | 账户余额/欠款直接编辑 | `AccountService.update` 直接更新账户金额，没有余额补齐流水模型 | PARTIAL（缺少可追溯校准流水） |
 | H5 认证接口 | `AuthController`、`H5AuthService`、`CaptchaService`、`PasswordCryptoService` | PASS（代码存在） |
+| 后端 Profile 文件日志目录 | `application-dev.yml` 与 `application-prod.yml` 分别通过 `logging.file.path` 设置开发、生产目录；`LoggingProfileConfigTest` 断言通过 | PARTIAL（真实环境文件写入未执行） |
+| H5 与个人中心账号规则 | `AuthPage.vue`、`profile.vue`、`H5AuthService`、`ProfileService`；账号仅 2–64 位英文字母或数字，前端过滤且后端拒绝绕过 | PASS（前后端测试） |
+| 首次注册默认昵称 | `H5AuthService.register` 使用规范化账号设置昵称 | PASS（`H5AuthServiceTest`） |
 | 登录/注册密码显隐控件 | `app/src/components/AuthPage.vue`、`app/src/prototype.scss`；本机 H5 登录/注册页均可点击共享组件右侧 CSS 小眼睛切换掩码/明文 | PASS（页面级验证） |
 | 登录/注册页说明文字 | `AuthPage.vue` 已移除微信自动登录与注册资料说明文字，仅保留认证字段和操作入口 | PASS（静态核对） |
+| 登录/注册协议勾选与协议页 | `AuthPage.vue`、`LegalDocumentPage.vue`、`legalDocuments.ts`、`h5AuthGuard.ts`；未勾选不能提交，用户协议/隐私协议可未登录阅读 | PASS（前端流程回归） |
 | 微信小程序认证 | `app/src/stores/ledger.ts` 调用 `/api/app/auth/login`；当前后端无该路径 | FAIL（接口不匹配） |
 | H5 头像链路 | `FileController`、`AppFileService`、`MinioStorageService`、`utils/file.ts` | PARTIAL（文件头识别实际 JPEG/PNG/WebP/GIF 类型，不信任文件名/MIME；真实对象上传未在本次执行） |
 | 账单附件 | Schema 预留 `TRANSACTION_ATTACHMENT`，当前业务页面/Service 未开放 | NOT_RUN |
@@ -39,6 +43,25 @@
 | H5 有效会话刷新 | 未取得真实会话；未执行多路由刷新回归 | NOT_RUN |
 | 微信开发者工具人工验收 | 未执行 | NOT_RUN |
 | 320/375/414 逐区域设计截图 | 当前工作区未找到 `app/tests/evidence/*.png`；仅有视觉服务脚本和日志 | NOT_RUN |
+
+## 2026-09-12 追加：登录注册协议
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 协议勾选、链接与未登录路由 | PASS | `node --test tests/page-flows.test.mjs` 28/28；回归检查认证组件双重提交拦截、协议路由注册和 H5 未登录白名单。 |
+| 协议内容与实际处理范围 | PASS | 静态比对 H5 认证、验证码、登录日志、头像对象存储和现有前端能力；正文未将未开放的数据导出、账单附件、微信认证或广告统计写成当前能力。 |
+| 类型检查与双端构建 | PASS | `pnpm run typecheck`、设定本地 API 基址后的 H5/微信小程序生产构建均成功。 |
+| 320/375/414 与微信开发者工具视觉验收 | NOT_RUN | 本轮未产生真实运行时截图，不能由构建结果替代。 |
+
+## 2026-09-12 追加：账号字符限制与注册昵称默认值
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 登录、注册与个人中心账号校验 | PASS | 前端输入过滤和提交校验、后端两处服务校验统一为 2–64 位英文字母或数字；前端流程回归 29/29。 |
+| 后端越过前端保护 | PASS | `H5AuthServiceTest`、`ProfileServiceTest` 覆盖中文、点号、下划线、连字符拒绝；定向 12/12 与全量 40/40 均通过。 |
+| 首次注册昵称 | PASS | 注册服务保存规范化账号为用户昵称，后端单测验证 `Demo123` 保存为 `demo123`。 |
+| 类型检查与双端构建 | PASS | `pnpm run typecheck` 和注入本地 API 基址后的 H5/微信小程序生产构建通过。 |
+| 真实认证与个人中心操作 | NOT_RUN | 未取得真实登录会话和浏览器/微信开发者工具运行证据。 |
 
 ## 2026-09-12 追加：头像真实图片类型识别
 

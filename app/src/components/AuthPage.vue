@@ -17,12 +17,13 @@ const captchaImage = ref('')
 const captchaLoading = ref(false)
 const errorMessage = ref('')
 const submitting = ref(false)
+const agreementAccepted = ref(false)
 const ledger = useLedger()
 
 const isLogin = computed(() => props.mode === 'login')
-const accountValid = computed(() => /^[a-zA-Z0-9][a-zA-Z0-9._-]{1,63}$/.test(account.value.trim()))
+const accountValid = computed(() => /^[a-zA-Z0-9]{2,64}$/.test(account.value.trim()))
 const passwordValid = computed(() => password.value.length >= 8 && password.value.length <= 64)
-const canSubmit = computed(() => Boolean(accountValid.value && passwordValid.value && captcha.value.trim() && captchaId.value && !submitting.value))
+const canSubmit = computed(() => Boolean(accountValid.value && passwordValid.value && captcha.value.trim() && captchaId.value && agreementAccepted.value && !submitting.value))
 
 async function refreshCaptcha() {
   captcha.value = ''
@@ -46,6 +47,10 @@ async function loadCaptcha() {
 }
 
 async function submit() {
+  if (!agreementAccepted.value) {
+    errorMessage.value = '请先阅读并同意用户协议和隐私协议'
+    return
+  }
   if (!canSubmit.value) return
   submitting.value = true
   errorMessage.value = ''
@@ -76,6 +81,15 @@ function switchMode() {
   uni.navigateTo({ url: isLogin.value ? '/pages/auth/register/register' : '/pages/auth/login/login' })
 }
 
+function openLegalDocument(type: 'agreement' | 'privacy') {
+  uni.navigateTo({ url: type === 'agreement' ? '/pages/legal/agreement/agreement' : '/pages/legal/privacy/privacy' })
+}
+
+function filterAccount() {
+  account.value = account.value.replace(/[^a-zA-Z0-9]/g, '')
+  errorMessage.value = ''
+}
+
 onMounted(loadCaptcha)
 </script>
 
@@ -102,7 +116,7 @@ onMounted(loadCaptcha)
           <text class="auth-field-icon" aria-hidden="true">◎</text>
           <view class="auth-field-copy">
             <text class="auth-field-label">账号</text>
-            <input v-model="account" class="auth-input" type="text" autocomplete="username" placeholder="输入账号" @input="errorMessage = ''" />
+            <input v-model="account" class="auth-input" type="text" autocomplete="username" placeholder="输入英文字母或数字" @input="filterAccount" />
           </view>
         </view>
         <view class="auth-field">
@@ -132,9 +146,18 @@ onMounted(loadCaptcha)
             <text v-else class="captcha-art">{{ captchaLoading ? '加载中…' : '点击重试' }}</text>
           </button>
         </view>
+        <view class="auth-agreement">
+          <button class="auth-agreement-check" :class="{ checked: agreementAccepted }" :aria-checked="agreementAccepted" aria-label="同意用户协议和隐私协议" @click="agreementAccepted = !agreementAccepted"><text v-if="agreementAccepted">✓</text></button>
+          <view class="auth-agreement-copy">
+            <text>我已阅读并同意</text>
+            <button class="auth-agreement-link" @click.stop="openLegalDocument('agreement')">《用户协议》</button>
+            <text>和</text>
+            <button class="auth-agreement-link" @click.stop="openLegalDocument('privacy')">《隐私协议》</button>
+          </view>
+        </view>
         <text class="auth-code-status" :class="{ 'has-error': errorMessage }">
           <text class="auth-status-dot" aria-hidden="true" />
-          {{ errorMessage || (isLogin ? '请输入右侧图形验证码' : '密码需为 8-64 位字符') }}
+          {{ errorMessage || (!agreementAccepted ? '请先阅读并同意协议' : (isLogin ? '请输入右侧图形验证码' : '密码需为 8-64 位字符')) }}
         </text>
         <button class="auth-submit" :class="{ enabled: canSubmit }" :disabled="!canSubmit" @click="submit">{{ submitting ? (isLogin ? '登录中…' : '注册中…') : (isLogin ? '登录' : '注册') }}</button>
         <button class="auth-switch" @click="switchMode">{{ isLogin ? '还没有账号？去注册' : '已有账号？返回登录' }}</button>
