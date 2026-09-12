@@ -13,7 +13,7 @@ pipeline {
     }
 
     stages {
-        stage('haji-server') {
+        stage('部署哈记账后端') {
             steps {
                 withCredentials([
                     sshUserPrivateKey(

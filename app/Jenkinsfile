@@ -14,7 +14,7 @@ pipeline {
     }
 
     stages {
-        stage('部署前端 H5') {
+        stage('部署哈记账前端 H5') {
             steps {
                 withCredentials([
                     sshUserPrivateKey(
@@ -51,7 +51,8 @@ pipeline {
                             'corepack enable && corepack prepare pnpm@11 --activate && pnpm install --frozen-lockfile && pnpm run typecheck && pnpm run build:h5'
 
                         test -d "$DEPLOY_DIR/app/dist/build/h5"
-                        install -d "$NGINX_ROOT"
+                        test -d "$NGINX_ROOT"
+                        test -w "$NGINX_ROOT"
                         find "$NGINX_ROOT" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
                         cp -a "$DEPLOY_DIR/app/dist/build/h5/." "$NGINX_ROOT/"
                         docker exec nginx nginx -t

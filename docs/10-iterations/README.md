@@ -26,6 +26,8 @@
 
 - [2026-09-12 后端日志目录](2026/09/backend-log-directories/README.md)：为 dev 与 prod Profile 配置独立的文件日志目录。
 
+- [2026-09-13 H5 静态目录部署权限](2026/09/h5-static-deploy-permission/README.md)：避免 Jenkins 部署用户对既有 Nginx 静态目录执行无权限 chmod。
+
 - [2026-09-12 登录注册协议勾选与协议页面](2026/09/auth-legal-agreements/README.md)：登录与注册提交前同意协议，新增未登录可读的用户协议和隐私协议页面。
 - [2026-09-12 账号字符限制与注册昵称默认值](2026/09/account-alphanumeric-nickname-default/README.md)：账号仅限英文字母和数字，首次注册昵称默认使用账号。
 

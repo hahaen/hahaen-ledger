@@ -359,6 +359,12 @@ PASS：恢复首页最近记账日期行的设计稿边距、字号和单行收�
 - 开发 Profile 的文件日志目录为 `D:/github/log/haji`，生产 Profile 为 `/home/hahaen/log/haji`；控制台日志格式、级别和业务逻辑均保持不变。
 - PASS：Profile YAML 加载测试和后端全量测试均通过（41/41）。NOT_RUN：真实开发/生产环境的目录创建与文件写入，需在具备依赖服务和生产目录权限后验证。完整档案：`docs/10-iterations/2026/09/backend-log-directories/`。
 
+## H5 静态目录发布权限（2026-09-13）
+
+- 根因：H5 编译已完成，但流水线以 `jenkins-deploy` 用户对 root 所有的 `/home/hahaen/nginx/html` 执行 `install -d`。该命令会尝试设置目录权限，因非所有者而失败，静态产物未被删除或复制。
+- 修正：保留既有 ACL 写入模型，将该步骤改为 `test -d` 和 `test -w`，仅校验目录存在与可写，不再尝试改变权限。
+- PARTIAL：代码差异与空白检查完成；推送后 Jenkins 重新部署、Nginx 重载和公网 H5/API 访问仍待实际验证。完整档案：`docs/10-iterations/2026/09/h5-static-deploy-permission/`。
+
 ## 数据库测试初始化基线（2026-09-12）
 
 - 因开发数据库已清空，当前测试阶段所需的资产账户 `sort_order`、头像 `avatar_file_url` 和头像去重索引已直接写入现有基础迁移。
