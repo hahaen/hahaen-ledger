@@ -25,6 +25,12 @@ export function isH5AuthPath(path: string) {
   return normalizedPath === H5_LOGIN_PATH || normalizedPath === H5_REGISTER_PATH || H5_LEGAL_PATHS.includes(normalizedPath as typeof H5_LEGAL_PATHS[number])
 }
 
+/** 已恢复会话时，H5 的默认入口和认证表单统一回到首页。 */
+export function shouldRedirectAuthenticatedH5UserToHome(path: string) {
+  const normalizedPath = normalizePath(path)
+  return normalizedPath === '/' || normalizedPath === H5_LOGIN_PATH || normalizedPath === H5_REGISTER_PATH
+}
+
 export type H5AuthGuard = {
   enforce: () => void
   dispose: () => void

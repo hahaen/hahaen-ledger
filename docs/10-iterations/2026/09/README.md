@@ -30,6 +30,7 @@
 - [account-records-scroll](account-records-scroll/README.md)：资金账户和信贷账户详情固定筛选区，仅让日期与流水区域独立滚动（2026-09-10）。
 - [mine-logout-modal-design](mine-logout-modal-design/README.md)：我的页退出登录确认弹层与系统圆角样式统一（2026-09-11）。
 - [h5-logout-route-guard](h5-logout-route-guard/README.md)：H5 退出登录后仅允许访问登录页或注册页（2026-09-11）。
+- [h5-authenticated-entry-home](h5-authenticated-entry-home/README.md)：H5 已登录用户重新打开默认登录/注册入口时直接进入首页（2026-09-13）。
 - [profile-cumulative-days-from-first-transaction](profile-cumulative-days-from-first-transaction/README.md)：我的页累计记账天数改按最早有效账单的业务日期统计（2026-09-11）。
 - [mine-profile-center-list-alignment](mine-profile-center-list-alignment/README.md)：我的页个人中心与关于帮助、退出登录统一为同一设置列表行样式（2026-09-11）。
 - [profile-center-management](profile-center-management/README.md)：个人中心资料、首次账号设置和密码修改闭环（2026-09-11）。

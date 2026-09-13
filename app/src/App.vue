@@ -3,7 +3,7 @@ import { onLaunch } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { useLedger } from './stores/ledger'
 import { setAuthExpiredHandler } from './utils/api'
-import { currentH5Path, H5_LOGIN_PATH, installH5AuthGuard, isH5AuthPath } from './utils/h5AuthGuard'
+import { currentH5Path, H5_LOGIN_PATH, installH5AuthGuard, isH5AuthPath, shouldRedirectAuthenticatedH5UserToHome } from './utils/h5AuthGuard'
 const ledger = useLedger()
 const initialized = ref(false)
 
@@ -28,7 +28,7 @@ onLaunch(async () => {
   const isAuthPage = isH5AuthPath(currentPath)
   if (ledger.state.token) {
     // 业务数据由当前页面加载，避免首页 onShow 与应用启动阶段重复请求。
-    if (currentPath === '/') uni.reLaunch({ url: '/pages/index/index' })
+    if (shouldRedirectAuthenticatedH5UserToHome(currentPath)) uni.reLaunch({ url: '/pages/index/index' })
   } else if (!isAuthPage) {
     h5AuthGuard.enforce()
   }
