@@ -136,7 +136,7 @@ onShow(loadProfile)
           <text class="setting-arrow">›</text>
         </button>
         <button v-if="loggedIn" class="setting-item logout-item" :disabled="loggingOut" @click="openLogout">
-          <text class="setting-icon logout-icon">↪</text>
+          <text class="setting-icon logout-icon" style="transform: translateY(-3px);">⎆</text>
           <text class="setting-text">{{ loggingOut ? '退出中…' : '退出登录' }}</text>
           <text class="setting-arrow">›</text>
         </button>

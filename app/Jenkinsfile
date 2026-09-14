@@ -10,7 +10,7 @@ pipeline {
         DEPLOY_USER = 'jenkins-deploy'
         DEPLOY_DIR = '/home/hahaen/hahaen-ledger'
         GIT_REPOSITORY = 'https://gitee.com/ihahaen/hahaen-ledger.git'
-        NGINX_ROOT = '/home/hahaen/nginx/html'
+        NGINX_H5_ROOT = '/home/hahaen/nginx/html/haji'
     }
 
     stages {
@@ -34,7 +34,7 @@ pipeline {
                             -o UserKnownHostsFile="$known_hosts" \\
                             -o StrictHostKeyChecking=yes \\
                             -i "$SSH_KEY" "$SSH_USER@$DEPLOY_HOST" \\
-                            "DEPLOY_DIR='$DEPLOY_DIR' GIT_REPOSITORY='$GIT_REPOSITORY' NGINX_ROOT='$NGINX_ROOT' bash -s" <<'REMOTE_SCRIPT'
+                            "DEPLOY_DIR='$DEPLOY_DIR' GIT_REPOSITORY='$GIT_REPOSITORY' NGINX_H5_ROOT='$NGINX_H5_ROOT' bash -s" <<'REMOTE_SCRIPT'
                         set -eu
                         if [ ! -d "$DEPLOY_DIR/.git" ]; then
                             mkdir -p "$(dirname "$DEPLOY_DIR")"
@@ -51,10 +51,10 @@ pipeline {
                             'corepack enable && corepack prepare pnpm@11 --activate && pnpm install --frozen-lockfile && pnpm run typecheck && pnpm run build:h5'
 
                         test -d "$DEPLOY_DIR/app/dist/build/h5"
-                        test -d "$NGINX_ROOT"
-                        test -w "$NGINX_ROOT"
-                        find "$NGINX_ROOT" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
-                        cp -R "$DEPLOY_DIR/app/dist/build/h5/." "$NGINX_ROOT/"
+                        test -d "$NGINX_H5_ROOT"
+                        test -w "$NGINX_H5_ROOT"
+                        find "$NGINX_H5_ROOT" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+                        cp -R "$DEPLOY_DIR/app/dist/build/h5/." "$NGINX_H5_ROOT/"
                         docker exec nginx nginx -t
                         docker exec nginx nginx -s reload
 REMOTE_SCRIPT
