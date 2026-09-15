@@ -1,5 +1,21 @@
 # 第三轮工程审计报告
 
+## 2026-09-15 追加：微信小程序默认首页入口
+
+- `app/pages.json` 已将 `pages/index/index` 调整为首路由；`pages/first-use/first-use` 仍保留注册，但不再作为默认入口。
+- `app/src/App.vue` 已移除小程序启动登录成功和登录重试成功后的首次使用页跳转，微信静默登录、Token 恢复和失效重登逻辑保持不变。
+- PASS：前端流程回归 33/33、`pnpm run typecheck`、`pnpm run build:mp-weixin`；真实微信开发者工具重新打开后的人工画面确认仍为 NOT_RUN。完整档案：`docs/10-iterations/2026/09/default-mini-home/`。
+
+## 2026-09-15 追加：微信小程序默认登录链路修复
+
+- 小程序启动时通过 `uni.login` 获取一次性 code，前端请求 `/api/app/auth/wechat-mini/login`；后端通过微信 code2Session 换取身份，按 `user_identity` 创建或复用本地用户，再签发 Sa-Token。H5 账号、密码、验证码认证路径未修改。
+- `AppSecret` 只从服务端配置读取；`session_key`、`open_id` 不返回前端；登录失败记录 `WECHAT_MINI_PROGRAM` 审计日志且不记录 code 或微信原始错误信息。
+- 已定位并修复真实运行报错：微信 `jscode2session` 返回 `text/plain` 时，旧实现直接按 JSON 类型读取而触发 `UnknownContentTypeException`；现改为接收文本后由 Jackson 解析，并对配置缺失、响应解析异常写入不含 Secret/code 的安全日志。
+- 已补齐 Token 失效链路：小程序会重新获取微信 code、重新签发业务 Token，并只重试原业务请求一次；登录过程不再嵌套刷新请求，避免自动重登录死锁。
+- PASS：本机后端无效 code 探针返回正确 `WECHAT_CODE_INVALID`；后端 `mvn test` 47/47，前端回归 42/42，TypeScript 检查，H5 和微信小程序生产构建；本机 MySQL/Redis/MinIO/Flyway 运行探针通过。
+- PASS：微信开发者工具真实运行已取得有效 `wx.login` code；首次登录创建 1 条身份关联，重复登录成功记录归属同一系统用户；真实 Token 访问账户/资料接口 HTTP 200；删除临时 Token 映射后重新运行，成功登录数增加且新 Token 业务访问 HTTP 200。
+- 详细档案：`docs/10-iterations/2026/09/wechat-mini-auth/`。
+
 ## 2026-09-13 追加：H5 已登录默认入口回首页
 
 - 已识别到启动层只在根路径 `/` 存在有效 token 时进入首页，浏览器重新打开且仍落在登录页时会错误保留登录页；本轮将登录和注册入口纳入同一启动重定向规则。
@@ -50,7 +66,7 @@
 - 首页已支持月度切换、服务端汇总、有效退款金额、按日倒序分组、空/错/加载态；日历已改为周日开始的 42 格月历，支持今日/选中/非当月日期、月度标记和单日接口；资产页由后端返回净资产、总资产、总负债，并支持资金/信贷分组、账户表单、流水筛选和部分还款。
 - 新增 `AccountServiceTest`、`AssetServiceTest`、`TransactionServiceTest`、`HomeServiceTest`、`CalendarServiceTest` 和 `GlobalExceptionHandlerTest`；最终 Maven 18 tests 全部通过。
 - 独立端口 18080 在 `spring.flyway.enabled=false` 下启动成功，Redis PING、MinIO bucket 探针成功，未登录账户接口返回 401，OpenAPI 暴露本轮 12 个路径。
-- 本轮未执行 Flyway/DDL，Migration diff 为空；没有隔离测试用户和真实微信会话，因此真实账单写入、跨用户/并发事务、`information_schema` 对照和微信开发者工具验收保持 BLOCKED/NOT_RUN。
+- 本轮未执行 Flyway/DDL，Migration diff 为空；没有隔离测试用户，因此真实账单写入、跨用户/并发事务仍保持 BLOCKED/NOT_RUN；微信开发者工具登录、重复登录、业务 Token 和失效重登已单独取得运行证据。
 
 ## 本轮差异与待确认
 
@@ -98,7 +114,7 @@
 
 - 当前工作区真实执行 `server/mvn test`：18 tests，0 failures/errors/skipped；前端 `pnpm run typecheck`、H5 构建和微信小程序构建均通过。
 - 当前运行探针可访问 `/api-docs` 和 `/api/app/auth/captcha`，未登录访问 `/api/app/accounts` 返回 401；这只证明当前运行实例的协议探针，不证明真实 MySQL 账务事务。
-- 发现规范与当前代码的关键差异：小程序 Store 仍调用 `/api/app/auth/login`，但当前 `AuthController` 只有 H5 登录/注册路径；微信认证应标记为接口未闭环。
+- 2026-09-08 历史审计曾发现小程序 Store 调用 `/api/app/auth/login` 而后端没有对应路径；该缺口已修复为 `/api/app/auth/wechat-mini/login`，并在 2026-09-15 定位修复 `text/plain` 响应解析错误，真实微信联调随后已在本机开发者工具完成。
 - 发现 `asset_account` 数据库没有账户名称唯一索引，但当前 `AccountService` 对有效账户执行重名校验；当前规范已明确这是 Service 约束并列出并发竞态风险。
 - 发现 `docs/09-audit/README.md` 原引用不存在的 `second-round-audit.md`，已改为说明历史明细未保留；当前工作区也未找到报告曾引用的 `app/tests/evidence/*.png`，因此视觉截图不再作为本次可复核 PASS。
 - 当前无可复核的 MySQL 3306、Redis 6379、MinIO 9000 运行证据，Flyway history、`information_schema`、真实对象链路、有效 H5 会话刷新和微信开发者工具保持 `BLOCKED`/`NOT_RUN`。

@@ -5,10 +5,11 @@
 ## 当前认证
 
 - H5 使用账号、RSA-OAEP 加密后的密码、一次性 Redis 图形验证码和服务端 BCrypt 哈希；会话由 Sa-Token 管理，客户端通过 `X-Auth-Token` 传递。
+- 微信小程序使用一次性 `code` 服务端换取微信身份，按 `user_identity` 绑定本地用户并签发业务 token；`AppSecret` 只在服务端配置，`session_key`、`open_id` 不返回前端。
 - 验证码 Key 使用 `haji:auth:captcha:` 前缀，TTL 为 300 秒，校验时一次性消费。
 - H5 登录失败统一返回“账号或密码错误”类业务信息，并写入登录审计；日志不得出现密码、Token、私钥或微信 `open_id`。
 - 个人中心资料和密码更新只从当前 Sa-Token 会话取得用户；账号一经设置即不可改。首次账号与密码在同一事务中写入，账号经格式校验、应用层预检及 `app_user` 唯一索引保护；新密码仅接收 RSA-OAEP 密文，服务端解密后使用 BCrypt 哈希，日志不记录密码或密文。
-- 当前后端没有微信登录 Controller 路径，前端小程序分支调用旧 `/api/app/auth/login`；在该接口补齐前不能宣称微信认证已安全闭环。
+- 微信登录接口为 `/api/app/auth/wechat-mini/login`；真实微信 code、目标数据库和微信开发者工具仍需运行时验收，不能仅凭单测和构建宣称生产闭环。
 
 ## 数据归属与 IDOR
 

@@ -544,3 +544,51 @@ test('认证页使用独立认证密码载荷，个人中心仍维持 RSA 密文
   assert.doesNotMatch(cryptoSource, /plainPassword/)
   assert.match(profileSource, /encryptPassword\(newPassword\.value\)/)
 })
+
+test('微信小程序启动默认静默登录并进入首页，H5 继续使用账号密码认证', async () => {
+  const ledgerSource = await readFile(new URL('../src/stores/ledger.ts', import.meta.url), 'utf8')
+  const appSource = await readFile(new URL('../src/App.vue', import.meta.url), 'utf8')
+  const authSource = await readFile(new URL('../src/components/AuthPage.vue', import.meta.url), 'utf8')
+
+  assert.match(ledgerSource, /uni\.login\(\{ provider: 'weixin'/)
+  assert.match(ledgerSource, /\/api\/app\/auth\/wechat-mini\/login/)
+  assert.doesNotMatch(ledgerSource, /\/api\/app\/auth\/login/)
+  assert.match(appSource, /#ifdef MP-WEIXIN[\s\S]*?else await ledger\.login\(\)/)
+  assert.doesNotMatch(appSource, /first-use-complete/)
+  assert.match(appSource, /redirectMpAuthPageToHome/)
+  assert.match(appSource, /uni\.reLaunch\(\{ url: '\/pages\/index\/index' \}\)/)
+  assert.doesNotMatch(appSource, /reLaunch\(\{ url: '\/pages\/first-use\/first-use' \}\)/)
+  assert.match(authSource, /\/api\/app\/auth\/h5\/login/)
+})
+
+test('微信小程序默认首路由为首页，首次使用页仍保留为可选页面', async () => {
+  const pagesSource = await readFile(new URL('../src/pages.json', import.meta.url), 'utf8')
+  const pages = JSON.parse(pagesSource)
+  assert.equal(pages.pages[0].path, 'pages/index/index')
+  assert.ok(pages.pages.some(page => page.path === 'pages/first-use/first-use'))
+})
+
+test('会话失效后重新获取微信会话并只重试原请求一次', async () => {
+  const apiSource = await readFile(new URL('../src/utils/api.ts', import.meta.url), 'utf8')
+  let token = 'expired-token'
+  let recoveryCalls = 0
+  const requests = []
+  const uni = {
+    ...defaultUni,
+    getStorageSync: key => key === 'auth-token' ? token : '',
+    removeStorageSync: key => { if (key === 'auth-token') token = '' },
+    request: options => {
+      requests.push(options)
+      if (requests.length === 1) options.success({ statusCode: 401, data: { code: 1, message: '会话失效', data: null } })
+      else options.success({ statusCode: 200, data: { code: 0, message: 'success', data: { ok: true } } })
+    },
+  }
+  const api = run(apiSource, { './env': { runtimeConfig: { apiBaseUrl: 'http://127.0.0.1:8080' } } }, uni)
+  api.setAuthExpiredHandler(async () => { recoveryCalls++; token = 'fresh-token' })
+  const result = await api.request('/api/app/user/profile')
+  assert.deepEqual(result, { ok: true })
+  assert.equal(recoveryCalls, 1)
+  assert.equal(requests.length, 2)
+  assert.equal(requests[0].header['X-Auth-Token'], 'expired-token')
+  assert.equal(requests[1].header['X-Auth-Token'], 'fresh-token')
+})

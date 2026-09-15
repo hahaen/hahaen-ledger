@@ -16,7 +16,7 @@
 - MySQL 8、Redis 7.4、MinIO
 - 微信开发者工具（小程序构建产物导入 `app/dist/build/mp-weixin`）
 
-当前仓库实际使用 `server/src/main/resources/application-dev.yml` 作为 `dev` Profile 配置；该文件不是 `application-dev.example.yml` 的复制产物。真实数据库、Redis、MinIO、CORS、H5 RSA 私钥和微信配置应通过环境变量或本地忽略配置覆盖，不能提交真实凭证。当前后端已实现 H5 账号/密码/验证码认证；小程序前端仍保留微信登录分支，但当前后端尚未提供对应的微信登录 Controller，不能把微信 `code2session` 写成已完成能力。
+当前仓库实际使用 `server/src/main/resources/application-dev.yml` 作为 `dev` Profile 配置；该文件会从运行目录下可选加载被 Git 忽略的 `server/application-dev.local.yml`，模板为 `server/application-dev.local.example.yml`。真实数据库、Redis、MinIO、CORS、H5 RSA 私钥和微信配置应通过环境变量或本地忽略配置覆盖，不能提交真实凭证。H5 使用账号/密码/验证码认证；微信小程序使用后端 code2Session 自动登录。
 
 ## 后端启动
 
@@ -64,4 +64,4 @@ pnpm run build:mp-weixin
 
 ### H5 开发页面检查
 
-在 `app` 目录运行 `pnpm run dev:h5`，访问终端打印的 Local 地址（默认 http://localhost:5173）。依赖或 Vite 配置变更后完整重启服务并刷新页面。若端口被占用，Vite 会使用下一个可用端口。H5/微信平台包必须与 uni-app 编译器版本一致，不要用自定义 Vue shim 代替平台运行时。启动验收应看到首次使用页，并能进入首页和切换四项导航。
+在 `app` 目录运行 `pnpm run dev:h5`，访问终端打印的 Local 地址（默认 http://localhost:5173）。依赖或 Vite 配置变更后完整重启服务并刷新页面。若端口被占用，Vite 会使用下一个可用端口。H5/微信平台包必须与 uni-app 编译器版本一致，不要用自定义 Vue shim 代替平台运行时。启动验收应直接进入首页，并能切换四项导航；首次使用页仍保留为可选页面。

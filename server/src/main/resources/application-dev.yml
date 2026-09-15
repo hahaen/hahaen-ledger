@@ -1,6 +1,9 @@
 server:
   port: 8080
 spring:
+  config:
+    # 兼容从 server 目录、项目根目录以及 IntelliJ IDEA 启动。
+    import: optional:file:./application-dev.local.yml,optional:file:./server/application-dev.local.yml
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/haji_dev?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_general_ci&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: root
@@ -19,9 +22,9 @@ hahaen:
   cors:
     allowed-origins: http://localhost:5173
   wechat:
-    app-id: local-dev
-    app-secret: local-dev
-    login-enabled: false
+    app-id: ${WECHAT_APP_ID:local-dev}
+    app-secret: ${WECHAT_APP_SECRET:}
+    login-enabled: ${WECHAT_LOGIN_ENABLED:false}
   minio:
     endpoint: http://127.0.0.1:9000
     access-key: root

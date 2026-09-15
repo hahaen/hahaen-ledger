@@ -14,7 +14,7 @@
 | 范围 | 当前事实 | 状态 |
 | --- | --- | --- |
 | H5 账号认证 | `/api/app/auth/h5/register`、`/api/app/auth/h5/login`、验证码、公钥、注销；会话使用 Sa-Token | 已有代码；真实依赖联调按审计证据 |
-| 微信小程序认证 | 前端 `ledger.login()` 仍调用 `/api/app/auth/login`；当前 `AuthController` 未提供该路径 | 未闭环，禁止写成已通过 |
+| 微信小程序认证 | 前端 `ledger.login()` 通过 `uni.login` 获取一次性 code，调用 `/api/app/auth/wechat-mini/login`；后端通过微信 code2Session 换取身份并签发 Sa-Token | 代码、单测和本机无效 code 运行探针已验证；真实微信开发者工具首次/重复登录仍待联调 |
 | 账户与账单 | V3/V4 Migration、Entity、Service、Controller、前端关联页面和单测均存在 | 代码/单测已覆盖；真实数据库事务需另验 |
 | 头像 | H5 `AVATAR` 文件上传、确认、短时预览和删除接口存在 | H5 部分已实现；微信头像选择和账单附件未开放 |
 | 数据库运行状态 | 工作区有 V1–V4 Migration；本次没有可复核的 `flyway_schema_history`/`information_schema` 证据 | BLOCKED/NOT_RUN，按环境分别记录 |

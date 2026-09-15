@@ -21,12 +21,15 @@
 | GET | `/api/app/auth/captcha` | 创建一次性、5 分钟有效的图形验证码 |
 | POST | `/api/app/auth/h5/register` | 注册 H5 账号；请求含 `account`、`encryptedPassword`、`captchaId`、`captchaCode` |
 | POST | `/api/app/auth/h5/login` | 登录 H5 账号并返回 `token`、`userId`、`nickname` |
+| POST | `/api/app/auth/wechat-mini/login` | 小程序提交 `uni.login` 的一次性 `code`，服务端换取微信身份并返回业务 token |
 | POST | `/api/app/auth/logout` | 注销当前会话 |
 | GET | `/api/app/user/profile` | 返回当前用户资料、创建时间、从最早有效账单业务日期起算的累计记账天数、头像状态和 `passwordConfigured`；没有有效账单时天数为 0 |
 | PUT | `/api/app/user/profile` | 更新当前用户昵称和首次登录账号；首次无密码时请求还须含 RSA-OAEP 密文 `encryptedPassword`；选择新头像时额外传已完成上传的 `avatarFileId` |
 | PUT | `/api/app/user/profile/password` | 更新当前用户密码；请求含 RSA-OAEP 加密后的 `encryptedPassword`，首次设置账号时同时传 `loginAccount` |
 
-当前后端没有 `/api/app/auth/login`。前端 `ledger.login()` 的小程序分支仍调用该旧路径，因此微信自动登录暂不能标记为接口闭环。
+小程序微信登录只接受一次性 `code`，服务端向微信换取 `open_id` 后按 `user_identity` 绑定或创建本地用户；前端不提交也不接收 `open_id`、`union_id` 或 `session_key`。
+
+微信配置缺失时返回 `WECHAT_CONFIG_INVALID`；微信返回无效 code 时返回 `WECHAT_CODE_INVALID`；网络/响应解析失败时返回 `WECHAT_API_UNAVAILABLE`，均不透传微信原始错误信息。
 
 H5 账号服务端会 trim 并转为小写，格式为 2–64 位英文字母或数字，不接受中文、空格或符号；客户端提交的是 RSA-OAEP 加密后的 `encryptedPassword`，解密后的密码要求 8–64 个字符且 UTF-8 不超过 72 字节。验证码校验成功后一次性消费，注册成功不会自动返回会话；首次注册的昵称默认等于规范化后的账号。
 

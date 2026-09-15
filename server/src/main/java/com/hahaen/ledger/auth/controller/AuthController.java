@@ -2,9 +2,11 @@ package com.hahaen.ledger.auth.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.hahaen.ledger.auth.dto.H5AuthRequest;
+import com.hahaen.ledger.auth.dto.WechatMiniLoginRequest;
 import com.hahaen.ledger.auth.service.CaptchaService;
 import com.hahaen.ledger.auth.service.H5AuthService;
 import com.hahaen.ledger.auth.service.PasswordCryptoService;
+import com.hahaen.ledger.auth.service.WechatMiniAuthService;
 import com.hahaen.ledger.auth.vo.CaptchaVO;
 import com.hahaen.ledger.auth.vo.LoginVO;
 import com.hahaen.ledger.auth.vo.PasswordKeyVO;
@@ -25,6 +27,7 @@ public class AuthController {
     private final H5AuthService authService;
     private final CaptchaService captchaService;
     private final PasswordCryptoService passwordCryptoService;
+    private final WechatMiniAuthService wechatMiniAuthService;
 
     @GetMapping("/password-key")
     public ApiResponse<PasswordKeyVO> passwordKey() {
@@ -46,6 +49,11 @@ public class AuthController {
     @PostMapping("/h5/login")
     public ApiResponse<LoginVO> login(@Valid @RequestBody H5AuthRequest request, HttpServletRequest servletRequest) {
         return ApiResponse.ok(authService.login(request, clientIp(servletRequest), servletRequest.getHeader("User-Agent"), isSecureTransport(servletRequest)));
+    }
+
+    @PostMapping("/wechat-mini/login")
+    public ApiResponse<LoginVO> wechatMiniLogin(@Valid @RequestBody WechatMiniLoginRequest request, HttpServletRequest servletRequest) {
+        return ApiResponse.ok(wechatMiniAuthService.login(request, clientIp(servletRequest), servletRequest.getHeader("User-Agent")));
     }
 
     @PostMapping("/logout")

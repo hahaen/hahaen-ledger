@@ -1,6 +1,32 @@
 # 当前验证矩阵
 
-更新日期：2026-09-13。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
+更新日期：2026-09-15。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
+
+## 2026-09-15：微信小程序默认首页入口
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 默认首路由 | PASS（自动化回归） | `pages.json` 首项为 `pages/index/index`，首次使用页仍注册但不再是默认入口 |
+| 启动成功跳转 | PASS（静态+自动化回归） | `App.vue` 启动和登录重试成功路径均不再跳转 `pages/first-use/first-use` |
+| 前端回归、类型检查和微信小程序构建 | PASS | 前端回归 33/33、`pnpm run typecheck`、`pnpm run build:mp-weixin` 完成 |
+| 真实微信工具重新启动确认 | NOT_RUN | 尚未重新打开微信开发者工具进行人工画面确认 |
+
+## 2026-09-15：微信小程序默认登录链路修复
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 微信登录接口 | PASS（本机运行探针） | `AuthController` 暴露 `/api/app/auth/wechat-mini/login`；无效 code 实际经过微信 code2Session 并返回 `WECHAT_CODE_INVALID`，同时修复 `text/plain` 响应解析错误 |
+| 微信身份绑定 | PASS（单测） | 首次登录创建无 H5 凭证的 `app_user` 和 `user_identity`，已有身份复用原用户 |
+| 微信安全边界 | PASS（静态） | 前端只提交一次性 code；AppSecret 仅服务端配置；session_key/open_id 不返回前端 |
+| Token 失效自动重登 | PASS（前端回归） | 401/403 清理旧会话，MP-WEIXIN 重新 `uni.login`，刷新 Token 后只重试原请求一次 |
+| H5 认证保持不变 | PASS（回归） | H5 `/api/app/auth/h5/login` 路径、验证码和密码载荷未改变 |
+| 后端测试 | PASS | `mvn test` 47/47 |
+| 前端回归、类型检查和双端构建 | PASS | 前端回归 42/42、`pnpm run typecheck`、H5/微信小程序构建完成 |
+| 本机运行依赖 | PASS | MySQL/Redis/MinIO 可用，Flyway 当前版本 V4 |
+| 真实微信首次登录 | PASS（运行态） | 微信开发者工具自动运行真实小程序，首次登录创建 1 条未删除 `user_identity` |
+| 真实微信重复登录 | PASS（运行态） | 成功登录记录归属同一系统用户，身份关联未重复创建 |
+| 真实 Token 后续业务请求 | PASS（运行态） | 真实 Token 访问账户和资料接口均 HTTP 200 |
+| 真实 Token 失效自动重登 | PASS（运行态） | 删除临时 Token 映射后重新运行，成功登录记录增加；新 Token 访问业务接口 HTTP 200 |
 
 ## 2026-09-13：HTTP 临时认证兼容
 
@@ -55,7 +81,7 @@
 | 登录/注册密码显隐控件 | `app/src/components/AuthPage.vue`、`app/src/prototype.scss`；本机 H5 登录/注册页均可点击共享组件右侧 CSS 小眼睛切换掩码/明文 | PASS（页面级验证） |
 | 登录/注册页说明文字 | `AuthPage.vue` 已移除微信自动登录与注册资料说明文字，仅保留认证字段和操作入口 | PASS（静态核对） |
 | 登录/注册协议勾选与协议页 | `AuthPage.vue`、`LegalDocumentPage.vue`、`legalDocuments.ts`、`h5AuthGuard.ts`；未勾选不能提交，用户协议/隐私协议可未登录阅读 | PASS（前端流程回归） |
-| 微信小程序认证 | `app/src/stores/ledger.ts` 调用 `/api/app/auth/login`；当前后端无该路径 | FAIL（接口不匹配） |
+| 微信小程序认证 | `ledger.ts` 调用 `/api/app/auth/wechat-mini/login`；后端已实现 Controller、Service、身份绑定和审计，并已用微信开发者工具真实运行验证 | PASS（运行态） |
 | H5 头像链路 | `FileController`、`AppFileService`、`MinioStorageService`、`utils/file.ts` | PARTIAL（文件头识别实际 JPEG/PNG/WebP/GIF 类型，不信任文件名/MIME；真实对象上传未在本次执行） |
 | 账单附件 | Schema 预留 `TRANSACTION_ATTACHMENT`，当前业务页面/Service 未开放 | NOT_RUN |
 | 底部导航设计稿对齐 | `app/src/prototype.scss`；本机只读视觉服务资产页 4 个导航项等宽 103px，导航整体和按钮均无边框/圆角/阴影，页面截图核对为连续白色底栏 | PARTIAL（视觉截图未持久化到 `app/tests/evidence/`） |
@@ -168,7 +194,7 @@
 
 ## 当前高风险项
 
-1. 在补齐并验证 `/api/app/auth/login` 前，微信小程序不能作为认证已闭环发布。
+1. 微信认证代码已补齐，但在真实微信开发者工具、数据库/Redis、合法域名和真实 Secret 验证前，不能作为生产认证已闭环发布。
 2. 账户名称只有 Service 级重复校验，V3 没有数据库唯一约束；并发创建同名账户仍需产品/数据库决策。
 3. Migration 文件存在不代表目标环境已经执行；必须在可用 MySQL 上补做 Flyway、`information_schema`、事务和并发验证。
 4. `application-prod.yml` 对 H5 RSA 私钥使用生成兜底，部署必须显式注入固定私钥；安全检查不能只依赖默认配置。

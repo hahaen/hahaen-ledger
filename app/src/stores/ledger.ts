@@ -72,6 +72,7 @@ const state = reactive<State>({ token: '', accounts: [], transactions: [], loadi
 let restored = false
 let refreshSequence = 0
 let pendingRefresh: { month: string; promise: Promise<Summary> } | undefined
+let loginPromise: Promise<void> | undefined
 
 export function useLedger() {
   async function restore() {
@@ -85,17 +86,22 @@ export function useLedger() {
   }
 
   async function login() {
-    let code = `dev-${Date.now()}`
-    // #ifdef MP-WEIXIN
-    const wxLogin = await new Promise<UniApp.LoginRes>((resolve, reject) => uni.login({ provider: 'weixin', success: resolve, fail: reject }))
-    code = wxLogin.code
-    // #endif
-    const result = await request<{ token: string; userId: string; nickname: string }>('/api/app/auth/login', { method: 'POST', data: { code } })
-    state.token = result.token
-    state.user = { id: result.userId, nickname: result.nickname }
-    uni.setStorageSync('auth-token', result.token)
-    uni.setStorageSync('auth-user', state.user)
-    await refresh()
+    if (loginPromise) return loginPromise
+    const promise = (async () => {
+      // #ifdef MP-WEIXIN
+      const wxLogin = await new Promise<UniApp.LoginRes>((resolve, reject) => uni.login({ provider: 'weixin', success: resolve, fail: reject }))
+      if (!wxLogin.code) throw new Error('微信登录凭证获取失败，请重试')
+      const result = await request<{ token: string; userId: string; nickname: string }>('/api/app/auth/wechat-mini/login', { method: 'POST', data: { code: wxLogin.code } })
+      if (!result?.token || !result.userId || typeof result.nickname !== 'string') throw new Error('微信登录响应无效，请重试')
+      state.token = result.token
+      state.user = { id: result.userId, nickname: result.nickname }
+      uni.setStorageSync('auth-token', result.token)
+      uni.setStorageSync('auth-user', state.user)
+      // #endif
+    })()
+    loginPromise = promise
+    try { return await promise }
+    finally { if (loginPromise === promise) loginPromise = undefined }
   }
 
   async function refresh(month = localDateTime().slice(0, 7)) {

@@ -52,9 +52,9 @@
 .about-note-copy > text:last-child { margin:4px 0 0; color:#72978f; font-size:10px; line-height:1.45; }
 .about-footer { padding:24px 0 8px; display:flex; flex-direction:column; align-items:center; gap:6px; color:#a2b5b0; font-size:10px; }
 .about-footer image { width:24px; height:24px; border-radius:8px; object-fit:cover; opacity:.82; }
-.help-page { height:100vh; padding-top:var(--status-bar-height, 0px); }
+.help-page { height:100vh; padding-top:calc(var(--status-bar-height, 0px) + env(safe-area-inset-top, 0px)); }
 .help-scroll { height:100%; }
-.help-nav { position:sticky; z-index:3; top:0; display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:44px; margin:0 -16px 10px; padding:2px 16px; border-bottom:1px solid rgba(224,232,228,.7); background:rgba(247,248,247,.96); }
+.help-nav { position:sticky; z-index:3; top:env(safe-area-inset-top, 0px); display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:44px; margin:0 -16px 10px; padding:2px 16px; border-bottom:1px solid rgba(224,232,228,.7); background:rgba(247,248,247,.96); }
 .help-back { width:40px; min-height:36px; padding:0; border:0; border-radius:0; outline:0; color:#455651; background:transparent; box-shadow:none; font-size:24px; text-align:left; appearance:none; -webkit-appearance:none; }
 .help-back::after { display:none; border:0; }
 .help-nav-side { width:40px; flex-shrink:0; }.help-title { flex:1; font-size:16px; font-weight:700; text-align:center; }.about-hero-title,.about-hero-copy,.about-section-title { display:block; }

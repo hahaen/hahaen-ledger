@@ -31,6 +31,8 @@
 - [mine-logout-modal-design](mine-logout-modal-design/README.md)：我的页退出登录确认弹层与系统圆角样式统一（2026-09-11）。
 - [h5-logout-route-guard](h5-logout-route-guard/README.md)：H5 退出登录后仅允许访问登录页或注册页（2026-09-11）。
 - [h5-authenticated-entry-home](h5-authenticated-entry-home/README.md)：H5 已登录用户重新打开默认登录/注册入口时直接进入首页（2026-09-13）。
+- [wechat-mini-auth](wechat-mini-auth/README.md)：微信小程序通过 `uni.login` 默认登录，H5 账号密码认证保持不变（2026-09-14）。
+- [default-mini-home](default-mini-home/README.md)：微信小程序认证后默认进入首页，首次使用页保留为可选页面（2026-09-15）。
 - [profile-cumulative-days-from-first-transaction](profile-cumulative-days-from-first-transaction/README.md)：我的页累计记账天数改按最早有效账单的业务日期统计（2026-09-11）。
 - [mine-profile-center-list-alignment](mine-profile-center-list-alignment/README.md)：我的页个人中心与关于帮助、退出登录统一为同一设置列表行样式（2026-09-11）。
 - [profile-center-management](profile-center-management/README.md)：个人中心资料、首次账号设置和密码修改闭环（2026-09-11）。
