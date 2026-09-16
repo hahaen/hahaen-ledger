@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
+import { createHash } from 'node:crypto'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import ts from 'typescript'
@@ -48,7 +49,12 @@ test('编辑记账沿用原账单类型且不能切换顶部类型', async () =>
 })
 
 test('编辑页放弃修改使用自定义确认弹窗', async () => {
-  const page = await entryPage({ state: { accounts: [account] }, refresh: async () => {} })
+  const page = await entryPage({ state: { accounts: [account] }, refresh: async () => {} }, async () => ({
+    refundedCents: 0,
+    transaction: { type: 'EXPENSE', originalAmountCents: 1234, accountId: '10', occurredAt: '2026-09-09T12:30:00', note: '' },
+  }))
+  page.routeId.value = '20'
+  page.editingId.value = '20'
   await page.initialize()
   page.note.value = '未保存的修改'
   page.back()
@@ -57,6 +63,18 @@ test('编辑页放弃修改使用自定义确认弹窗', async () => {
   assert.equal(page.discardOpen.value, false)
   page.back()
   page.confirmDiscard()
+  assert.equal(page.discardOpen.value, false)
+})
+
+test('新增记账输入内容或切换类型后退出不提示放弃修改', async () => {
+  const page = await entryPage({ state: { accounts: [account] }, refresh: async () => {} })
+  await page.initialize()
+  page.expression.value = '88.50'
+  page.setType('INCOME')
+
+  page.back()
+
+  assert.equal(page.type.value, 'INCOME')
   assert.equal(page.discardOpen.value, false)
 })
 
@@ -471,6 +489,28 @@ test('头像扩展名或浏览器 MIME 错误时，以真实图片头的类型�
   assert.equal(calls[0].options.data.contentType, 'image/jpeg')
 })
 
+test('小程序头像使用临时文件摘要并以 PUT 上传预签名对象', async () => {
+  const calls = []
+  const miniRequests = []
+  const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3, 4]).buffer
+  const source = await readFile(new URL('../src/utils/file.ts', import.meta.url), 'utf8')
+  const fileUtils = run(source, { './api': { request: async (url, options) => {
+    calls.push({ url, options })
+    if (url === '/api/app/files/upload-url') return { fileId: '20', uploadUrl: 'https://upload.example/avatar', expiresInSeconds: 600, status: 'UPLOADING' }
+    if (url === '/api/app/files/20/view-url') return { fileId: '20', viewUrl: 'temporary-view-url', expiresInSeconds: 600, objectKey: 'avatars/7/new.png' }
+    return {}
+  } } }, { getFileSystemManager: () => ({ getFileInfo: options => options.success({ size: 12, digest: 'a'.repeat(64) }), readFile: options => options.success({ data: png }) }), request: options => { miniRequests.push(options); options.success({ statusCode: 200 }) } })
+
+  const result = await fileUtils.uploadAvatarFromMiniPath('wxfile://avatar', 'avatar.png')
+
+  assert.equal(result.objectKey, 'avatars/7/new.png')
+  assert.equal(calls[0].options.data.contentType, 'image/png')
+  assert.equal(calls[0].options.data.fileHash, createHash('sha256').update(Buffer.from(png)).digest('hex'))
+  assert.equal(calls[1].url, '/api/app/files/20/complete')
+  assert.equal(miniRequests[0].method, 'PUT')
+  assert.equal(miniRequests[0].dataType, 'text')
+})
+
 test('个人中心头像按钮动态创建原生 H5 文件输入框', async () => {
   const source = (await readFile(new URL('../src/pages/profile/profile.vue', import.meta.url), 'utf8')).match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
   let clicks = 0
@@ -485,7 +525,7 @@ test('个人中心头像按钮动态创建原生 H5 文件输入框', async () =
       '@dcloudio/uni-app': { onLoad() {} },
       '../../stores/ledger': { useLedger: () => ({ state: { token: 'test-session' } }) },
       '../../utils/file': {}, '../../utils/api': {}, '../../utils/passwordCrypto': {}, '../../utils/entry': {},
-    })
+    }, { ...defaultUni, chooseImage() {} })
     page.handleAvatarClick()
     page.handleAvatarClick()
 
@@ -499,6 +539,13 @@ test('个人中心头像按钮动态创建原生 H5 文件输入框', async () =
   }
   assert.match(source, /document\.createElement\('input'\)/)
   assert.doesNotMatch(source, /profile-avatar-file-input/)
+})
+
+test('微信小程序个人中心使用用户选择的图片上传，不获取微信头像资料', async () => {
+  const fullSource = await readFile(new URL('../src/pages/profile/profile.vue', import.meta.url), 'utf8')
+  assert.match(fullSource, /#ifdef MP-WEIXIN[\s\S]*uni\.chooseImage\(/)
+  assert.match(fullSource, /uploadAvatarFromMiniPath/)
+  assert.doesNotMatch(fullSource, /getUserProfile|getUserInfo|开放数据域/)
 })
 
 test('登录和注册均须先同意两份协议，且协议页可在未登录状态访问', async () => {

@@ -7,5 +7,5 @@ withDefaults(defineProps<{ subtitle?: string }>(), { subtitle: '记录每一笔�
 <style scoped>
 .page-header { flex-shrink:0; margin-bottom:20px; }
 .page-brand { display:block; width:22px; height:22px; margin-bottom:8px; border-radius:7px; }
-.page-subtitle { display:block; color:var(--muted); font-size:13px; line-height:normal; }
+.page-subtitle { display:block; color:#858b8b; font-size:13px; line-height:normal; }
 </style>

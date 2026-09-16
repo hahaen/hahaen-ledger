@@ -41,7 +41,7 @@ const idempotencyKey = ref(createIdempotencyKey())
 const snapshot = () => JSON.stringify([type.value, expression.value, note.value, accountIndex.value, toIndex.value, dateTime.value])
 function back() {
   if (saving.value) return
-  if (initialValue.value && initialValue.value !== snapshot()) {
+  if (isEdit.value && initialValue.value && initialValue.value !== snapshot()) {
     discardOpen.value = true
   } else { allowBack.value = true; backToLedger() }
 }
@@ -202,8 +202,8 @@ async function save(afterSave: 'home' | 'again') {
 
 <template>
   <view class="page entry-page">
+    <view class="screen-nav"><button class="back nav-side" aria-label="返回" @click="back">‹</button><text class="page-title">{{ isEdit ? '编辑记账' : '新增记账' }}</text><view class="nav-side" /></view>
     <view class="entry-content">
-      <view class="screen-nav"><button class="back nav-side" aria-label="返回" @click="back">‹</button><text class="page-title">{{ isEdit ? '编辑记账' : '新增记账' }}</text><view class="nav-side" /></view>
       <view v-if="loading" class="list-empty">正在加载账户与账单…</view><view v-else-if="loadError" class="list-empty">{{ loadError }}<button class="text-button" @click="initialize">重新加载</button></view>
       <view v-if="isEdit && !loading && !loadError" :class="['entry-edit-type', type.toLowerCase()]"><text class="entry-edit-type-label">当前账单类型</text><text class="entry-edit-type-value">{{ typeLabel }}记账</text></view>
       <view v-if="!isEdit" :class="['entry-type', { 'single-type': type === 'REPAYMENT' }]"><button v-for="option in typeOptions" :key="option.value" :disabled="locked || !!refundedCents" :class="{ active: type === option.value, 'income-active': type === 'INCOME' && type === option.value, 'transfer-active': type === 'TRANSFER' && type === option.value }" @click="setType(option.value)">{{ option.label }}</button></view>

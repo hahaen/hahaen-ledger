@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { currentAvatar, uploadAvatar, type FileViewUrl } from '../../utils/file'
+import { currentAvatar, uploadAvatar, uploadAvatarFromMiniPath, type FileViewUrl } from '../../utils/file'
 import { request } from '../../utils/api'
 import { encryptPassword } from '../../utils/passwordCrypto'
 import { useLedger } from '../../stores/ledger'
@@ -103,7 +103,20 @@ function handleAvatarClick() {
   input.click()
   // #endif
   // #ifdef MP-WEIXIN
-  uni.showToast({ title: '微信头像选择将在后续版本接入', icon: 'none' })
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    sourceType: ['album', 'camera'],
+    success: result => {
+      const selected = result.tempFiles?.[0]
+      const filePath = selected?.path || result.tempFilePaths?.[0]
+      if (filePath) void chooseMiniAvatar(filePath, selected?.name || 'avatar.jpg')
+      else uni.showToast({ title: '未选择头像，请重试', icon: 'none' })
+    },
+    fail: error => {
+      if (!String(error.errMsg || '').includes('cancel')) uni.showToast({ title: '头像选择失败，请重试', icon: 'none' })
+    },
+  })
   // #endif
 }
 
@@ -132,6 +145,21 @@ async function chooseAvatar(event: Event) {
   } finally {
     uploading.value = false
     ;(event.target as HTMLInputElement).value = ''
+  }
+}
+
+async function chooseMiniAvatar(filePath: string, originalName: string) {
+  if (uploading.value) return
+  uploading.value = true
+  try {
+    const result = await uploadAvatarFromMiniPath(filePath, originalName)
+    pendingAvatar.value = result
+    avatarUrl.value = result.viewUrl
+    uni.showToast({ title: '新头像已预览，点击保存后更新', icon: 'none' })
+  } catch (error) {
+    uni.showToast({ title: error instanceof Error ? error.message : '头像上传失败，请重试', icon: 'none' })
+  } finally {
+    uploading.value = false
   }
 }
 

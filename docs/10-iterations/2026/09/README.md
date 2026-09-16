@@ -33,6 +33,10 @@
 - [h5-authenticated-entry-home](h5-authenticated-entry-home/README.md)：H5 已登录用户重新打开默认登录/注册入口时直接进入首页（2026-09-13）。
 - [wechat-mini-auth](wechat-mini-auth/README.md)：微信小程序通过 `uni.login` 默认登录，H5 账号密码认证保持不变（2026-09-14）。
 - [default-mini-home](default-mini-home/README.md)：微信小程序认证后默认进入首页，首次使用页保留为可选页面（2026-09-15）。
+- [transaction-create-exit-no-discard](transaction-create-exit-no-discard/README.md)：新增记账退出不提示放弃修改，编辑态保护保持不变（2026-09-17）。
+- [global-ui-cross-platform-optimization](global-ui-cross-platform-optimization/README.md)：全局 UI、布局、交互及 H5/微信小程序跨端适配复查（2026-09-16）。
+- [calendar-mini-selected-state](calendar-mini-selected-state/README.md)：修复微信小程序日历选中日期不可见的跨端节点渲染问题（2026-09-17）。
+- [mini-color-theme-compatibility](mini-color-theme-compatibility/README.md)：修复微信小程序主题色变量回退导致的多页面颜色与 H5 不一致（2026-09-17）。
 - [profile-cumulative-days-from-first-transaction](profile-cumulative-days-from-first-transaction/README.md)：我的页累计记账天数改按最早有效账单的业务日期统计（2026-09-11）。
 - [mine-profile-center-list-alignment](mine-profile-center-list-alignment/README.md)：我的页个人中心与关于帮助、退出登录统一为同一设置列表行样式（2026-09-11）。
 - [profile-center-management](profile-center-management/README.md)：个人中心资料、首次账号设置和密码修改闭环（2026-09-11）。

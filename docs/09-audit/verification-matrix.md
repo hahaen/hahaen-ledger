@@ -1,6 +1,17 @@
 # 当前验证矩阵
 
-更新日期：2026-09-15。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
+更新日期：2026-09-17。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
+
+## 2026-09-17：微信小程序个人中心底部按钮可见性
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 个人中心保存/修改密码按钮结构 | PASS（静态） | `profile.wxml` 保留 `profile-save-action` 节点；页面脚本、文案和点击方法未改变 |
+| 微信原生按钮外观兼容 | PASS（静态） | `styles.scss` 为保存和修改密码确认按钮写入明确 `#49ad9c` 背景色、白色文字并关闭 `::after`，避免 CSS 变量/原生伪元素造成白色空按钮 |
+| 微信小程序头像主动选择上传 | PASS（静态+回归） | `profile.js` 使用 `chooseImage` 和 `uploadAvatarFromMiniPath`；临时文件摘要、图片头识别和预签名 PUT 已有回归；未调用微信资料接口 |
+| 小程序文件信息 API 和预签名 PUT 兼容性 | PASS（静态+回归） | 使用 `getFileSystemManager().getFileInfo` 读取大小，由同一二进制内容计算 SHA-256；预签名 PUT 设置 `dataType: 'text'`；产物未残留 `uni.getFileInfo`，回归通过 |
+| 前端回归、类型检查和双端构建 | PASS | 前端回归 52/52、`pnpm run typecheck`、H5 和微信小程序生产构建完成 |
+| 微信开发者工具实际画面与点击 | BLOCKED / NOT_RUN | 当前 UI 自动化面未暴露可控制的原生微信开发者工具窗口，未进行真实小程序导入、登录态和点击验收 |
 
 ## 2026-09-15：微信小程序默认首页入口
 
@@ -510,7 +521,7 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 | 个人中心页面与导航 | PASS（静态+视觉夹具） | `pages/profile/profile.vue` 已注册；我的页入口受登录态保护；主页面复用帮助页导航规格。 |
 | 头像、昵称、账号和密码 | PASS（静态+单测） | 保存资料时头像/昵称/账号均前端必填；未设置密码时密码框必填并随资料请求加密提交；`ProfileService` 使用当前 Sa-Token 用户；昵称/账号/密码均双端校验；已有账号不可修改；首次账号与密码同事务，唯一性由预检和现有 `uk_app_user_login_account` 保护。 |
 | 密码立即更新和保存成功返回 | PASS（前端流程） | `page-flows.test.mjs` 覆盖密码确认即时 PUT、资料 PUT 成功后显示返回我的弹层。 |
-| 头像 | PARTIAL | 新页复用既有 H5 上传与预览；未连接真实 MinIO，微信头像选择仍未开放。 |
+| 头像 | PARTIAL | 新页复用 H5 上传与预览；微信小程序主动选择上传已实现，真实 MinIO 和微信开发者工具运行验收仍未执行；详见 2026-09-17 条目。 |
 | 后端回归 | PASS | `server: mvn test`，34 tests，0 failures/errors/skipped。 |
 | 前端回归、类型检查与双端构建 | PASS | 21 项 Node 测试、`pnpm run typecheck`、H5 和微信小程序构建均成功。 |
 | 只读视觉验收 | PASS | 本机只读夹具 `/#/pages/profile/profile` 核对主页面和修改密码弹层；未提交写入。 |
@@ -553,3 +564,68 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 | 真实 H5 关闭后重新打开 | NOT_RUN | 需要有效 H5 会话及浏览器操作证据。 |
 
 完整档案：[h5-authenticated-entry-home](../10-iterations/2026/09/h5-authenticated-entry-home/README.md)。
+
+## 2026-09-16：全局 UI 与 H5/微信小程序跨端适配优化
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 全局布局静态回归 | PASS | `app/tests/responsive-layout.test.mjs` 纳入全量 Node 回归，共 53/53；覆盖认证滚动、按钮居中、弹层安全区/滚动、核心 `scroll-view` 结构和新增记账顶部控件 |
+| 前端业务回归 | PASS | `cd app; pnpm exec node --test tests/*.test.mjs`，53/53 |
+| TypeScript 类型检查 | PASS | `cd app; pnpm run typecheck`，exit 0 |
+| Lint | BLOCKED | `pnpm run lint` 返回 `ERR_PNPM_NO_SCRIPT`，项目当前无 lint script |
+| H5 生产构建 | PASS | 临时 `VITE_API_BASE_URL=http://127.0.0.1:8080` 后 `pnpm run build:h5` 输出 `DONE Build complete.` |
+| 微信小程序生产构建 | PASS | 同一临时 API 地址下 `pnpm run build:mp-weixin` 输出 `DONE Build complete.`；仅表示产物可生成 |
+| H5 浏览器页面/交互 | PARTIAL | 本机 H5 开发服务中认证/注册/协议页正常显示，密码显隐可点击，协议长内容可滚动；当前视口 771×1272，未覆盖窄屏设备、真实登录账务和全部数据弹层 |
+| H5 横向溢出 | PASS（当前浏览器） | `innerWidth=771`、`scrollWidth=771`、`clientWidth=771` |
+| 微信开发者工具人工验收 | BLOCKED / NOT_RUN | 已确认 `D:\software\微信web开发者工具\微信开发者工具.exe` 存在，但当前 UI 自动化面未暴露可控制的原生窗口，未导入 `dist/build/mp-weixin` |
+| API、业务、数据库影响 | PASS（范围核对） | 仅修改共享 SCSS、记账页布局结构、布局回归测试和迭代文档；接口地址/参数/请求方式/返回结构、方法名称和业务逻辑未改 |
+
+完整档案：[global-ui-cross-platform-optimization](../10-iterations/2026/09/global-ui-cross-platform-optimization/README.md)。
+
+## 2026-09-17：新增记账页微信小程序顶部控件
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 顶部导航移出滚动层 | PASS（静态） | `app/src/pages/entry/entry.vue` 中 `screen-nav` 位于 `.entry-content` 之前。 |
+| 小程序胶囊区域避让与类型按钮约束 | PASS（静态+产物） | `app/src/prototype.scss` 使用 `MP-WEIXIN` 条件编译预留 44px，并锁定类型按钮尺寸/行高；`app/dist/build/mp-weixin/app.wxss` 已包含对应规则。 |
+| 前端回归、类型检查、H5/微信小程序构建 | PASS | 53/53、`pnpm run typecheck`、`pnpm run build:h5`、`pnpm run build:mp-weixin`。 |
+| H5/微信真实页面画面与点击 | BLOCKED / NOT_RUN | 本次未取得真实登录态；微信开发者工具原生窗口当前不可控，构建和静态产物不能替代页面验收。 |
+
+## 2026-09-17：微信小程序日历选中日期可见性
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 日历日期格跨端节点 | PASS | 日期格和日期数字由原生 `button`/`text` 改为 `view`，小程序 WXML 静态核对通过。 |
+| 选中态样式 | PASS（静态） | 小程序 WXSS 使用 `#49ad9c !important`、`background-color` 和白色文字，避免 CSS 变量/层叠回退为白色。 |
+| 前端回归 | PASS | `node --test tests/*.test.mjs`，53/53。 |
+| 类型检查与 H5/微信小程序构建 | PASS | `pnpm typecheck`、`pnpm build:h5`、`pnpm build:mp-weixin` 均成功。 |
+| 微信开发者工具真实画面 | BLOCKED / NOT_RUN | 本次未导入产物并点击日历；构建和静态产物不能替代真实小程序画面验收。 |
+
+完整档案：[calendar-mini-selected-state](../10-iterations/2026/09/calendar-mini-selected-state/README.md)。
+
+## 2026-09-17：微信小程序主题色跨端兼容
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 主题色跨端声明 | PASS | `app/src/prototype.scss`、`app/src/styles.scss` 和 `PageHeader.vue` 中主题色引用改为当前色板对应的明确十六进制颜色，保留主题色定义和 H5 视觉值 |
+| 四个核心页面与复用控件 | PASS（静态） | 首页、日历、资产、我的、底部导航、页头、弹层、表单和记账键盘均由共享样式覆盖 |
+| 前端回归 | PASS | `cd app; pnpm exec node --test tests/*.test.mjs`，54/54 |
+| TypeScript | PASS | `cd app; pnpm run typecheck`，exit 0 |
+| H5/微信小程序构建 | PASS | 临时本地 API 地址下两个生产构建均输出 `DONE Build complete.` |
+| 微信小程序 WXSS 产物 | PASS（静态） | `app/dist/build/mp-weixin/app.wxss` 未发现主题色 `var(--...)` 引用；核心页面和导航规则包含明确颜色值 |
+| `git diff --check` | PASS | 无空白错误 |
+| 微信开发者工具真实画面 | BLOCKED / NOT_RUN | 当前 UI 自动化面未暴露可控制的原生窗口，不能以构建代替真实页面验收 |
+| API、后端、数据库 | PASS（范围核对） | 本次仅改前端颜色声明和静态回归，未修改接口、业务、数据库 |
+
+完整档案：[mini-color-theme-compatibility](../10-iterations/2026/09/mini-color-theme-compatibility/README.md)。
+
+## 2026-09-17：新增记账退出不提示放弃修改
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 新增态退出 | PASS | `entry.vue` 仅在编辑态比较未保存快照；`page-flows.test.mjs` 覆盖输入金额、切换为收入后退出不打开确认弹层。 |
+| 编辑态退出保护 | PASS | 真实编辑路由回填后修改备注并退出，仍打开自定义“放弃修改”弹层。 |
+| 前端回归、类型检查和双端构建 | PASS | Node 回归 55/55、`pnpm run typecheck`、临时本地 API 地址下 H5/微信小程序生产构建均完成。 |
+| 真实 H5/微信页面退出操作 | NOT_RUN | 本次未取得真实登录态；构建和静态回归不能替代页面运行验收。 |
+
+完整档案：[transaction-create-exit-no-discard](../10-iterations/2026/09/transaction-create-exit-no-discard/README.md)。

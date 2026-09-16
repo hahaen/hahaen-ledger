@@ -1,5 +1,20 @@
 # 第三轮工程审计报告
 
+## 2026-09-17 追加：新增记账页微信小程序顶部控件
+
+- 新增记账页将 `screen-nav` 移到 `.entry-content` 外，避免顶部导航与主体滚动层混用；微信小程序条件编译为页面状态栏后的自定义导航预留 44px，类型切换按钮显式锁定 38px 高度、零内边距、单倍行高、flex 居中和 `::after` 清理。
+- 未修改新增记账的类型切换业务、保存逻辑、接口、金额、事务、数据库或认证逻辑；H5 仅共享结构保持可构建。
+- PASS：前端回归 53/53、类型检查、H5 生产构建、微信小程序生产构建、`entry.wxml/app.wxss` 产物静态核对和 `git diff --check`。
+- BLOCKED / NOT_RUN：未在真实微信开发者工具/真机打开新增记账页并点击支出、收入、转账；当前 UI 自动化面未暴露可控制的微信开发者工具原生窗口。
+
+## 2026-09-17 追加：微信小程序个人中心底部按钮可见性
+
+- 个人中心保存按钮和修改密码确认按钮保留原有节点、文案及事件，仅将主按钮背景改为明确的 `#49ad9c`，并清理微信原生 `button::after`，修复截图中白色空按钮现象；H5 视觉规则保持不变。
+- 个人中心头像已改为通过 `uni.chooseImage` 选择相册/相机图片，工具层完成临时文件校验和预签名 PUT，继续保持预览后保存关联；没有调用微信头像资料接口。
+- 针对小程序控制台的废弃 API 提示，已将文件信息读取改为 `getFileSystemManager().getFileInfo`；预签名 PUT 设置 `dataType: 'text'`，并补充上传失败状态提示。
+- PASS：前端回归 52/52、类型检查、H5 生产构建、微信小程序生产构建，以及 `profile.wxml`/`profile.js`/`utils/file.js` 产物静态核对。
+- BLOCKED / NOT_RUN：当前 UI 自动化面未暴露可控制的微信开发者工具原生窗口，未完成真实小程序页面、登录态和按钮点击验收。详细记录见 `docs/10-iterations/2026/09/global-ui-cross-platform-optimization/`。
+
 ## 2026-09-15 追加：微信小程序默认首页入口
 
 - `app/pages.json` 已将 `pages/index/index` 调整为首路由；`pages/first-use/first-use` 仍保留注册，但不再作为默认入口。
@@ -79,7 +94,7 @@
 
 1. 启动 MySQL、Redis、MinIO，使用真实 H5 会话验证刷新保留当前路由、后端重启续会话、个人资料、头像上传/刷新、旧预览 URL 过期重取和退出后的“登录”状态。
 2. 在 320/375/414px 下截图对照原型，检查滚动、安全区和帮助页长内容。
-3. 后续补齐微信小程序头像选择和平台差异，不把 H5 文件选择器直接移植到微信端。
+3. 在微信开发者工具中完成头像主动选择、上传、预览和保存后的真实运行验收，不把 H5 文件选择器直接移植到微信端。
 
 ## 本轮追加：资产账户数据库设计
 
@@ -408,3 +423,33 @@ PASS：恢复首页最近记账日期行的设计稿边距、字号和单行收�
 - PASS（静态）：当前测试基线的迁移目录、Entity、Service 和数据库文档已完成核对；`MigrationIntegrityTest` 1/1 通过。后续结构调整继续按新版本 Migration 管理。
 - NOT_RUN：本机 `information_schema` 当前未发现 `haji_dev`，尚未执行重新建库/建表后的 Flyway 和 `information_schema` 实际验收。
 - 完整档案：`docs/10-iterations/2026/09/database-initialization-adjustment/`。
+
+## 2026-09-16 追加：全局 UI 与 H5/微信小程序跨端适配优化
+
+- 共享前端样式完成全局复查，修复认证页小屏纵向滚动受限、按钮/文字平台默认行高差异、弹层底部安全区缺失、固定高度弹层内容滚动边界不完整等问题。
+- 变更范围仅为 `app/src/prototype.scss`、`app/src/styles.scss`、布局静态回归 `app/tests/responsive-layout.test.mjs` 和本轮迭代档案；未修改页面脚本、接口调用、方法名、业务逻辑、数据库或后端。
+- PASS：布局与既有前端 Node 回归 52/52、`pnpm run typecheck`、H5 构建、微信小程序构建、`git diff --check`；H5 浏览器认证/注册/协议页显示、密码显隐点击和协议长内容滚动通过。
+- PARTIAL：H5 实际运行仅覆盖未登录认证/协议页面和 771×1272 浏览器视口，真实登录账务页面、窄屏设备和所有真实数据弹层尚未闭环。
+- BLOCKED / NOT_RUN：`pnpm run lint` 因项目无 script 阻塞；本机虽存在微信开发者工具安装文件，但当前 UI 自动化面未暴露可控制的原生窗口，未执行真实小程序页面、安全区、滚动和点击验收。
+- 完整档案：`docs/10-iterations/2026/09/global-ui-cross-platform-optimization/README.md`。
+
+## 2026-09-17 追加：微信小程序日历选中日期可见性
+
+- 根因风险：日历日期格使用原生 `button`、日期数字使用 `text`，选中态背景和文字颜色依赖平台差异较大的盒模型；H5 可见不代表微信小程序渲染一致。
+- 修正：日历日期格和日期数字改为 `view`，并为日期格、数字补充明确的 flex 盒模型；选中态强制使用 `#49ad9c`、`background-color` 和白色文字，保留当前月选择、非本月不可选、今天态和既有 API/业务逻辑。
+- PASS：前端回归 53/53、`pnpm typecheck`、H5/微信小程序生产构建、`git diff --check`，以及小程序 WXML/WXSS 静态产物核对。
+- BLOCKED / NOT_RUN：未在微信开发者工具中导入产物并进行真实登录态日历点击/截图，不能把构建结果当作运行时验收。
+- 完整档案：`docs/10-iterations/2026/09/calendar-mini-selected-state/README.md`。
+
+## 2026-09-17 追加：微信小程序主题色跨端兼容
+
+共享样式原先大量依赖 CSS 自定义属性 `var(--主题色)`。为避免微信小程序端颜色解析或原生组件层叠失败后回退为黑色，保留现有色板定义，同时将实际颜色声明改为对应的明确十六进制值；PageHeader 作用域样式同步处理。前端回归 54/54、类型检查、H5/微信小程序构建、微信 WXSS 主题色静态检查和 `git diff --check` 为 PASS；真实微信开发者工具页面画面与点击仍为 BLOCKED/NOT_RUN。
+
+详细档案：`docs/10-iterations/2026/09/mini-color-theme-compatibility/`。
+
+## 2026-09-17 追加：新增记账退出不提示放弃修改
+
+- 新增记账的返回路径不再把输入金额、备注、账户选择或类型切换视为需要确认放弃的修改；仅编辑已有账单时比较初始快照并保留自定义确认弹层。
+- PASS：前端 Node 回归 55/55、类型检查、H5/微信小程序生产构建和 `git diff --check`。
+- NOT_RUN：未在真实登录 H5 或微信开发者工具中操作退出；构建与静态回归不替代运行时验收。
+- 完整档案：`docs/10-iterations/2026/09/transaction-create-exit-no-discard/`。

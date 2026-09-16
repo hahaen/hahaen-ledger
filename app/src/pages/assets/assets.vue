@@ -158,10 +158,10 @@ onShow(() => { void load() })
     </template>
     <button class="fab" aria-label="新增资产账户" @click="openCreate">＋</button><BottomNav active="assets" />
     <view v-if="createOpen" class="asset-create-backdrop" @click.self="closeCreate" @touchmove.stop.prevent>
-      <view class="asset-create-modal" role="dialog" aria-modal="true" aria-label="新增资产账户">
+      <view class="asset-create-modal" role="dialog" aria-modal="true" aria-label="新增资产账户" @click.stop>
         <view class="asset-create-handle" />
         <text class="asset-create-title">{{ createKind === 'FUND' ? '新增资产账户' : '新增信贷账户' }}</text>
-        <view class="asset-type-tabs"><button :class="{ active: createKind === 'FUND' }" @click="createKind = 'FUND'">资金账户</button><button :class="{ active: createKind === 'CREDIT' }" @click="createKind = 'CREDIT'">信贷账户</button></view>
+        <view class="asset-type-tabs"><button :class="{ active: createKind === 'FUND' }" :aria-pressed="createKind === 'FUND'" @click="createKind = 'FUND'">资金账户</button><button class="credit-choice" :class="{ active: createKind === 'CREDIT' }" :aria-pressed="createKind === 'CREDIT'" @click="createKind = 'CREDIT'">信贷账户</button></view>
         <view class="asset-create-fields">
           <view class="asset-create-row"><text>账户名称</text><input v-model="createName" maxlength="20" :placeholder="createKind === 'CREDIT' ? '例如：xx信用卡' : '例如：微信'" aria-required="true" :disabled="savingAccount" /></view>
           <view v-if="createKind === 'FUND'" class="asset-create-row"><text>余额</text><view class="asset-create-money"><input v-model="createBalance" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="savingAccount" /></view></view>

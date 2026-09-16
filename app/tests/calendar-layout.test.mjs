@@ -10,3 +10,11 @@ test('日历页仅让记账记录区域独立滚动', () => {
   assert.match(prototypeStyles, /\.calendar-page\s*\{[^}]*height:100vh[^}]*overflow:hidden/)
   assert.match(prototypeStyles, /\.calendar-transaction-list\s*\{[^}]*flex:1[^}]*height:0[^}]*min-height:0[^}]*overflow-y:auto/)
 })
+
+test('日历日期格使用跨端 view，避免微信原生 button/text 覆盖选中态', () => {
+  assert.match(calendarPage, /<view v-for="day in visibleDays"[^>]*class="\['calendar-cell'/)
+  assert.match(calendarPage, /<view class="day-num">\{\{ day\.day \}\}<\/view>/)
+  assert.doesNotMatch(calendarPage, /<button v-for="day in visibleDays"/)
+  assert.match(prototypeStyles, /\.calendar-cell\s*\{[^}]*display:flex[^}]*flex-direction:column/)
+  assert.match(prototypeStyles, /\.calendar-cell\.selected \.day-num\s*\{[^}]*background:#49ad9c !important[^}]*background-color:#49ad9c !important[^}]*color:#fff !important/)
+})
