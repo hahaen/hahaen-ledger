@@ -10,6 +10,8 @@ services:
       - /home/hahaen/haji-prod.env
     environment:
       SPRING_PROFILES_ACTIVE: prod
+    volumes:
+      - /home/hahaen/log/haji:/home/hahaen/log/haji
     expose:
       - "8080"
     networks:

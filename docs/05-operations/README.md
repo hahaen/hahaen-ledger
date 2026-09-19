@@ -15,6 +15,8 @@ Flyway 由应用启动执行，位置为 `classpath:db/migration`，当前仓库
 
 生产环境必须通过环境变量提供数据库、Redis、MinIO、CORS、微信和 H5 RSA 私钥等配置；生产配置中的 `GENERATE` 仅是兜底值，不能作为生产密钥策略。真实凭证只放本地忽略文件或部署密钥系统，不能进入文档、命令和日志。
 
+生产后端文件日志配置为 `/home/hahaen/log/haji`。Docker Compose 将该宿主机目录 bind mount 到容器内同一路径；通过 Jenkins 使用仓库中的 `docker-compose.prod.yml` 部署后，可直接在宿主机查看该目录。首次启用挂载前，先备份需要保留的旧容器内日志，因为挂载会遮住容器原目录内容。应用控制台日志也可通过 `docker logs haji-server` 查看。
+
 MinIO 的 `MINIO_ENDPOINT` 是应用服务器访问 MinIO 的内网 API 地址。若该地址不能被浏览器/微信客户端访问，生产环境还须在部署环境配置 `MINIO_PUBLIC_URL_PREFIX`。后端仍以 `MINIO_ENDPOINT` 生成签名，仅替换返回 URL 的外部前缀；Nginx 必须将公网前缀去前缀代理至同一内网 Endpoint，并让上游收到与签名一致的 Host（使用该 Endpoint 作为 `proxy_pass` 时保留 Nginx 默认 `$proxy_host`）。生产 Profile 要求提供非空 `MINIO_PUBLIC_URL_PREFIX`，缺少时应用启动失败；不要把 MinIO Console 地址 `9001` 配成对象 API 地址。
 
 ## 常用命令

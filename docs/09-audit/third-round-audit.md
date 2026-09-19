@@ -1,5 +1,13 @@
 # 第三轮工程审计报告
 
+## 2026-09-19 追加：生产后端日志挂载到宿主机
+
+- `docker-compose.prod.yml` 将宿主机 `/home/hahaen/log/haji` 绑定到容器内同一路径，Jenkins 后续按现有 Compose 流程部署时自动生效。
+- PASS（配置/静态）：Compose 挂载定义已补充；无业务、API、数据库或日志格式变化。
+- NOT_RUN：未触发 Jenkins、未在服务器解析 Compose 配置，宿主机写入与容器重建后保留尚未验证。
+- 注意：首次启用 bind mount 前应备份现有容器日志，挂载会隐藏原容器目录内容。
+- 详细档案：`docs/10-iterations/2026/09/prod-log-host-bind/`。
+
 ## 2026-09-19 追加：MinIO 正式环境文件回显 URL
 
 - 生产 MinIO SDK 仍访问 `MINIO_ENDPOINT` 内网地址；上传和预览的短时签名 URL 返回给客户端前替换为部署环境提供的 `MINIO_PUBLIC_URL_PREFIX`。

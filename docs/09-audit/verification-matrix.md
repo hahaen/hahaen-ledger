@@ -2,6 +2,16 @@
 
 更新日期：2026-09-19。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
 
+## 2026-09-19：生产后端日志挂载到宿主机
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 宿主机与容器日志目录映射 | PASS（配置/静态） | `docker-compose.prod.yml` 将 `/home/hahaen/log/haji` 映射到容器相同路径；Jenkins 使用该 Compose 文件部署。 |
+| Compose 配置解析 | NOT_RUN | 尚未使用生产服务器 Docker Compose 实际解析配置。 |
+| 生产文件写入与持久性 | NOT_RUN | 未部署或重建容器，尚无宿主机落盘证据。 |
+
+详见 `docs/10-iterations/2026/09/prod-log-host-bind/`。
+
 ## 2026-09-19：MinIO 正式环境文件回显 URL
 
 | 范围 | 状态 | 证据/限制 |
