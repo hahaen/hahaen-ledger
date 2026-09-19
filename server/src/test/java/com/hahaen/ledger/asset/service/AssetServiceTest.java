@@ -30,6 +30,22 @@ class AssetServiceTest {
         }
     }
 
+    @Test
+    void classifiesNegativeBalancesAsAssetOrLiabilityByAccountKind() {
+        AssetAccountMapper mapper = mock(AssetAccountMapper.class);
+        when(mapper.selectActiveByUser(7L)).thenReturn(List.of(
+                fund(1L, 10_000L, 1), fund(2L, -1_500L, 1),
+                credit(3L, 8_000L, 2_500L, 1), credit(4L, 8_000L, -700L, 1)));
+        AssetService service = new AssetService(mapper);
+        try (MockedStatic<CurrentUser> ignored = mockStatic(CurrentUser.class)) {
+            ignored.when(CurrentUser::id).thenReturn(7L);
+            var result = service.overview();
+            assertEquals(10_700L, result.totalAssetsCents());
+            assertEquals(4_000L, result.totalLiabilitiesCents());
+            assertEquals(6_700L, result.netAssetsCents());
+        }
+    }
+
     private static AssetAccount fund(long id, long balance, int included) {
         AssetAccount value = new AssetAccount(); value.setId(id); value.setAccountType("FUND"); value.setBalanceCent(balance); value.setIncludeNetAsset(included); return value;
     }

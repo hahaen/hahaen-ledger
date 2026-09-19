@@ -1,6 +1,11 @@
 /** 使用可安全表示的整数分数运算，最终结果四舍五入到分，遵循乘除优先级。 */
 import { cents, inputYuan } from './money'
 
+/** 信贷支出超出可用额度的金额；结果只用于提示，不用于拦截记账。 */
+export function creditExpenseOverLimitCents(currentDebtCents: number, creditLimitCents: number, expenseCents: number): number {
+  return Math.max(0, currentDebtCents + expenseCents - creditLimitCents)
+}
+
 export function calculateAmount(input: string): string {
   const expression = input.replaceAll('−', '-').replaceAll('×', '*').replaceAll('÷', '/')
   if (!/^\d+(\.\d{1,2})?([+\-*/]\d+(\.\d{1,2})?)*$/.test(expression)) throw new Error('算式有误，请检查后重试')

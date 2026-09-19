@@ -196,7 +196,7 @@ public class TransactionService {
         if (amount > remaining) throw new BusinessException("REFUND_EXCEEDS_REMAINING", "退款金额不能超过剩余可退款金额");
         Map<Long, AssetAccount> accounts = lockAccounts(userId, idsOf(transaction));
         AssetAccount account = account(accounts, transaction.getAccountId());
-        requireFund(account);
+        requireExpenseAccount(account);
         TransactionRefund refund = new TransactionRefund();
         refund.setTransactionId(transactionId);
         refund.setRefundNo("REF-" + UUID.randomUUID());
@@ -206,7 +206,7 @@ public class TransactionService {
         transaction.setAmount(transaction.getOriginalAmount() - activeRefunded - amount);
         transaction.setHasRefund(1);
         transactionMapper.updateById(transaction);
-        adjustFund(account, "EXPENSE".equals(transaction.getTransactionType()) ? amount : -amount);
+        applyRefundImpact(transaction.getTransactionType(), account, amount, true);
         accountMapper.updateById(account);
         return toRefundVO(refund);
     }
@@ -223,7 +223,7 @@ public class TransactionService {
         if (refund == null) throw new BusinessException("REFUND_NOT_FOUND", "退款记录不存在");
         Map<Long, AssetAccount> accounts = lockAccounts(userId, idsOf(transaction));
         AssetAccount account = account(accounts, transaction.getAccountId());
-        requireFund(account);
+        requireExpenseAccount(account);
         AuditSupport.markDeleted(refund);
         if (refundMapper.softDeleteById(refund) != 1) {
             throw new BusinessException("REFUND_NOT_FOUND", "退款记录不存在或已被删除");
@@ -232,7 +232,7 @@ public class TransactionService {
         transaction.setAmount(transaction.getOriginalAmount() - activeRefunded);
         transaction.setHasRefund(activeRefunded > 0 ? 1 : 0);
         transactionMapper.updateById(transaction);
-        adjustFund(account, "EXPENSE".equals(transaction.getTransactionType()) ? -refund.getRefundAmount() : refund.getRefundAmount());
+        applyRefundImpact(transaction.getTransactionType(), account, refund.getRefundAmount(), false);
         accountMapper.updateById(account);
     }
 
@@ -257,16 +257,22 @@ public class TransactionService {
         switch (type) {
             case "EXPENSE", "INCOME" -> {
                 if (request.accountId() == null || request.fromAccountId() != null || request.toAccountId() != null) {
-                    throw new BusinessException("TRANSACTION_ACCOUNT_INVALID", "支出和收入必须选择一个资金账户");
+                    throw new BusinessException("TRANSACTION_ACCOUNT_INVALID", "支出和收入必须选择一个账户");
                 }
-                requireFund(account(accounts, request.accountId()));
+                AssetAccount selected = account(accounts, request.accountId());
+                if ("EXPENSE".equals(type)) {
+                    requireExpenseAccount(selected);
+                } else {
+                    requireFund(selected);
+                }
             }
             case "TRANSFER" -> {
                 if (request.accountId() != null || request.fromAccountId() == null || request.toAccountId() == null
                         || request.fromAccountId().equals(request.toAccountId())) {
                     throw new BusinessException("TRANSFER_ACCOUNT_INVALID", "转账必须选择两个不同的资金账户");
                 }
-                requireFund(account(accounts, request.fromAccountId()));
+                AssetAccount from = account(accounts, request.fromAccountId());
+                requireFund(from);
                 requireFund(account(accounts, request.toAccountId()));
             }
             case "REPAYMENT" -> {
@@ -276,9 +282,7 @@ public class TransactionService {
                 }
                 requireFund(account(accounts, request.fromAccountId()));
                 requireCredit(account(accounts, request.toAccountId()));
-                AssetAccount fund = account(accounts, request.fromAccountId());
                 AssetAccount credit = account(accounts, request.toAccountId());
-                if (value(fund.getBalanceCent()) < request.amountCents()) throw new BusinessException("BALANCE_NOT_ENOUGH", "资金账户余额不足");
                 if (value(credit.getCurrentDebtCent()) < request.amountCents()) throw new BusinessException("DEBT_NOT_ENOUGH", "还款金额不能超过当前欠款");
             }
             default -> throw new BusinessException("TRANSACTION_TYPE_INVALID", "账单类型不支持");
@@ -288,7 +292,7 @@ public class TransactionService {
     private void applyImpact(TransactionDetail transaction, long amount, Map<Long, AssetAccount> accounts, int multiplier) {
         if (amount < 0) throw new BusinessException("INVALID_AMOUNT", "金额不能为负数");
         switch (transaction.getTransactionType()) {
-            case "EXPENSE" -> adjustFund(account(accounts, transaction.getAccountId()), -amount * multiplier);
+            case "EXPENSE" -> applyExpenseImpact(account(accounts, transaction.getAccountId()), amount * multiplier);
             case "INCOME" -> adjustFund(account(accounts, transaction.getAccountId()), amount * multiplier);
             case "TRANSFER" -> {
                 adjustFund(account(accounts, transaction.getFromAccountId()), -amount * multiplier);
@@ -366,6 +370,12 @@ public class TransactionService {
         if (account == null || !"FUND".equals(account.getAccountType())) throw new BusinessException("FUND_ACCOUNT_REQUIRED", "请选择资金账户");
     }
 
+    private static void requireExpenseAccount(AssetAccount account) {
+        if (account == null || (!"FUND".equals(account.getAccountType()) && !"CREDIT".equals(account.getAccountType()))) {
+            throw new BusinessException("EXPENSE_ACCOUNT_REQUIRED", "请选择资金账户或信贷账户");
+        }
+    }
+
     private static void requireCredit(AssetAccount account) {
         if (account == null || !"CREDIT".equals(account.getAccountType())) throw new BusinessException("CREDIT_ACCOUNT_REQUIRED", "请选择信贷账户");
     }
@@ -373,14 +383,32 @@ public class TransactionService {
     private static void adjustFund(AssetAccount account, long delta) {
         requireFund(account);
         long next = Math.addExact(value(account.getBalanceCent()), delta);
-        if (next < 0) throw new BusinessException("BALANCE_NOT_ENOUGH", "资金账户余额不足");
         account.setBalanceCent(next);
+    }
+
+    private static void applyExpenseImpact(AssetAccount account, long amountDelta) {
+        if ("FUND".equals(account.getAccountType())) {
+            adjustFund(account, -amountDelta);
+        } else {
+            adjustDebt(account, amountDelta);
+        }
+    }
+
+    private static void applyRefundImpact(String transactionType, AssetAccount account, long amount, boolean creating) {
+        if ("EXPENSE".equals(transactionType)) {
+            if ("FUND".equals(account.getAccountType())) {
+                adjustFund(account, creating ? amount : -amount);
+            } else {
+                adjustDebt(account, creating ? -amount : amount);
+            }
+        } else {
+            adjustFund(account, creating ? -amount : amount);
+        }
     }
 
     private static void adjustDebt(AssetAccount account, long delta) {
         requireCredit(account);
         long next = Math.addExact(value(account.getCurrentDebtCent()), delta);
-        if (next < 0 || next > value(account.getTotalLimitCent())) throw new BusinessException("DEBT_INVALID", "信贷账户欠款超出有效范围");
         account.setCurrentDebtCent(next);
     }
 

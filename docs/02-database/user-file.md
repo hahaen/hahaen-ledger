@@ -11,7 +11,7 @@
 - `login_account` 全表唯一，允许仅微信身份用户为空。
 - `password_hash` 与 `login_account` 必须同时为空或同时存在；只保存服务端哈希。
 - `status` 为 `ACTIVE` 或 `DISABLED`；业务查询还必须过滤 `deleted=0`。
-- `avatar_file_url` 只保存 MinIO `object_key`，例如 `avatars/<userId>/<uuid>.png`；它不是完整 URL，不含可变 Endpoint、Bucket 访问前缀或短时签名参数。
+- `avatar_file_url` 只保存 MinIO `object_key`，新上传对象采用 `avatars/<yyyyMMdd>/<userId>/<原文件名主干>-<uuid>.<ext>`，日期按 `Asia/Shanghai` 生成，最终扩展名按实际内容 MIME 确定；它不是完整 URL，不含可变 Endpoint、Bucket 访问前缀或短时签名参数。历史对象 Key 保持原值，不做批量迁移。
 - 用户表从初始化基线开始直接保存 `avatar_file_url` 对象 Key，不再建立 `avatar_file_id` 外键；当前头像的对象元数据仍由 `app_file` 按当前用户和对象 Key 校验。
 
 ### `user_identity`

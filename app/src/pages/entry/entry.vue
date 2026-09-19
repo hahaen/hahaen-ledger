@@ -6,8 +6,8 @@ import NativeNavigation from '../../components/NativeNavigation.vue'
 import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import { useLedger, TransactionPayload } from '../../stores/ledger'
 import { request } from '../../utils/api'
-import { cents, inputYuan, localDateTime } from '../../utils/money'
-import { calculateAmount, validLocalDateTime, backToLedger } from '../../utils/entry'
+import { cents, formatYuan, inputYuan, localDateTime } from '../../utils/money'
+import { calculateAmount, creditExpenseOverLimitCents, validLocalDateTime, backToLedger } from '../../utils/entry'
 import { stringId } from '../../utils/id'
 import { staticResource } from '../../utils/staticResource'
 
@@ -26,6 +26,8 @@ const loading = ref(true)
 const loadError = ref('')
 const refundedCents = ref(0)
 const routeId = ref('')
+const editingAccountId = ref('')
+const editingAccountImpactCents = ref(0)
 const locked = computed(() => saving.value || loading.value || !!loadError.value)
 const modal = ref<'account' | 'to' | 'date' | 'note' | ''>('')
 const formError = ref('')
@@ -82,9 +84,23 @@ function selectDateTimeValue(value: string) {
   if (dateTimePicker.value === 'time') draftTime.value = value
   dateTimePicker.value = ''
 }
-const accounts = computed(() => ledger.state.accounts.filter(account => account.kind === 'FUND' && account.status === 'ACTIVE'))
+const fundAccounts = computed(() => ledger.state.accounts.filter(account => account.kind === 'FUND' && account.status === 'ACTIVE'))
+const expenseAccounts = computed(() => ledger.state.accounts.filter(account => account.status === 'ACTIVE'))
+const accounts = computed(() => type.value === 'EXPENSE' ? expenseAccounts.value : fundAccounts.value)
+const creditOverLimitCents = computed(() => {
+  const selected = type.value === 'EXPENSE' ? accounts.value[accountIndex.value] : undefined
+  if (selected?.kind !== 'CREDIT' || !amount.value) return 0
+  try {
+    const editingThisAccount = isEdit.value && selected.id === editingAccountId.value
+    const debtBeforeEditedExpense = selected.balanceCents - (editingThisAccount ? editingAccountImpactCents.value : 0)
+    const proposedExpenseImpact = Math.max(0, cents(amount.value) - (editingThisAccount ? refundedCents.value : 0))
+    return creditExpenseOverLimitCents(debtBeforeEditedExpense, selected.creditLimitCents, proposedExpenseImpact)
+  } catch {
+    return 0
+  }
+})
 const paired = computed(() => type.value === 'TRANSFER' || type.value === 'REPAYMENT')
-const targetAccounts = computed(() => type.value === 'REPAYMENT' ? ledger.state.accounts.filter(account => account.kind === 'CREDIT' && account.status === 'ACTIVE') : accounts.value)
+const targetAccounts = computed(() => type.value === 'REPAYMENT' ? ledger.state.accounts.filter(account => account.kind === 'CREDIT' && account.status === 'ACTIVE') : fundAccounts.value)
 const pickerAccounts = computed(() => modal.value === 'to' ? targetAccounts.value : accounts.value)
 function isSameAccountSelection(index: number) {
   const candidate = pickerAccounts.value[index]
@@ -96,14 +112,36 @@ const isEdit = computed(() => Boolean(editingId.value))
 const typeOptions = computed<Array<{ value: EntryType; label: string }>>(() => type.value === 'REPAYMENT' ? [{ value: 'REPAYMENT', label: '还款' }] : [{ value: 'EXPENSE', label: '支出' }, { value: 'INCOME', label: '收入' }, { value: 'TRANSFER', label: '转账' }])
 const typeLabel = computed(() => ({ EXPENSE: '支出', INCOME: '收入', TRANSFER: '转账', REPAYMENT: '还款' }[type.value]))
 
-function setType(value: EntryType) { if (!locked.value && !isEdit.value && !refundedCents.value) type.value = value }
+function setType(value: EntryType) {
+  if (locked.value || isEdit.value || refundedCents.value) return
+  const selectedId = accounts.value[accountIndex.value]?.id
+  const selectedTargetId = targetAccounts.value[toIndex.value]?.id
+  type.value = value
+  const nextAccountIndex = accounts.value.findIndex(account => account.id === selectedId)
+  accountIndex.value = nextAccountIndex >= 0 ? nextAccountIndex : 0
+  if (value === 'TRANSFER') {
+    const sourceId = accounts.value[accountIndex.value]?.id
+    const retainedTarget = targetAccounts.value.findIndex(account => account.id === selectedTargetId && account.id !== sourceId)
+    const otherFund = targetAccounts.value.findIndex(account => account.id !== sourceId)
+    toIndex.value = retainedTarget >= 0 ? retainedTarget : otherFund >= 0 ? otherFund : 0
+  }
+}
 function updateAmount() {
   const completedExpression = expression.value.replace(/[+−×÷]+$/, '').replace(/\.$/, '')
   if (!completedExpression) { amount.value = ''; return }
   try { amount.value = calculateAmount(completedExpression) } catch { amount.value = '' }
 }
+function vibrateCalculatorKey() {
+  // #ifdef MP-WEIXIN
+  uni.vibrateShort({ type: 'light', fail: () => {} })
+  // #endif
+  // #ifdef H5
+  if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(10)
+  // #endif
+}
 function appendKey(key: string) {
   if (locked.value) return
+  vibrateCalculatorKey()
   formError.value = ''
   if (key === 'C') { expression.value = ''; amount.value = ''; return }
   if (key === '⌫') { expression.value = expression.value.slice(0, -1); updateAmount(); return }
@@ -134,6 +172,8 @@ async function loadForEdit(id: string) {
   if (!['EXPENSE', 'INCOME', 'TRANSFER', 'REPAYMENT'].includes(transaction.type)) throw new Error('账单类型不支持')
   editingId.value = id; type.value = transaction.type; amount.value = inputYuan(transaction.originalAmountCents); expression.value = amount.value; note.value = transaction.note || ''; dateTime.value = transaction.occurredAt.slice(0, 16)
   refundedCents.value = result.refundedCents
+  editingAccountId.value = transaction.accountId || ''
+  editingAccountImpactCents.value = Math.max(0, transaction.originalAmountCents - result.refundedCents)
   const from = transaction.fromAccountId ?? transaction.accountId
   accountIndex.value = accounts.value.findIndex(account => account.id === from)
   toIndex.value = targetAccounts.value.findIndex(account => account.id === transaction.toAccountId)
@@ -146,8 +186,11 @@ async function initialize() {
     else {
       await ledger.refresh()
       const lastId = stringId(uni.getStorageSync('last-entry-account'))
-      accountIndex.value = Math.max(0, accounts.value.findIndex(account => account.id === lastId))
-      toIndex.value = accounts.value.findIndex((account, index) => index !== accountIndex.value)
+      const preferredId = accounts.value.some(account => account.id === lastId) ? lastId : fundAccounts.value[0]?.id
+      accountIndex.value = Math.max(0, accounts.value.findIndex(account => account.id === preferredId))
+      const sourceId = accounts.value[accountIndex.value]?.kind === 'FUND' ? accounts.value[accountIndex.value]?.id : fundAccounts.value[0]?.id
+      const otherFundIndex = fundAccounts.value.findIndex(account => account.id !== sourceId)
+      toIndex.value = otherFundIndex >= 0 ? otherFundIndex : 0
     }
     initialValue.value = snapshot()
   } catch (error) { loadError.value = error instanceof Error ? error.message : '加载失败，请重试' }
@@ -161,6 +204,7 @@ onLoad(query => {
 })
 async function save(afterSave: 'home' | 'again') {
   if (locked.value) return
+  vibrateCalculatorKey()
   saving.value = true
   try {
     formError.value = ''
@@ -177,7 +221,7 @@ async function save(afterSave: 'home' | 'again') {
       payload.fromAccountId = from.id; payload.toAccountId = to.id
     } else {
       const account = accounts.value[accountIndex.value]
-      if (!account) throw new Error('请先创建资金账户')
+      if (!account) throw new Error(type.value === 'EXPENSE' ? '请先创建资金账户或信贷账户' : '请先创建资金账户')
       payload.accountId = account.id
     }
     const savedAccountId = payload.accountId || payload.fromAccountId
@@ -210,8 +254,9 @@ async function save(afterSave: 'home' | 'again') {
       <view v-if="isEdit && !loading && !loadError" :class="['entry-edit-type', type.toLowerCase()]"><text class="entry-edit-type-label">当前账单类型</text><text class="entry-edit-type-value">{{ typeLabel }}记账</text></view>
       <view v-if="!isEdit" :class="['entry-type', { 'single-type': type === 'REPAYMENT' }]"><button v-for="option in typeOptions" :key="option.value" :disabled="locked || !!refundedCents" :class="{ active: type === option.value, 'income-active': type === 'INCOME' && type === option.value, 'transfer-active': type === 'TRANSFER' && type === option.value }" @click="setType(option.value)">{{ option.label }}</button></view>
       <view class="amount-panel"><text class="amount-label">{{ type === 'REPAYMENT' ? '还款金额' : type === 'TRANSFER' ? '转账金额' : '记账金额' }}</text><view class="amount-display"><text :class="['amount-value', { 'amount-placeholder': !amount, 'long-amount': amount.length > 10 }]">{{ amount || '输入金额' }}</text></view><button class="calculation-line" :aria-label="expression ? `当前算式：${expression}` : '支持加减乘除连续计算'" @click="appendKey('=')">{{ expression || '支持 + − × ÷ 连续计算' }}</button></view>
+      <view v-if="creditOverLimitCents > 0" class="credit-over-limit-hint">本次会超出信用卡可用额度 {{ formatYuan(creditOverLimitCents) }} 元，仍可继续记账。</view>
       <view class="fields-card">
-        <button class="field-row" :disabled="locked || !!refundedCents" @click="openModal('account')"><text class="field-icon">{{ paired ? '↗' : '◉' }}</text><text class="field-label">{{ type === 'REPAYMENT' ? '还款账户' : type === 'TRANSFER' ? '转出账户' : '资金账户' }}</text><text class="field-value">{{ accounts[accountIndex]?.name || '请选择' }}</text><text class="arrow">›</text></button>
+        <button class="field-row" :disabled="locked || !!refundedCents" @click="openModal('account')"><text class="field-icon">{{ paired ? '↗' : '◉' }}</text><text class="field-label">{{ type === 'REPAYMENT' ? '还款账户' : type === 'TRANSFER' ? '转出账户' : type === 'EXPENSE' ? '支出账户' : '资金账户' }}</text><text class="field-value">{{ accounts[accountIndex]?.name || '请选择' }}</text><text class="arrow">›</text></button>
         <button v-if="paired" class="field-row" :disabled="locked || !!refundedCents" @click="openModal('to')"><text class="field-icon">↘</text><text class="field-label">{{ type === 'REPAYMENT' ? '信贷账户' : '转入账户' }}</text><text class="field-value">{{ targetAccounts[toIndex]?.name || '请选择' }}</text><text class="arrow">›</text></button>
         <button class="field-row" :disabled="locked" @click="openModal('date')"><text class="field-icon">◷</text><text class="field-label">日期与时间</text><text class="field-value">{{ dateTime.replace('T', ' ').slice(0, 16) }}</text><text class="arrow">›</text></button>
         <button class="field-row" :disabled="locked" @click="openModal('note')"><text class="field-icon">⌁</text><text class="field-label">备注</text><text :class="['field-value', { placeholder: !note }]">{{ note || '写点说明...' }}</text></button>
@@ -234,9 +279,9 @@ async function save(afterSave: 'home' | 'again') {
       </view>
     </view>
     <view v-if="modal === 'account' || modal === 'to'" class="entry-account-picker-backdrop" @click.self="modal = ''" @touchmove.stop.prevent>
-      <view class="entry-account-picker-modal" role="dialog" aria-modal="true" :aria-label="modal === 'to' ? (type === 'REPAYMENT' ? '选择信贷账户' : '选择转入账户') : (type === 'TRANSFER' ? '请选择转出账户' : '选择资金账户')">
+      <view class="entry-account-picker-modal" role="dialog" aria-modal="true" :aria-label="modal === 'to' ? (type === 'REPAYMENT' ? '选择信贷账户' : '选择转入账户') : (type === 'TRANSFER' ? '请选择转出账户' : type === 'EXPENSE' ? '选择支出账户' : '选择资金账户')">
         <view class="entry-account-picker-handle" />
-        <text class="entry-account-picker-title">{{ modal === 'to' ? (type === 'REPAYMENT' ? '选择信贷账户' : '选择转入账户') : (type === 'TRANSFER' ? '请选择转出账户' : '选择资金账户') }}</text>
+        <text class="entry-account-picker-title">{{ modal === 'to' ? (type === 'REPAYMENT' ? '选择信贷账户' : '选择转入账户') : (type === 'TRANSFER' ? '请选择转出账户' : type === 'EXPENSE' ? '选择支出账户' : '选择资金账户') }}</text>
         <scroll-view scroll-y class="entry-account-choice-list" @touchmove.stop>
           <view v-if="!pickerAccounts.length" class="list-empty">暂无可用账户<button class="text-button" @click="modal = ''; uni.switchTab({ url: '/pages/assets/assets' })">去资产页添加账户</button></view>
           <button v-for="(account, index) in pickerAccounts" v-else :key="account.id" :disabled="isSameAccountSelection(index)" :class="['entry-account-choice-item', { selected: index === draftAccountIndex }]" @click="selectAccount(index)"><image class="entry-account-choice-icon" :src="staticResource(account.kind === 'CREDIT' ? 'prototype/credit-account.png' : 'prototype/funds-account.png')" mode="aspectFit" /><text class="entry-account-choice-name">{{ account.name }}</text><MoneyDisplay class="entry-account-choice-balance" :value="account.kind === 'CREDIT' ? -account.balanceCents : account.balanceCents" /><text class="entry-account-choice-state">{{ index === draftAccountIndex ? '✓' : '›' }}</text></button>

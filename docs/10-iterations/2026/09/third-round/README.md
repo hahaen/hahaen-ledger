@@ -12,9 +12,17 @@
 
 本轮新增的 H5 我的页及会话持久化修复审计结论已同步到 `docs/09-audit/verification-matrix.md` 和 `docs/09-audit/third-round-audit.md`；未执行的真实基础设施联调仍按 BLOCKED/NOT_RUN 记录。
 
+## 2026-09-19 追加：账户负余额与信贷支出
+
+资金账户支出、转账和还款允许低于 0；支出可选择信贷账户，超出可用额度时显示提示但仍可保存，溢缴可由负欠款表达。前后端测试、类型检查及 H5/微信构建状态以后续 `../negative-account-balances/08-commands.md` 为准；Flyway/MySQL、DEV API、登录态页面和真机验收仍需实际环境证据。详见 `../negative-account-balances/README.md`。
+
 ## 2026-09-19 追加：微信小程序全页面自定义导航对齐
 
 共享导航组件现按微信胶囊实际矩形布置主页面品牌行与次级页面标题栏，并消除状态栏/安全区重复留白。前端回归 55/55、TypeScript、H5/微信小程序构建和产物静态核对 PASS；微信开发者工具/真机画面仍为 NOT_RUN。详细记录：`../wechat-custom-navigation-alignment/README.md`。
+
+## 2026-09-19 追加：MinIO 新上传对象 Key 命名
+
+新头像对象 Key 改为 `avatars/<上海时区yyyyMMdd>/<userId>/<原文件名主干>-<UUID>.<内容MIME扩展名>`；用户归属继续由 `app_file.user_id` 和当前用户查询校验，历史对象 Key 不迁移。静态代码与文档核对 PASS；自动化测试、构建及真实 MinIO 上传/读取未运行，详见 `../minio-date-filename-object-key/README.md`。
 
 ## 2026-09-17 追加：新增记账页微信小程序顶部控件
 

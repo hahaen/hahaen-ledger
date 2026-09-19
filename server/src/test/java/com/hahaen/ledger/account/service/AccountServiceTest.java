@@ -36,13 +36,47 @@ class AccountServiceTest {
     }
 
     @Test
-    void rejectsCreditDebtAboveLimitBeforePersistence() {
+    void createsFundAccountWithNegativeBalance() {
         AssetAccountMapper mapper = mock(AssetAccountMapper.class);
+        doAnswer(invocation -> { AssetAccount value = invocation.getArgument(0); value.setId(12L); return 1; })
+                .when(mapper).insert(any(AssetAccount.class));
         AccountService service = new AccountService(mapper);
         try (MockedStatic<CurrentUser> ignored = mockStatic(CurrentUser.class)) {
             ignored.when(CurrentUser::id).thenReturn(7L);
-            assertThrows(BusinessException.class, () -> service.create(new AccountRequest("信用卡", "CREDIT", null, 10_000L, 10_001L, true)));
-            verify(mapper, never()).insert(any(AssetAccount.class));
+            var result = service.create(new AccountRequest("透支账户", "FUND", -12_345L, null, null, true));
+            assertEquals(-12_345L, result.balanceCents());
+        }
+    }
+
+    @Test
+    void acceptsNegativeCreditBalanceAndDebtAboveLimit() {
+        AssetAccountMapper mapper = mock(AssetAccountMapper.class);
+        AccountService service = new AccountService(mapper);
+        AssetAccount existing = account(11L, "信用卡", "CREDIT", 1);
+        existing.setTotalLimitCent(10_000L);
+        existing.setCurrentDebtCent(0L);
+        when(mapper.selectOwnedForUpdate(11L, 7L)).thenReturn(existing);
+        try (MockedStatic<CurrentUser> ignored = mockStatic(CurrentUser.class)) {
+            ignored.when(CurrentUser::id).thenReturn(7L);
+            var result = service.update(11L, new AccountRequest("信用卡", "CREDIT", null, 10_000L, -500L, true));
+            assertEquals(-500L, result.balanceCents());
+            var overLimit = service.update(11L,
+                    new AccountRequest("信用卡", "CREDIT", null, 10_000L, 10_001L, true));
+            assertEquals(10_001L, overLimit.balanceCents());
+        }
+    }
+
+    @Test
+    void createsCreditAccountWithDebtAboveLimit() {
+        AssetAccountMapper mapper = mock(AssetAccountMapper.class);
+        doAnswer(invocation -> { AssetAccount value = invocation.getArgument(0); value.setId(13L); return 1; })
+                .when(mapper).insert(any(AssetAccount.class));
+        AccountService service = new AccountService(mapper);
+        try (MockedStatic<CurrentUser> ignored = mockStatic(CurrentUser.class)) {
+            ignored.when(CurrentUser::id).thenReturn(7L);
+            var result = service.create(new AccountRequest("信用卡", "CREDIT", null, 10_000L, 10_001L, true));
+            assertEquals(10_001L, result.balanceCents());
+            verify(mapper).insert(any(AssetAccount.class));
         }
     }
 

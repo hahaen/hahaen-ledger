@@ -11,8 +11,10 @@ export function cents(value: string | number): number {
 
 /** 输入框使用无分组符的金额，不能复用带千分位的展示文本。 */
 export function inputYuan(value: number): string {
-  const fraction = Math.abs(value % 100)
-  return `${Math.trunc(value / 100)}${fraction ? '.' + String(fraction).padStart(2, '0') : ''}`
+  const sign = value < 0 ? '-' : ''
+  const absolute = Math.abs(value)
+  const fraction = absolute % 100
+  return `${sign}${Math.trunc(absolute / 100)}${fraction ? '.' + String(fraction).padStart(2, '0') : ''}`
 }
 
 function normalizeCents(value: MoneyCents): number {

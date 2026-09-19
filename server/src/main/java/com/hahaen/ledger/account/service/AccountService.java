@@ -136,7 +136,7 @@ public class AccountService {
 
     private static void applyAmounts(AssetAccount account, String type, Long balance, Long limit, Long debt) {
         if ("FUND".equals(type)) {
-            long value = nonNegative(balance, "余额");
+            long value = signedAmount(balance, "余额");
             account.setBalanceCent(value);
             account.setTotalLimitCent(null);
             account.setCurrentDebtCent(null);
@@ -144,8 +144,7 @@ public class AccountService {
         }
         if (limit == null || debt == null) throw new BusinessException("ACCOUNT_AMOUNT_REQUIRED", "信贷账户需要填写总额度和当前欠款");
         long limitValue = nonNegative(limit, "总额度");
-        long debtValue = nonNegative(debt, "当前欠款");
-        if (debtValue > limitValue) throw new BusinessException("ACCOUNT_DEBT_EXCEEDS_LIMIT", "当前欠款不能超过总额度");
+        long debtValue = signedAmount(debt, "当前欠款");
         account.setBalanceCent(null);
         account.setTotalLimitCent(limitValue);
         account.setCurrentDebtCent(debtValue);
@@ -154,6 +153,13 @@ public class AccountService {
     private static long nonNegative(Long value, String label) {
         if (value == null || value < 0 || value > MAX_CENTS) {
             throw new BusinessException("INVALID_AMOUNT", label + "必须在 ¥0～¥999,999,999.99 之间");
+        }
+        return value;
+    }
+
+    private static long signedAmount(Long value, String label) {
+        if (value == null || value < -MAX_CENTS || value > MAX_CENTS) {
+            throw new BusinessException("INVALID_AMOUNT", label + "必须在 -¥999,999,999.99～¥999,999,999.99 之间");
         }
         return value;
     }

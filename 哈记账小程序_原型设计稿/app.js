@@ -717,7 +717,6 @@ document.addEventListener('click', (event) => {
     const debtInput = document.getElementById('credit-debt');
     const limit = Number(limitInput.value), debt = Number(debtInput.value);
     if (!name || !limitInput.value || !debtInput.value || !Number.isFinite(limit) || !Number.isFinite(debt) || !limitInput.checkValidity() || !debtInput.checkValidity()) { showToast('请输入名称和有效的两位小数金额'); return; }
-    if (debt > limit) { showToast('欠款不能超过总额度'); return; }
     if ([...creditAccounts, ...fundAccounts].some(item => item !== account && !item.deleted && item.name === name)) { showToast('账户名称已存在'); return; }
     const values = { name, limit, debt, included: document.getElementById('credit-included').checked };
     if (account) {

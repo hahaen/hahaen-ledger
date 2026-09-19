@@ -19,7 +19,7 @@
 | 每条账单唯一记录编号 | `transaction_detail.transaction_no` | 独立于主键的用户可读编号，唯一索引保证不重复。 |
 | 账单主键 | `transaction_detail.id` | 内部关联 ID；也是退款表的 `transaction_id` 外键目标。 |
 | 所属用户及当前账本 | `user_id` | 当前单账本模型不在账单表重复保存 `book_id`；`user_id` 外键关联 `app_user.id`。当前没有独立 `book_id` 过滤。 |
-| 支出 | `transaction_type=EXPENSE`、`account_id` | `account_id` 必须是有效资金账户；原型的金额、账户、日期时间、备注分别映射金额字段、账户字段、`occurred_at`、`note`。 |
+| 支出 | `transaction_type=EXPENSE`、`account_id` | `account_id` 可关联有效资金账户或信贷账户；资金支出可形成负余额，信贷支出增加欠款；超出可用额度时提示但仍可保存。 |
 | 收入 | `transaction_type=INCOME`、`account_id` | 结构同支出，金额方向由 Service 按收入规则处理。 |
 | 转账 | `transaction_type=TRANSFER`、`from_account_id`、`to_account_id` | 转出和转入账户均必填且不能相同，均须为资金账户。 |
 | 还款 | `transaction_type=REPAYMENT`、`from_account_id`、`to_account_id` | `from_account_id` 为还款资金账户，`to_account_id` 为还款信贷账户。 |
@@ -45,7 +45,7 @@
 | `original_amount` | `BIGINT` | NOT NULL | 原始金额，单位为分；大于 0，最大对应 ¥999,999,999.99。 |
 | `amount` | `BIGINT` | NOT NULL | 当前有效金额，单位为分；`0 <= amount <= original_amount`。 |
 | `has_refund` | `TINYINT` | NOT NULL DEFAULT 0 | 只允许 0/1；0 时要求 `amount=original_amount`，1 表示曾有退款。 |
-| `account_id` | `BIGINT` | NULL | 仅支出/收入使用，必须为资金账户；其他类型必须为空。 |
+| `account_id` | `BIGINT` | NULL | 仅支出/收入使用；支出可关联资金或信贷账户，收入必须为资金账户；其他类型必须为空。 |
 | `from_account_id` | `BIGINT` | NULL | 仅转账/还款使用，表示资金流出账户。 |
 | `to_account_id` | `BIGINT` | NULL | 仅转账/还款使用，表示资金流入或还款目标账户。 |
 | `occurred_at` | `DATETIME(3)` | NOT NULL | 用户选择的业务记账日期与时间。 |
@@ -61,10 +61,10 @@
 
 | 类型 | `account_id` | `from_account_id` | `to_account_id` | 数据库可强制的结构规则 | Service 必须补充的规则 |
 | --- | --- | --- | --- | --- | --- |
-| `EXPENSE` 支出 | 必填，资金账户 | NULL | NULL | 类型与字段组合 | 账户属于当前用户/账本且未删除；余额影响与幂等。 |
+| `EXPENSE` 支出 | 必填，资金或信贷账户 | NULL | NULL | 类型与字段组合 | 账户属于当前用户/账本且未删除；资金可透支，信贷支出可超额度，前端显示非阻断提示。 |
 | `INCOME` 收入 | 必填，资金账户 | NULL | NULL | 类型与字段组合 | 账户属于当前用户/账本且未删除；余额影响与幂等。 |
 | `TRANSFER` 转账 | NULL | 必填，资金账户 | 必填，资金账户 | 两账户不能相同 | 两账户归属当前用户/账本且未删除；不进入收支统计。 |
-| `REPAYMENT` 还款 | NULL | 必填，资金账户 | 必填，信贷账户 | 两账户不能相同 | 来源余额充足、目标欠款足够、账户归属有效；不允许退款。 |
+| `REPAYMENT` 还款 | NULL | 必填，资金账户 | 必填，信贷账户 | 两账户不能相同 | 资金余额可低于 0；还款金额不得超过当前正向欠款，账户归属有效；不允许退款。 |
 
 V4 的外键只能保证账户 ID 对应某条 `asset_account` 记录，不能表达账户类型、用户/当前账本一致性或 `deleted=0`；这些必须由 Service 在创建、编辑、删除、详情和统计查询中校验。
 

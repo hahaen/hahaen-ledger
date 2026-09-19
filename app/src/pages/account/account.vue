@@ -69,12 +69,13 @@ async function loadRecords() {
   records.value = page.items
 }
 
-function centsFromInput(value: string, label: string) {
+function centsFromInput(value: string, label: string, allowNegative = false) {
   const text = value.trim()
-  if (!/^\d+(\.\d{1,2})?$/.test(text)) throw new Error(`${label}格式不正确`)
-  const [yuanPart, centPart = ''] = text.split('.')
-  const cents = Number(yuanPart) * 100 + Number(centPart.padEnd(2, '0'))
-  if (!Number.isSafeInteger(cents) || cents < 0 || cents > 99_999_999_999) throw new Error(`${label}超出范围`)
+  if (!(allowNegative ? /^-?\d+(\.\d{1,2})?$/ : /^\d+(\.\d{1,2})?$/).test(text)) throw new Error(`${label}格式不正确`)
+  const negative = text.startsWith('-')
+  const [yuanPart, centPart = ''] = (negative ? text.slice(1) : text).split('.')
+  const cents = (Number(yuanPart) * 100 + Number(centPart.padEnd(2, '0'))) * (negative ? -1 : 1)
+  if (!Number.isSafeInteger(cents) || cents < (allowNegative ? -99_999_999_999 : 0) || cents > 99_999_999_999) throw new Error(`${label}超出范围`)
   return cents
 }
 
@@ -85,8 +86,8 @@ async function save() {
     const common = { name: formName.value.trim(), kind: formKind.value, includedInNetAsset: included.value }
     if (!common.name) throw new Error('请输入账户名称')
     const payload: Record<string, unknown> = formKind.value === 'FUND'
-      ? { ...common, balanceCents: centsFromInput(fundBalance.value, '余额'), creditLimitCents: null, currentDebtCents: null }
-      : { ...common, balanceCents: null, creditLimitCents: centsFromInput(creditLimit.value, '总额度'), currentDebtCents: centsFromInput(currentDebt.value, '当前欠款') }
+      ? { ...common, balanceCents: centsFromInput(fundBalance.value, '余额', true), creditLimitCents: null, currentDebtCents: null }
+      : { ...common, balanceCents: null, creditLimitCents: centsFromInput(creditLimit.value, '总额度'), currentDebtCents: centsFromInput(currentDebt.value, '当前欠款', true) }
     await request<Account>(`/api/app/accounts/${id.value}`, { method: 'PUT', data: payload })
     uni.showToast({ title: '账户已保存', icon: 'success' })
     editing.value = false
@@ -101,7 +102,7 @@ function onIncluded(event: Event) {
   included.value = Boolean(value)
 }
 async function openRepay() {
-  if (!account.value || formKind.value !== 'CREDIT' || saving.value || deleting.value) return
+  if (!account.value || formKind.value !== 'CREDIT' || account.value.balanceCents <= 0 || saving.value || deleting.value) return
   if (!fundAccounts.value.length) {
     try { await ledger.refresh() } catch { /* request 已显示失败原因 */ }
   }
@@ -134,7 +135,6 @@ async function repay() {
     const amountCents = centsFromInput(repayAmount.value, '还款金额')
     if (!amountCents) throw new Error('还款金额必须大于0')
     if (amountCents > account.value.balanceCents) throw new Error('还款金额不能超过当前欠款')
-    if (amountCents > fund.balanceCents) throw new Error('还款金额不能超过还款账户余额')
     saving.value = true
     await request<Transaction>(`/api/app/accounts/${account.value.id}/repayments`, { method: 'POST', data: { fundAccountId: fund.id, amountCents, idempotencyKey: `repay-${account.value.id}-${Date.now()}` } })
     uni.showToast({ title: '还款成功', icon: 'success' })
@@ -169,9 +169,9 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
     <view v-else-if="loadError" class="card empty">暂时无法加载账户<button class="text-button" @click="load">重试</button></view>
     <template v-else>
       <template v-if="account">
-        <view :class="['detail-hero', 'fund-hero', { 'credit-hero': formKind === 'CREDIT' }]"><view class="fund-heading"><view><text class="fund-name">{{ account.name }}</text><text class="account-desc">{{ formKind === 'FUND' ? '资金账户' : '信贷账户' }}</text></view><text class="fund-included">{{ account.includedInNetAsset ? '计入净资产' : '不计入净资产' }}</text></view><text class="fund-balance-label">{{ formKind === 'FUND' ? '当前余额' : '当前欠款' }}</text><MoneyDisplay class="detail-amount" :value="account.balanceCents" /><view v-if="formKind === 'CREDIT'" class="credit-stats"><view>总额度<MoneyDisplay :value="account.creditLimitCents" /></view><view>可用额度<MoneyDisplay :value="account.creditLimitCents - account.balanceCents" /></view></view><view class="detail-orbit orbit-one" /></view>
+        <view :class="['detail-hero', 'fund-hero', { 'credit-hero': formKind === 'CREDIT' }]"><view class="fund-heading"><view><text class="fund-name">{{ account.name }}</text><text class="account-desc">{{ formKind === 'FUND' ? '资金账户' : '信贷账户' }}</text></view><text class="fund-included">{{ account.includedInNetAsset ? '计入净资产' : '不计入净资产' }}</text></view><text class="fund-balance-label">{{ formKind === 'FUND' ? '当前余额' : (account.balanceCents < 0 ? '溢缴余额' : '当前欠款') }}</text><MoneyDisplay class="detail-amount" :value="account.balanceCents" /><view v-if="formKind === 'CREDIT'" class="credit-stats"><view>总额度<MoneyDisplay :value="account.creditLimitCents" /></view><view>可用额度<MoneyDisplay :value="account.creditLimitCents - account.balanceCents" /></view></view><view class="detail-orbit orbit-one" /></view>
         <view class="detail-section"><view class="detail-section-heading"><text class="section-title">账户流水</text><text class="section-meta">{{ records.length }} 笔记录</text></view><view class="filter-row"><button v-for="filter in filters" :key="filter.value" :class="{ active: recordFilter === filter.value }" @click="recordFilter = filter.value; loadRecords()">{{ filter.label }}</button></view><scroll-view scroll-y :show-scrollbar="false" class="account-record-list"><view v-if="!records.length" class="fund-empty"><text class="empty-symbol">◷</text><text class="empty-title">暂无相关记录</text><text>这个账户的收支会在这里呈现</text></view><view v-for="group in groupedRecords" :key="group[0]" class="date-group"><view class="date-heading"><text class="date-title">{{ group[0] }}</text><text class="section-meta">{{ group[1].length }} 笔</text></view><view class="transaction-list"><TransactionRow v-for="record in group[1]" :key="record.id" :transaction="record" @open="openTransaction" /></view></view></scroll-view></view>
-        <view class="detail-actions"><button class="detail-action" :disabled="saving || deleting" @click="editing = true">编辑账户</button><button v-if="formKind === 'CREDIT'" class="detail-action refund" :disabled="saving || deleting || !account.balanceCents" @click="openRepay">{{ account.balanceCents ? '还款' : '已还清' }}</button><button class="detail-action delete" :disabled="saving || deleting" @click="remove">删除账号</button></view>
+        <view class="detail-actions"><button class="detail-action" :disabled="saving || deleting" @click="editing = true">编辑账户</button><button v-if="formKind === 'CREDIT'" class="detail-action refund" :disabled="saving || deleting || account.balanceCents <= 0" @click="openRepay">{{ account.balanceCents > 0 ? '还款' : account.balanceCents < 0 ? '有溢缴款' : '已还清' }}</button><button class="detail-action delete" :disabled="saving || deleting" @click="remove">删除账号</button></view>
       </template>
     </template>
     <view v-if="editing" class="asset-create-backdrop" @click.self="!saving && (editing = false)" @touchmove.stop.prevent>
@@ -209,7 +209,7 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
       <view class="repay-account-modal" role="dialog" aria-modal="true" aria-label="选择还款账户">
         <view class="asset-create-handle" />
         <text class="repay-title">选择还款账户</text>
-        <view class="repay-choice-list"><button v-for="fund in fundAccounts" :key="fund.id" :class="['repay-choice-item', { selected: repayFundId === fund.id }]" :disabled="saving" @click="selectRepayAccount(fund.id)"><image class="repay-account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="repay-account-copy"><text class="repay-account-name">{{ fund.name }}</text><view class="repay-choice-balance"><text>可用余额</text><MoneyDisplay :value="fund.balanceCents" /></view></view><text class="repay-choice-check">{{ repayFundId === fund.id ? '✓' : '' }}</text></button></view>
+        <view class="repay-choice-list"><button v-for="fund in fundAccounts" :key="fund.id" :class="['repay-choice-item', { selected: repayFundId === fund.id }]" :disabled="saving" @click="selectRepayAccount(fund.id)"><image class="repay-account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="repay-account-copy"><text class="repay-account-name">{{ fund.name }}</text><view class="repay-choice-balance"><text>账户余额</text><MoneyDisplay :value="fund.balanceCents" /></view></view><text class="repay-choice-check">{{ repayFundId === fund.id ? '✓' : '' }}</text></button></view>
         <button class="repay-return" :disabled="saving" @click="returnToRepay">返回还款</button>
       </view>
     </view>

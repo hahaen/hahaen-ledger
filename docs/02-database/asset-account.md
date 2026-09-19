@@ -6,7 +6,7 @@
 
 本表只保存账户当前展示所需的账户属性：资金账户的余额、信贷账户的总额度与当前欠款，以及是否计入净资产。账户明细、交易记录、还款记录和统计不在本次表设计范围内。
 
-净资产口径为：计入净资产的资金账户余额之和，减去计入净资产的信贷账户当前欠款之和。信贷账户的当前欠款以正数表示负债，不保存负数欠款。
+账户金额均使用有符号整数分。资金账户负余额表示透支；信贷账户当前欠款为正数时表示负债，低于零时表示溢缴余额。计入净资产的正资金余额和负信贷欠款计入总资产；负资金余额和正信贷欠款计入总负债；净资产为总资产减总负债。
 
 ## 2. 统一表方案
 
@@ -31,11 +31,11 @@
 | `account_type` | `VARCHAR(16)` | 无 | 是 | 账户类型：`FUND`资金账户、`CREDIT`信贷账户；不设置默认值，创建时必须显式选择类型。 |
 | `sort_order` | `INT` | 无 | 是 | 同一用户、同一账户类型内的展示顺序，数字越小越靠前；新账户取该类型当前最大值加一。 |
 | `total_limit_cent` | `BIGINT` | `NULL` | 否 | 信贷账户总额度，单位为分，非负；资金账户必须为 `NULL`。 |
-| `current_debt_cent` | `BIGINT` | `NULL` | 否 | 信贷账户当前欠款，单位为分，非负且不得大于总额度；资金账户必须为 `NULL`。 |
-| `balance_cent` | `BIGINT` | `NULL` | 否 | 资金账户余额，单位为分，非负；信贷账户必须为 `NULL`。 |
+| `current_debt_cent` | `BIGINT` | `NULL` | 否 | 信贷账户当前欠款，单位为分；可为负表示溢缴，也可大于总额度表示超额使用；资金账户必须为 `NULL`。 |
+| `balance_cent` | `BIGINT` | `NULL` | 否 | 资金账户余额，单位为分，可为负表示透支；信贷账户必须为 `NULL`。 |
 | `include_net_asset` | `TINYINT` | `1` | 是 | 净资产标识：`0`不计入，`1`计入。 |
 
-金额使用整数分，避免 `float`/`double` 的精度问题。当前金额字段使用有符号 `BIGINT` 并配合非负 `CHECK`；后续如果需要明确业务上限，应在业务规则和接口校验中同步限定，不在本次 Schema 中人为收窄到某个产品上限。
+金额使用整数分，避免 `float`/`double` 的精度问题。金额字段使用有符号 `BIGINT`。资金余额和信贷欠款可为负；信贷额度不得为负，信贷欠款可超过总额度。
 
 ### 3.2 公共审计字段
 
@@ -49,8 +49,8 @@
 - 资产账户查询按 `account_type ASC, sort_order ASC, id ASC` 排序；初始化基线中的 `sort_order` 默认值为 `0`，新账户由 Service 按同类账户最大值加一分配。
 - `fk_asset_account_user`：保证所属用户存在；当前单账本模型不在账户表重复保存账本字段。
 - `ck_asset_account_type`、`ck_asset_account_include_net_asset`、`ck_asset_account_deleted`：限制类型和标识取值。
-- `ck_asset_account_amounts_non_negative`：金额均不得为负数。
-- `ck_asset_account_type_amounts`：强制账户类型与金额列的必填/置空关系，并限制信贷账户当前欠款不超过总额度。
+- V3 历史约束 `ck_asset_account_amounts_non_negative` 由 V5 移除；当前 `ck_asset_account_signed_amounts` 仅限制信贷额度非负。
+- `ck_asset_account_type_amounts`：强制账户类型与金额列的必填/置空关系，不限制信贷欠款与总额度的关系。
 
 所有业务查询仍须同时使用当前用户和 `deleted=0` 条件；数据库层不保证账户名称唯一，但当前 Service 对同一用户的有效账户执行重名校验，业务展示和账户选择必须使用账户ID区分，名称快照只用于展示，不能参与权限判断。由于没有数据库唯一索引，并发创建同名账户仍需后续补充数据库级策略或接受该边界。
 
@@ -61,7 +61,13 @@
 - `sort_order` 已直接并入 `V3__create_asset_account_table.sql`，新建数据库不再需要单独的顺序迁移或旧数据回填。
 - 当前工作区包含 V3 Migration、`AssetAccount` Entity 及账户 Service/Controller；本次审计没有可复核的数据库执行记录。需要在可用 MySQL 环境中通过应用/Flyway 执行后，再用 `flyway_schema_history`、`information_schema` 和 Entity 对照验收。
 
-## 6. 后续扩展建议
+## 6. 有符号账户金额（V5）
+
+- 文件：`server/src/main/resources/db/migration/V5__allow_signed_account_balances.sql`。
+- 保留 V3 历史文件不变；V5 调整账户金额约束，允许资金余额和信贷欠款为负数，也允许欠款超过总额度；总额度仍不得为负。
+- 负资金余额表示透支；负信贷欠款表示溢缴余额。记账页面对超过可用额度的消费显示非阻断提示。是否已在某环境执行仍需核对 Flyway 历史和实际表约束。
+
+## 7. 后续扩展建议
 
 1. 若未来从单账本扩展为多账本，应新增账本归属模型并评估为账户表引入账本归属字段，同时核对用户与账本的归属一致性。
 2. 账户业务落地时增加幂等键、防重复提交、当前用户校验和主动软删除逻辑。

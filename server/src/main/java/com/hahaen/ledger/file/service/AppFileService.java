@@ -19,7 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.security.MessageDigest;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
@@ -59,7 +62,7 @@ public class AppFileService {
         file.setBusinessType("AVATAR");
         file.setStorageProvider("MINIO");
         file.setBucketName(storage.bucketName());
-        file.setObjectKey("avatars/" + userId + "/" + UUID.randomUUID() + extension(request.contentType()));
+        file.setObjectKey(newObjectKey(userId, request.originalName(), request.contentType()));
         file.setOriginalName(trimmedName(request.originalName()));
         file.setContentType(request.contentType().trim().toLowerCase(Locale.ROOT));
         file.setFileSize(request.fileSize());
@@ -200,6 +203,16 @@ public class AppFileService {
             case "image/gif" -> ".gif";
             default -> ".jpg";
         };
+    }
+
+    private static String newObjectKey(long userId, String originalName, String contentType) {
+        String date = LocalDate.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.BASIC_ISO_DATE);
+        String fileName = trimmedName(originalName).replaceAll("[\\p{C}]", "_").trim();
+        int extensionIndex = fileName.lastIndexOf('.');
+        if (extensionIndex > 0) fileName = fileName.substring(0, extensionIndex);
+        fileName = fileName.replaceAll("[. ]+$", "").trim();
+        if (fileName.isEmpty()) fileName = "file";
+        return "avatars/" + date + "/" + userId + "/" + fileName + "-" + UUID.randomUUID() + extension(contentType);
     }
 
     private static String trimmedName(String name) {

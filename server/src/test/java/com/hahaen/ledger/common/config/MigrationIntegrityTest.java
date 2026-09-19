@@ -35,6 +35,12 @@ class MigrationIntegrityTest {
         String accountMigration = readMigration("V3__create_asset_account_table.sql");
         assertTrue(accountMigration.contains("sort_order INT NOT NULL DEFAULT 0"));
         assertTrue(accountMigration.contains("idx_asset_account_user_type_deleted_order"));
+
+        String signedBalancesMigration = readMigration("V5__allow_signed_account_balances.sql");
+        assertTrue(signedBalancesMigration.contains("DROP CHECK ck_asset_account_amounts_non_negative"));
+        assertTrue(signedBalancesMigration.contains("DROP CHECK ck_asset_account_type_amounts"));
+        assertTrue(signedBalancesMigration.contains("ck_asset_account_signed_amounts CHECK"));
+        assertFalse(signedBalancesMigration.contains("current_debt_cent <= total_limit_cent"));
     }
 
     private String readMigration(String migration) throws Exception {

@@ -154,11 +154,11 @@ class TransactionServiceTest {
     }
 
     @Test
-    void expenseDecreasesFundBalanceAndPersistsEffectiveAmountInCents() {
+    void expenseAllowsFundBalanceToBecomeNegativeAndPersistsCents() {
         TransactionDetailMapper transactions = mock(TransactionDetailMapper.class);
         TransactionRefundMapper refunds = mock(TransactionRefundMapper.class);
         AssetAccountMapper accounts = mock(AssetAccountMapper.class);
-        AssetAccount fund = fund(10L, 10_000L);
+        AssetAccount fund = fund(10L, 100L);
         when(accounts.selectOwnedForUpdate(10L, 7L)).thenReturn(fund);
         doAnswer(invocation -> { TransactionDetail value = invocation.getArgument(0); value.setId(20L); return 1; }).when(transactions).insert(any(TransactionDetail.class));
         TransactionService service = new TransactionService(transactions, refunds, accounts);
@@ -169,13 +169,13 @@ class TransactionServiceTest {
             assertEquals("20", result.id());
             assertEquals("10", result.accountId());
             assertEquals(1_250L, result.amountCents());
-            assertEquals(8_750L, fund.getBalanceCent());
+            assertEquals(-1_150L, fund.getBalanceCent());
             verify(accounts).updateById(fund);
         }
     }
 
     @Test
-    void rejectsRepaymentWhenFundBalanceIsInsufficient() {
+    void allowsRepaymentToMakeFundBalanceNegative() {
         TransactionDetailMapper transactions = mock(TransactionDetailMapper.class);
         TransactionRefundMapper refunds = mock(TransactionRefundMapper.class);
         AssetAccountMapper accounts = mock(AssetAccountMapper.class);
@@ -186,9 +186,52 @@ class TransactionServiceTest {
         TransactionService service = new TransactionService(transactions, refunds, accounts);
         try (MockedStatic<CurrentUser> ignored = mockStatic(CurrentUser.class)) {
             ignored.when(CurrentUser::id).thenReturn(7L);
-            assertThrows(BusinessException.class, () -> service.create(new TransactionRequest("REPAYMENT", 101L, null,
-                    10L, 11L, "2026-09-07T10:30", null, "repay-1")));
-            verify(transactions, never()).insert(any(TransactionDetail.class));
+            service.create(new TransactionRequest("REPAYMENT", 200L, null,
+                    10L, 11L, "2026-09-07T10:30", null, "repay-1"));
+            assertEquals(-100L, fund.getBalanceCent());
+            assertEquals(300L, credit.getCurrentDebtCent());
+            verify(transactions).insert(any(TransactionDetail.class));
+        }
+    }
+
+    @Test
+    void allowsTransferToMakeSourceFundNegative() {
+        var transactions = mock(TransactionDetailMapper.class);
+        var refunds = mock(TransactionRefundMapper.class);
+        var accounts = mock(AssetAccountMapper.class);
+        AssetAccount source = fund(10L, 100L);
+        AssetAccount target = fund(11L, 300L);
+        when(accounts.selectOwnedForUpdate(10L, 7L)).thenReturn(source);
+        when(accounts.selectOwnedForUpdate(11L, 7L)).thenReturn(target);
+        doAnswer(invocation -> { ((TransactionDetail) invocation.getArgument(0)).setId(20L); return 1; })
+                .when(transactions).insert(any(TransactionDetail.class));
+        try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
+            current.when(CurrentUser::id).thenReturn(7L);
+            new TransactionService(transactions, refunds, accounts).create(new TransactionRequest("TRANSFER", 500L,
+                    null, 10L, 11L, "2026-09-07T10:30", null, "transfer-1"));
+            assertEquals(-400L, source.getBalanceCent());
+            assertEquals(800L, target.getBalanceCent());
+        }
+    }
+
+    @Test
+    void expenseCanExceedCreditAccountLimit() {
+        var transactions = mock(TransactionDetailMapper.class);
+        var refunds = mock(TransactionRefundMapper.class);
+        var accounts = mock(AssetAccountMapper.class);
+        AssetAccount credit = credit(11L, 1_000L, 900L);
+        when(accounts.selectOwnedForUpdate(11L, 7L)).thenReturn(credit);
+        doAnswer(invocation -> { ((TransactionDetail) invocation.getArgument(0)).setId(20L); return 1; })
+                .when(transactions).insert(any(TransactionDetail.class));
+        try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
+            current.when(CurrentUser::id).thenReturn(7L);
+            var service = new TransactionService(transactions, refunds, accounts);
+            service.create(new TransactionRequest("EXPENSE", 100L, 11L, null, null,
+                    "2026-09-07T10:30", null, "credit-expense-1"));
+            assertEquals(1_000L, credit.getCurrentDebtCent());
+            service.create(new TransactionRequest("EXPENSE", 1L, 11L, null, null,
+                    "2026-09-07T10:31", null, "credit-expense-2"));
+            assertEquals(1_001L, credit.getCurrentDebtCent());
         }
     }
 
@@ -211,6 +254,38 @@ class TransactionServiceTest {
             assertEquals(750L, bill.getAmount());
             assertEquals(1, bill.getHasRefund());
             assertEquals(9_250L, fund.getBalanceCent());
+        }
+    }
+
+    @Test
+    void creditExpenseRefundCanProduceNegativeDebtBalance() {
+        var transactions = mock(TransactionDetailMapper.class);
+        var refunds = mock(TransactionRefundMapper.class);
+        var accounts = mock(AssetAccountMapper.class);
+        var bill = new TransactionDetail();
+        bill.setId(20L); bill.setUserId(7L); bill.setTransactionType("EXPENSE");
+        bill.setOriginalAmount(500L); bill.setAmount(500L); bill.setHasRefund(0); bill.setAccountId(11L);
+        AssetAccount credit = credit(11L, 1_000L, 0L);
+        var refund = new com.hahaen.ledger.transaction.entity.TransactionRefund();
+        when(transactions.selectOwnedForUpdate(20L, 7L)).thenReturn(bill);
+        when(refunds.sumActiveAmount(20L)).thenReturn(0L);
+        when(accounts.selectOwnedForUpdate(11L, 7L)).thenReturn(credit);
+        doAnswer(invocation -> {
+            var value = (com.hahaen.ledger.transaction.entity.TransactionRefund) invocation.getArgument(0);
+            value.setId(31L); value.setDeleted(0); refund.setId(31L); refund.setTransactionId(20L);
+            refund.setRefundAmount(value.getRefundAmount()); refund.setDeleted(0);
+            return 1;
+        })
+                .when(refunds).insert(any(com.hahaen.ledger.transaction.entity.TransactionRefund.class));
+        when(refunds.selectActiveById(31L)).thenReturn(refund);
+        when(refunds.selectActiveByIdForUpdate(31L)).thenReturn(refund);
+        when(refunds.softDeleteById(refund)).thenReturn(1);
+        try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
+            current.when(CurrentUser::id).thenReturn(7L);
+            new TransactionService(transactions, refunds, accounts).createRefund(20L, new RefundRequest(500L, "credit-refund-1"));
+            assertEquals(-500L, credit.getCurrentDebtCent());
+            new TransactionService(transactions, refunds, accounts).deleteRefund(31L);
+            assertEquals(0L, credit.getCurrentDebtCent());
         }
     }
 

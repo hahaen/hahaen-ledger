@@ -54,13 +54,13 @@ H5 账号服务端会 trim 并转为小写，格式为 2–64 位英文字母或
 | 方法 | 路径 | 请求/查询重点 |
 | --- | --- | --- |
 | GET | `/api/app/accounts` | 当前用户未删除账户 |
-| POST | `/api/app/accounts` | `name`、`kind`、资金账户 `balanceCents`，或信贷账户 `creditLimitCents`/`currentDebtCents`，可选 `includedInNetAsset` |
+| POST | `/api/app/accounts` | `name`、`kind`、资金账户可带符号的 `balanceCents`，或信贷账户 `creditLimitCents`/可带符号的 `currentDebtCents`（欠款可超过额度），可选 `includedInNetAsset` |
 | GET | `/api/app/accounts/{id}` | 当前用户账户详情 |
 | PUT | `/api/app/accounts/{id}` | 编辑名称、金额和净资产标识；账户类型不可修改 |
 | PUT | `/api/app/accounts/{id}/order` | `targetAccountId`、双方当前 `expectedSortOrder`/`targetExpectedSortOrder`、`idempotencyKey`；锁定并交换同类账户顺序 |
 | DELETE | `/api/app/accounts/{id}` | 写入删除审计字段并逻辑删除；当前没有独立停用状态 |
 | GET | `/api/app/accounts/{id}/transactions?type=&page=&pageSize=` | 账户流水分页，页大小服务端限制为 1–100 |
-| POST | `/api/app/accounts/{id}/repayments` | `fundAccountId`、`amountCents`、`idempotencyKey`；目标 `{id}` 必须为信贷账户 |
+| POST | `/api/app/accounts/{id}/repayments` | `fundAccountId`、`amountCents`、`idempotencyKey`；目标 `{id}` 必须为信贷账户；来源资金账户余额允许低于 0，金额仍不得超过当前正向欠款 |
 
 数据库没有账户名称唯一索引，但当前 `AccountService` 对同一用户的有效账户执行重名校验；接口返回的 `status=ACTIVE` 是 VO 展示字段，不是 `asset_account` 的物理列。
 
@@ -76,13 +76,13 @@ H5 账号服务端会 trim 并转为小写，格式为 2–64 位英文字母或
 | POST | `/api/app/transactions/{id}/refunds` | 仅支出/收入可退款；`amountCents` 不得超过剩余可退款金额 |
 | DELETE | `/api/app/transactions/refunds/{refundId}` | 逻辑删除退款并重算原账单有效金额 |
 
-账单请求字段为 `type`、`amountCents`、`accountId`、`fromAccountId`、`toAccountId`、`occurredAt`、`note`、`idempotencyKey`。支出/收入使用 `accountId`；转账使用两个不同的资金账户；还款使用资金账户到信贷账户。退款不是账单类型。
+账单请求字段为 `type`、`amountCents`、`accountId`、`fromAccountId`、`toAccountId`、`occurredAt`、`note`、`idempotencyKey`。支出使用资金或信贷账户 `accountId`，资金余额可低于 0；信贷支出可超过总额度，页面提示超出可用额度但仍允许保存。收入使用资金账户。转账使用两个不同的资金账户，还款使用资金账户到信贷账户；转账和还款可使资金余额低于 0。退款不是账单类型。
 
 ### 文件
 
 | 方法 | 路径 | 当前用途 |
 | --- | --- | --- |
-| POST | `/api/app/files/upload-url` | 创建文件元数据并返回短时效 PUT URL；`fileHash` 为必传 SHA-256；同摘要已就绪头像直接返回 `READY`，前端不再 PUT |
+| POST | `/api/app/files/upload-url` | 创建文件元数据并返回短时效 PUT URL；`originalName` 保存原始文件名，新对象 Key 为 `avatars/<上海时区yyyyMMdd>/<userId>/<原文件名主干>-<uuid>.<按内容MIME确定的扩展名>`；`fileHash` 为必传 SHA-256；同摘要已就绪头像直接返回 `READY`，前端不再 PUT |
 | POST | `/api/app/files/{fileId}/complete` | 校验对象大小、SHA-256、声明 MIME 与图片文件头后确认文件为 READY，不替换当前头像 |
 | GET | `/api/app/files/{fileId}/view-url` | 当前用户文件的短时效预览 URL |
 | GET | `/api/app/files/avatar/view-url` | 当前用户头像预览 URL |
@@ -98,4 +98,4 @@ H5 账号服务端会 trim 并转为小写，格式为 2–64 位英文字母或
 
 ## 交易编辑与退款边界补充（2026-09-08）
 
-PUT transactions/{id} 不覆盖原创建 idempotencyKey；还款编辑在事务内先撤销旧影响再按恢复后的余额/欠款校验。退款幂等键重复但金额不同返回 IDEMPOTENCY_CONFLICT。删除退款取得原账单锁后必须重新锁定读取有效退款，防止等待期间已删除的记录再次扣款。occurredAt 年份限定 1000–9999，以匹配 MySQL DATETIME 范围。
+PUT transactions/{id} 不覆盖原创建 idempotencyKey；还款编辑在事务内先撤销旧影响，再校验信贷账户仍有足够正向欠款可还，资金账户余额可为负。退款幂等键重复但金额不同返回 IDEMPOTENCY_CONFLICT。删除退款取得原账单锁后必须重新锁定读取有效退款，防止等待期间已删除的记录再次扣款。occurredAt 年份限定 1000–9999，以匹配 MySQL DATETIME 范围。

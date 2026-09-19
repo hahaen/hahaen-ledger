@@ -102,7 +102,15 @@ async function confirmLogout() {
   }
 }
 
-onShow(loadProfile)
+onShow(() => {
+  // #ifdef MP-WEIXIN
+  console.log('当前运行环境：微信小程序')
+  // #endif
+  // #ifdef H5
+  console.log('当前运行环境：H5')
+  // #endif
+  void loadProfile()
+})
 </script>
 
 <template>
@@ -137,11 +145,13 @@ onShow(loadProfile)
           <text class="setting-text">关于与帮助</text>
           <text class="setting-arrow">›</text>
         </button>
+        <!-- #ifdef H5 -->
         <button v-if="loggedIn" class="setting-item logout-item" :disabled="loggingOut" @click="openLogout">
           <text class="setting-icon logout-icon" style="transform: translateY(-3px);">⎆</text>
           <text class="setting-text">{{ loggingOut ? '退出中…' : '退出登录' }}</text>
           <text class="setting-arrow">›</text>
         </button>
+        <!-- #endif -->
       </view>
     </view>
 

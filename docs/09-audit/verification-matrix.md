@@ -2,6 +2,31 @@
 
 更新日期：2026-09-19。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
 
+## 2026-09-19：账户余额允许为负及信贷支出
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 资金账户负余额和信贷支出 | PASS（代码/单测） | 53 项 Maven 测试通过；覆盖负资金支出、转账/还款透支、信贷消费/额度、溢缴退款和资产汇总。 |
+| 前端回归与类型检查 | PASS | `node --test tests/*.test.mjs`：56/56；`pnpm run typecheck` 通过。 |
+| H5/微信小程序构建 | PASS（仅构建） | `pnpm run build:h5` 与 `pnpm run build:mp-weixin` 完成；不代表运行态验收。 |
+| V5 Migration 静态检查 | PASS（静态） | V1–V4 未修改；V5 允许资金余额、信贷欠款为负，也允许信贷欠款超过额度；额度本身不得为负。 |
+| Flyway/MySQL/information_schema | NOT_RUN | 未执行 V5 或查询目标数据库迁移历史及实际 CHECK 约束。 |
+| DEV API、H5 登录态与微信工具/真机 | NOT_RUN | 未执行真实接口、页面或设备验收。 |
+| 规范与迭代档案同步 | PASS（静态） | 产品说明、数据库/API 文档、迭代索引及第三轮审计已更新。 |
+
+详见 `docs/10-iterations/2026/09/negative-account-balances/`。
+
+## 2026-09-19：MinIO 新上传对象 Key 命名
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 新头像对象 Key 格式 | PASS（静态） | `AppFileService` 生成 `avatars/<上海时区yyyyMMdd>/<userId>/<原文件名主干>-<UUID>.<内容MIME扩展名>`；用户归属仍按当前用户过滤。 |
+| 数据库、API 与文档契约 | PASS（静态） | 无 Schema/API 字段变化；已同步文件存储说明、上传接口说明和本迭代档案。历史对象 Key 不迁移。 |
+| 自动化测试和构建 | NOT_RUN | 本轮未执行 Maven/前端测试、类型检查或构建。 |
+| 真实 MinIO 上传、确认与预览 | NOT_RUN | 未执行 MinIO 对象链路运行验收。 |
+
+详见 `docs/10-iterations/2026/09/minio-date-filename-object-key/`。
+
 ## 2026-09-19：微信小程序全页面自定义导航对齐
 
 | 范围 | 状态 | 证据/限制 |

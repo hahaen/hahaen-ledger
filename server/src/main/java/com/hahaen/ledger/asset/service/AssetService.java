@@ -17,12 +17,21 @@ public class AssetService {
 
     public AssetOverviewVO overview() {
         List<AssetAccount> accounts = accountMapper.selectActiveByUser(CurrentUser.id());
-        long assets = accounts.stream()
-                .filter(a -> "FUND".equals(a.getAccountType()) && Integer.valueOf(1).equals(a.getIncludeNetAsset()))
-                .mapToLong(a -> value(a.getBalanceCent())).sum();
-        long liabilities = accounts.stream()
-                .filter(a -> "CREDIT".equals(a.getAccountType()) && Integer.valueOf(1).equals(a.getIncludeNetAsset()))
-                .mapToLong(a -> value(a.getCurrentDebtCent())).sum();
+        long assets = 0;
+        long liabilities = 0;
+        for (AssetAccount account : accounts) {
+            if (!Integer.valueOf(1).equals(account.getIncludeNetAsset())) continue;
+            long balance = "FUND".equals(account.getAccountType())
+                    ? value(account.getBalanceCent()) : value(account.getCurrentDebtCent());
+            if (balance >= 0) {
+                if ("FUND".equals(account.getAccountType())) assets = Math.addExact(assets, balance);
+                else liabilities = Math.addExact(liabilities, balance);
+            } else {
+                long magnitude = Math.negateExact(balance);
+                if ("FUND".equals(account.getAccountType())) liabilities = Math.addExact(liabilities, magnitude);
+                else assets = Math.addExact(assets, magnitude);
+            }
+        }
         return new AssetOverviewVO(assets, liabilities, assets - liabilities,
                 accounts.stream().map(AccountService::toVO).toList());
     }

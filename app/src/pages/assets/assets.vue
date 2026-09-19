@@ -98,12 +98,13 @@ function openCreate() {
   createOpen.value = true
 }
 function closeCreate() { if (!savingAccount.value) createOpen.value = false }
-function centsFromInput(value: string, label: string) {
+function centsFromInput(value: string, label: string, allowNegative = false) {
   const text = value.trim()
-  if (!/^\d+(\.\d{1,2})?$/.test(text)) throw new Error(`${label}格式不正确`)
-  const [yuanPart, centPart = ''] = text.split('.')
-  const cents = Number(yuanPart) * 100 + Number(centPart.padEnd(2, '0'))
-  if (!Number.isSafeInteger(cents) || cents < 0 || cents > 99_999_999_999) throw new Error(`${label}超出范围`)
+  if (!(allowNegative ? /^-?\d+(\.\d{1,2})?$/ : /^\d+(\.\d{1,2})?$/).test(text)) throw new Error(`${label}格式不正确`)
+  const negative = text.startsWith('-')
+  const [yuanPart, centPart = ''] = (negative ? text.slice(1) : text).split('.')
+  const cents = (Number(yuanPart) * 100 + Number(centPart.padEnd(2, '0'))) * (negative ? -1 : 1)
+  if (!Number.isSafeInteger(cents) || cents < (allowNegative ? -99_999_999_999 : 0) || cents > 99_999_999_999) throw new Error(`${label}超出范围`)
   return cents
 }
 function onIncluded(event: Event) {
@@ -121,8 +122,8 @@ async function saveAccount() {
     if (createKind.value === 'CREDIT' && !createCurrentDebt.value.trim()) throw new Error('请输入当前欠款')
     const common = { name, kind: createKind.value, includedInNetAsset: createIncluded.value }
     const payload: Record<string, unknown> = createKind.value === 'FUND'
-      ? { ...common, balanceCents: centsFromInput(createBalance.value, '余额'), creditLimitCents: null, currentDebtCents: null }
-      : { ...common, balanceCents: null, creditLimitCents: centsFromInput(createCreditLimit.value, '总额度'), currentDebtCents: centsFromInput(createCurrentDebt.value, '当前欠款') }
+      ? { ...common, balanceCents: centsFromInput(createBalance.value, '余额', true), creditLimitCents: null, currentDebtCents: null }
+      : { ...common, balanceCents: null, creditLimitCents: centsFromInput(createCreditLimit.value, '总额度'), currentDebtCents: centsFromInput(createCurrentDebt.value, '当前欠款', true) }
     await ledger.createAccount(payload)
     await load()
     createOpen.value = false
@@ -146,7 +147,7 @@ onShow(() => { void load() })
         <button class="account-heading" :aria-expanded="creditsExpanded" @click="creditsExpanded = !creditsExpanded"><text>信贷账户</text><view class="account-toggle">{{ creditsExpanded ? '收起' : '展开' }}</view></button>
         <view v-if="creditsExpanded" class="account-list">
           <view v-if="!credits.length" class="list-empty">暂无信贷账户</view>
-          <view v-for="account in credits" :key="account.id" role="button" :aria-label="account.name" :class="['account-item', { 'reorder-selected': reorderingAccountId === account.id }]" @click="handleAccountRowTap(account)" @longpress="startReorder(account)"><image class="account-icon credit" :src="staticResource('prototype/credit-account.png')" mode="aspectFit" /><view class="account-main"><view class="account-name-row"><text class="account-name">{{ account.name }}</text><text v-if="!account.includedInNetAsset" class="account-exclusion-badge">不计入</text></view><view class="credit-available"><text>可用</text><MoneyDisplay :value="account.creditLimitCents - account.balanceCents" /></view></view><view class="account-balance liability"><text class="balance-caption">欠款</text><MoneyDisplay :value="account.balanceCents" /></view><view v-if="reorderingKind === 'CREDIT'" class="account-reorder-action" @click.stop.prevent="handleAccountTap(account)">交换</view><text v-else class="arrow">›</text></view>
+          <view v-for="account in credits" :key="account.id" role="button" :aria-label="account.name" :class="['account-item', { 'reorder-selected': reorderingAccountId === account.id }]" @click="handleAccountRowTap(account)" @longpress="startReorder(account)"><image class="account-icon credit" :src="staticResource('prototype/credit-account.png')" mode="aspectFit" /><view class="account-main"><view class="account-name-row"><text class="account-name">{{ account.name }}</text><text v-if="!account.includedInNetAsset" class="account-exclusion-badge">不计入</text></view><view class="credit-available"><text>可用</text><MoneyDisplay :value="account.creditLimitCents - account.balanceCents" /></view></view><view class="account-balance liability"><text class="balance-caption">{{ account.balanceCents < 0 ? '溢缴' : '欠款' }}</text><MoneyDisplay :value="account.balanceCents" /></view><view v-if="reorderingKind === 'CREDIT'" class="account-reorder-action" @click.stop.prevent="handleAccountTap(account)">交换</view><text v-else class="arrow">›</text></view>
         </view>
       </view>
       <view class="account-section">
@@ -165,8 +166,8 @@ onShow(() => { void load() })
         <view class="asset-type-tabs"><button :class="{ active: createKind === 'FUND' }" :aria-pressed="createKind === 'FUND'" @click="createKind = 'FUND'">资金账户</button><button class="credit-choice" :class="{ active: createKind === 'CREDIT' }" :aria-pressed="createKind === 'CREDIT'" @click="createKind = 'CREDIT'">信贷账户</button></view>
         <view class="asset-create-fields">
           <view class="asset-create-row"><text>账户名称</text><input v-model="createName" maxlength="20" :placeholder="createKind === 'CREDIT' ? '例如：xx信用卡' : '例如：微信'" aria-required="true" :disabled="savingAccount" /></view>
-          <view v-if="createKind === 'FUND'" class="asset-create-row"><text>余额</text><view class="asset-create-money"><input v-model="createBalance" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="savingAccount" /></view></view>
-          <template v-else><view class="asset-create-row"><text>总额度</text><view class="asset-create-money"><input v-model="createCreditLimit" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="savingAccount" /></view></view><view class="asset-create-row"><text>当前欠款</text><view class="asset-create-money"><input v-model="createCurrentDebt" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="savingAccount" /></view></view></template>
+          <view v-if="createKind === 'FUND'" class="asset-create-row"><text>余额</text><view class="asset-create-money"><input v-model="createBalance" type="digit" inputmode="decimal" aria-required="true" :disabled="savingAccount" /></view></view>
+          <template v-else><view class="asset-create-row"><text>总额度</text><view class="asset-create-money"><input v-model="createCreditLimit" type="digit" inputmode="decimal" aria-required="true" :disabled="savingAccount" /></view></view><view class="asset-create-row"><text>当前欠款</text><view class="asset-create-money"><input v-model="createCurrentDebt" type="digit" inputmode="decimal" aria-required="true" :disabled="savingAccount" /></view></view></template>
           <view class="asset-create-row asset-create-switch"><text>计入净资产</text><switch :checked="createIncluded" aria-required="true" :disabled="savingAccount" color="#49AD9C" @change="onIncluded" /></view>
         </view>
         <view class="asset-create-actions"><button class="asset-create-cancel" :disabled="savingAccount" @click="createOpen = false">取消</button><button class="asset-create-save" :disabled="savingAccount" @click="saveAccount">{{ savingAccount ? '保存中…' : '保存账户' }}</button></view>
