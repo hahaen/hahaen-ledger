@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
+import NativeNavigation from '../../components/NativeNavigation.vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { currentAvatar, uploadAvatar, uploadAvatarFromMiniPath, type FileViewUrl } from '../../utils/file'
 import { request } from '../../utils/api'
@@ -272,11 +273,7 @@ onBeforeUnmount(() => {
 
 <template>
   <view class="page profile-page">
-    <view class="help-nav profile-nav">
-      <button class="help-back" aria-label="返回我的" @click="backToMine">‹</button>
-      <text class="help-title">个人中心</text>
-      <view class="help-nav-side" />
-    </view>
+    <NativeNavigation variant="help" title="个人中心" back-label="返回我的" :page-top-extra="20" @back="backToMine" />
 
     <view v-if="loading" class="profile-loading">正在加载个人资料…</view>
     <view v-else-if="loadError" class="profile-error"><text>{{ loadError }}</text><button class="text-button" @click="loadProfile">重新加载</button></view>

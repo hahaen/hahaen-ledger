@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { onLoad, onBackPress } from '@dcloudio/uni-app'
 import EntryDateTimePicker from '../../components/EntryDateTimePicker.vue'
+import NativeNavigation from '../../components/NativeNavigation.vue'
 import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import { useLedger, TransactionPayload } from '../../stores/ledger'
 import { request } from '../../utils/api'
@@ -203,7 +204,7 @@ async function save(afterSave: 'home' | 'again') {
 
 <template>
   <view class="page entry-page">
-    <view class="screen-nav"><button class="back nav-side" aria-label="返回" @click="back">‹</button><text class="page-title">{{ isEdit ? '编辑记账' : '新增记账' }}</text><view class="nav-side" /></view>
+    <NativeNavigation variant="screen" :title="isEdit ? '编辑记账' : '新增记账'" compact :full-width="false" @back="back" />
     <view class="entry-content">
       <view v-if="loading" class="list-empty">正在加载账户与账单…</view><view v-else-if="loadError" class="list-empty">{{ loadError }}<button class="text-button" @click="initialize">重新加载</button></view>
       <view v-if="isEdit && !loading && !loadError" :class="['entry-edit-type', type.toLowerCase()]"><text class="entry-edit-type-label">当前账单类型</text><text class="entry-edit-type-value">{{ typeLabel }}记账</text></view>

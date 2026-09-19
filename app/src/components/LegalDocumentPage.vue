@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import NativeNavigation from './NativeNavigation.vue'
 import { legalDocuments, type LegalDocumentType } from '../constants/legalDocuments'
 import { staticResource } from '../utils/staticResource'
 
@@ -18,11 +19,7 @@ function backToAuth() {
 <template>
   <view class="help-page legal-page">
     <scroll-view scroll-y class="help-scroll">
-      <view class="help-nav">
-        <button class="help-back" aria-label="返回登录" @click="backToAuth">‹</button>
-        <text class="help-title">{{ document.title }}</text>
-        <view class="help-nav-side" />
-      </view>
+      <NativeNavigation variant="help" :title="document.title" compact back-label="返回登录" @back="backToAuth" />
 
       <view class="about-hero legal-hero">
         <view class="about-brand"><image :src="staticResource('brand.png')" mode="aspectFill" /><text>哈记账</text></view>

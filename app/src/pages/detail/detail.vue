@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import MoneyDisplay from '../../components/MoneyDisplay.vue'
+import NativeNavigation from '../../components/NativeNavigation.vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { request } from '../../utils/api'
 import { cents, inputYuan } from '../../utils/money'
@@ -137,7 +138,7 @@ function remove() { openDelete({ type: 'transaction' }) }
 
 <template>
   <view class="page detail-page">
-    <view class="screen-nav"><button class="back nav-side" aria-label="返回" :disabled="saving" @click="backToLedger">‹</button><text class="page-title">账单详情</text><view class="nav-side" /></view>
+    <NativeNavigation variant="screen" title="账单详情" compact back-label="返回" :back-disabled="saving" @back="backToLedger" />
     <view v-if="loading && !detail" class="card empty">正在加载账单…</view>
     <view v-else-if="error && !detail" class="card empty">{{ error }}<button class="text-button" @click="load">重试</button></view>
     <template v-else-if="detail">

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { staticResource } from '../../utils/staticResource'
+import NativeNavigation from '../../components/NativeNavigation.vue'
 
 function enter() { uni.setStorageSync('first-use-complete', true); uni.reLaunch({ url: '/pages/index/index' }) }
 </script>
 <template>
   <view class="page first-use">
-    <view class="welcome-brand"><image :src="staticResource('brand.png')" mode="aspectFill" /><text>哈记账</text></view>
+    <NativeNavigation variant="welcome" :page-top-extra="60" />
     <text class="eyebrow">A LITTLE BOOKKEEPER</text>
     <view class="first-illustration"><view class="leaf" /></view>
     <view class="welcome-title">记录每一笔，<view class="expense">让生活更清晰</view></view>

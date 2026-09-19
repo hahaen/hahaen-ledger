@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import TransactionRow from '../../components/TransactionRow.vue'
+import NativeNavigation from '../../components/NativeNavigation.vue'
 import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import MoneyDisplay from '../../components/MoneyDisplay.vue'
@@ -163,7 +164,7 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
 
 <template>
   <view class="page detail-page account-page">
-    <view class="screen-nav"><button class="back nav-side" aria-label="返回" @click="uni.navigateBack()">‹</button><text class="page-title">账户详情</text><view class="nav-side" /></view>
+    <NativeNavigation variant="screen" title="账户详情" compact :page-top-extra="20" @back="uni.navigateBack()" />
     <view v-if="loading && !account" class="card empty">正在加载账户…</view>
     <view v-else-if="loadError" class="card empty">暂时无法加载账户<button class="text-button" @click="load">重试</button></view>
     <template v-else>

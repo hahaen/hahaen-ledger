@@ -63,6 +63,11 @@
 .about-setting-copy { flex:1; }.about-setting-copy > text:last-child { max-width:100%; }
 @media (max-width:340px) { .help-card { min-width:0; padding-left:6px; padding-right:6px; }.help-card-copy { white-space:normal; }.about-note { flex-wrap:wrap; }.about-feedback { margin-left:42px; } }
 
+/* #ifdef MP-WEIXIN */
+.help-page { padding-top:max(var(--status-bar-height, 25px), env(safe-area-inset-top, 0px)); }
+.help-nav { top:0; }
+/* #endif */
+
 /* 登录协议勾选与协议正文页复用关于与帮助的导航、引导卡和内容卡层级。 */
 .auth-agreement { display:flex; align-items:flex-start; gap:7px; min-height:32px; padding:9px 2px 0; }
 .auth-agreement-check { width:17px; height:17px; min-height:17px; flex:0 0 auto; display:grid; place-items:center; margin-top:1px; padding:0; border:1.5px solid #b5c7c2; border-radius:5px; color:#fff; background:#fff; font-size:11px; font-weight:800; line-height:1; }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import NativeNavigation from '../../components/NativeNavigation.vue'
 import { backToLedger } from '../../utils/entry'
 import { staticResource } from '../../utils/staticResource'
 
@@ -24,11 +25,7 @@ function showReserved(message: string) {
 <template>
   <view class="help-page">
     <scroll-view scroll-y class="help-scroll">
-      <view class="help-nav">
-        <button class="help-back" aria-label="返回我的" @click="backToLedger">‹</button>
-        <text class="help-title">关于与帮助</text>
-        <view class="help-nav-side" />
-      </view>
+      <NativeNavigation variant="help" title="关于与帮助" compact back-label="返回我的" @back="backToLedger" />
 
       <view class="about-hero">
         <view class="about-brand"><image :src="staticResource('brand.png')" mode="aspectFill" /><text>哈记账</text></view>

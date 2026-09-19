@@ -111,7 +111,6 @@ input, textarea { font:inherit; }
 .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }.back { display:flex; width:40px; min-height:44px; align-items:center; justify-content:flex-start; padding:0; font-size:30px; line-height:1; text-align:left; }
 .screen-nav { position:sticky; z-index:3; top:calc(var(--status-bar-height, 0px) + env(safe-area-inset-top, 0px)); display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 -16px 20px; padding:8px 16px; min-height:62px; border-bottom:1px solid rgba(224,232,228,.7); background:rgba(247,248,247,.96); }
 .screen-nav .page-title { flex:1; text-align:center; font-size:18px; font-weight:700; }.nav-side { width:40px; flex-shrink:0; }
-.account-page .screen-nav, .detail-page .screen-nav, .entry-page .screen-nav { min-height:44px; margin-bottom:10px; padding:2px 16px; }.account-page .screen-nav .back, .detail-page .screen-nav .back, .entry-page .screen-nav .back { min-height:36px; border:0 !important; border-radius:0; outline:0; box-shadow:none; background:transparent; appearance:none; -webkit-appearance:none; font-size:24px; }.account-page .screen-nav .back::after, .detail-page .screen-nav .back::after, .entry-page .screen-nav .back::after { display:none; border:0; }.account-page .screen-nav .page-title, .detail-page .screen-nav .page-title, .entry-page .screen-nav .page-title { font-size:16px; }
 .calendar-page { display:flex; flex-direction:column; height:100vh; min-height:0; overflow:hidden; background:linear-gradient(180deg,#f5faf8 0%,#f7f8f7 42%); }
 .calendar-page .page-header,
 .calendar-page .calendar-card,
@@ -196,7 +195,6 @@ input, textarea { font:inherit; }
 .month-picker-actions { display:flex; gap:14px; margin-top:24px; }.month-picker-actions button { display:flex; flex:1; min-width:0; min-height:68px; align-items:center; justify-content:center; padding:0; border:0; border-radius:17px; font-size:20px; font-weight:700; line-height:1; }.month-picker-cancel { color:#278879; background:#f0f6f4; }.month-picker-confirm { color:#fff; background:#49ad9c; box-shadow:0 8px 16px rgba(73,173,156,.2); }
 .sheet-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }.sheet-option { padding:12px 4px; border-radius:12px; background:#f7faf9; font-size:12px; overflow-wrap:anywhere; }.sheet-option .account-icon { display:block; margin:0 auto 7px; }.sheet-option.selected { background:#dff2ef; color:#278879; font-weight:700; }
 .entry-page { display:flex; height:100vh; flex-direction:column; overflow:hidden; padding:calc(var(--status-bar-height, 0px) + env(safe-area-inset-top, 0px)) 0 0; }
-.entry-page > .screen-nav { flex-shrink:0; margin-left:0; margin-right:0; }
 .entry-content { flex:1; height:auto; min-height:0; padding:0 16px calc(292px + env(safe-area-inset-bottom)); overflow-y:auto; }
 .entry-success-toast { position:fixed; z-index:40; left:50%; top:50%; display:flex; min-width:144px; align-items:center; justify-content:center; gap:9px; padding:14px 18px; border:1px solid rgba(73,173,156,.18); border-radius:18px; color:#278879; background:rgba(255,255,255,.98); box-shadow:0 14px 34px rgba(21,51,45,.16); font-size:15px; font-weight:700; transform:translate(-50%,-50%); pointer-events:none; }.entry-success-icon { display:flex; width:24px; height:24px; align-items:center; justify-content:center; border-radius:50%; color:#fff; background:#49ad9c; font-size:15px; line-height:1; }
 .entry-account-picker-backdrop { position:fixed; z-index:30; inset:0; display:flex; align-items:center; justify-content:center; padding:24px 16px 28px; background:rgba(30,47,44,.28); }.entry-account-picker-modal { display:flex; width:100%; max-width:430px; height:530px; max-height:calc(100vh - 52px); flex-direction:column; padding:12px 28px 24px; overflow:hidden; border-radius:30px; background:#fff; box-shadow:0 14px 34px rgba(21,51,45,.16); }.entry-account-picker-handle { width:52px; height:5px; flex-shrink:0; margin:0 auto 18px; border-radius:999px; background:#d7dfdc; }.entry-account-picker-title { display:block; flex-shrink:0; margin-bottom:18px; color:#171a1a; font-size:23px; font-weight:750; line-height:1.2; }.entry-account-choice-list { height:0; flex:1; min-height:0; margin-bottom:20px; }.entry-account-choice-item { display:flex; width:100%; min-height:82px; align-items:center; gap:13px; padding:10px 8px; border:0 !important; border-radius:0; outline:0; color:#415650; background:transparent; box-shadow:none !important; text-align:left; appearance:none; -webkit-appearance:none; }.entry-account-choice-item::after { display:none !important; border:0 !important; }.entry-account-choice-item.selected { background:#dff2ef; }.entry-account-choice-icon { width:44px; height:44px; flex-shrink:0; border-radius:14px; background:#edf8f5; }.entry-account-choice-name { min-width:0; flex:1; overflow:hidden; color:#405650; font-size:17px; font-weight:750; text-overflow:ellipsis; white-space:nowrap; }.entry-account-choice-balance { display:flex; flex-shrink:0; color:#71847e; font-size:16px; font-weight:600; white-space:nowrap; }.entry-account-choice-state { display:flex; width:24px; flex-shrink:0; align-items:center; justify-content:center; color:#a9bab5; font-size:26px; line-height:1; }.entry-account-choice-item.selected .entry-account-choice-state { color:#8dbab1; }.entry-account-picker-actions { display:flex; flex-shrink:0; gap:14px; }.entry-account-picker-actions button { display:flex; flex:1; min-width:0; min-height:68px; align-items:center; justify-content:center; padding:0; border-radius:19px; font-size:20px; font-weight:700; line-height:1; }.entry-account-picker-cancel { color:#278879; background:#f0f5f3; }.entry-account-picker-confirm { color:#fff; background:#49ad9c; box-shadow:0 10px 20px rgba(73,173,156,.22); }
@@ -244,7 +242,6 @@ input, textarea { font:inherit; }
 .welcome-title { display:block; font-size:28px; font-weight:700; line-height:1.3; letter-spacing:-.05em; }.welcome-copy { display:block; margin:12px 0 23px; color:#858b8b; font-size:14px; line-height:1.8; }.first-use .primary-btn { margin-top:22px; height:50px; }.skip-link { min-height:44px; margin-top:13px; color:#858b8b; font-size:12px; }
 .detail-page { padding-top:calc(var(--status-bar-height, 0px) + env(safe-area-inset-top, 0px)); background:linear-gradient(180deg,#f4faf8 0%,#f7f8f7 48%); }
 .account-page { display:flex; flex-direction:column; height:100vh; min-height:0; overflow:hidden; }
-.account-page .screen-nav,
 .account-page .detail-hero { flex-shrink:0; }
 .account-page .detail-section { display:flex; flex:1; min-height:0; flex-direction:column; }
 .account-page .detail-section-heading,
@@ -304,9 +301,12 @@ html, body, .page, .entry-content, .uni-scroll-view { scrollbar-width:none; }
 .entry-note-picker-modal { height:calc(100dvh - 52px); }
 /* #endif */
 /* #ifdef MP-WEIXIN */
-/* 自定义导航需避开微信右上角胶囊区域；44px 为小程序导航栏标准高度。 */
-.entry-page { padding-top:calc(var(--status-bar-height, 0px) + 44px + env(safe-area-inset-top, 0px)); }
-.entry-page > .screen-nav { position:relative; top:auto; }
+/* 小程序安全区和状态栏描述同一顶部区域，使用较大值，并放在页面基础规则之后避免被覆盖。 */
+.page { padding-top:calc(20px + max(var(--status-bar-height, 25px), env(safe-area-inset-top, 0px))); }
+.detail-page,
+.entry-page { padding-top:max(var(--status-bar-height, 25px), env(safe-area-inset-top, 0px)); }
+.first-use { padding-top:calc(60px + max(var(--status-bar-height, 25px), env(safe-area-inset-top, 0px))); }
+.screen-nav { top:max(var(--status-bar-height, 25px), env(safe-area-inset-top, 0px)); }
 /* 小程序 button 的默认最小高度/行高与 H5 不同，顶部类型切换器必须显式锁定。 */
 .entry-type button { min-height:38px; line-height:1; }
 /* #endif */

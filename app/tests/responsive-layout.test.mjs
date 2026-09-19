@@ -20,11 +20,20 @@ test('文本按钮和主要操作按钮明确居中并清除平台默认行高�
   assert.match(styles, /\.help-back \{[^}]*display:flex;[^}]*align-items:center;/)
 })
 
-test('记账页顶部导航避开微信胶囊且类型按钮显式锁定尺寸', async () => {
+test('各业务页面顶部导航共享微信胶囊定位且记账类型按钮显式锁定尺寸', async () => {
   const entry = await read('pages/entry/entry.vue')
-  assert.match(entry, /<view class="page entry-page">\s*<view class="screen-nav">[\s\S]*<\/view>\s*<view class="entry-content">/)
-  assert.match(prototype, /\.entry-page > \.screen-nav \{ flex-shrink:0; margin-left:0; margin-right:0; \}/)
-  assert.match(prototype, /\/\* #ifdef MP-WEIXIN \*\/[\s\S]*\.entry-page \{ padding-top:calc\(var\(--status-bar-height, 0px\) \+ 44px \+ env\(safe-area-inset-top, 0px\)\); \}/)
+  const navigation = await read('components/NativeNavigation.vue')
+  const metrics = await read('utils/nativeNavigation.ts')
+  const pageHeader = await read('components/PageHeader.vue')
+  assert.match(entry, /<view class="page entry-page">\s*<NativeNavigation variant="screen"[\s\S]*\s*<view class="entry-content">/)
+  assert.match(navigation, /getNativeMenuMetrics\(\)/)
+  assert.match(navigation, /height: `\$\{menu\.height\}px`/)
+  assert.match(metrics, /uni\.getMenuButtonBoundingClientRect\(\)/)
+  assert.match(pageHeader, /<NativeNavigation variant="brand"/)
+  for (const route of ['pages/account/account.vue', 'pages/detail/detail.vue', 'pages/help/help.vue', 'pages/profile/profile.vue', 'pages/first-use/first-use.vue', 'components/LegalDocumentPage.vue']) {
+    assert.match(await read(route), /NativeNavigation/)
+  }
+  assert.match(prototype, /\.detail-page,[\s\S]*\.entry-page \{ padding-top:max\(var\(--status-bar-height, 25px\), env\(safe-area-inset-top, 0px\)\); \}/)
   assert.match(prototype, /\.entry-type button \{[^}]*min-height:38px;[^}]*line-height:1;/)
 })
 
@@ -53,13 +62,14 @@ test('微信小程序资料保存按钮显式覆盖原生按钮外观', () => {
 })
 
 test('主题色使用微信小程序可直接编译的颜色值', async () => {
-  const pageHeader = await read('components/PageHeader.vue')
+  const pageHeader = await read('components/NativeNavigation.vue')
   const themeVar = /var\(--(?:background|surface|primary|primary-dark|primary-light|text|muted|light|income|danger|liability|divider)\)/
   for (const source of [prototype, styles, pageHeader]) assert.doesNotMatch(source, themeVar)
   assert.match(prototype, /page, :root \{[\s\S]*--background:#f7f8f7;/)
   assert.match(prototype, /color:#171a1a; background:#f7f8f7;/)
   assert.match(styles, /\.help-page \{[^}]*background:#f7f8f7;/)
   assert.match(pageHeader, /\.page-subtitle \{[^}]*color:#858b8b;/)
+  assert.match(pageHeader, /\.page-header\.menu-aligned \{ display:flex; align-items:center; gap:8px; \}/)
 })
 
 test('核心可滚动页面仍保留独立 scroll-view 结构', async () => {
