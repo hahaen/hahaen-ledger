@@ -6,6 +6,7 @@ import { request } from '../../utils/api'
 import { cents, inputYuan } from '../../utils/money'
 import { backToLedger } from '../../utils/entry'
 import { stringId } from '../../utils/id'
+import { staticResource } from '../../utils/staticResource'
 import { Transaction, useLedger } from '../../stores/ledger'
 
 type Refund = { id: string; refundNo: string; amountCents: number; createdAt: string }
@@ -141,7 +142,7 @@ function remove() { openDelete({ type: 'transaction' }) }
     <view v-else-if="error && !detail" class="card empty">{{ error }}<button class="text-button" @click="load">重试</button></view>
     <template v-else-if="detail">
       <view :class="['detail-hero', detail.transaction.type.toLowerCase()]">
-        <view class="detail-hero-heading"><view :class="['type-icon', detail.transaction.type.toLowerCase()]"><image :src="'/static/prototype/' + typeImages[detail.transaction.type]" mode="aspectFit" /></view><text :class="['detail-type-badge', detail.transaction.type.toLowerCase()]">{{ label(detail.transaction.type) }}</text></view>
+        <view class="detail-hero-heading"><view :class="['type-icon', detail.transaction.type.toLowerCase()]"><image :src="staticResource('prototype/' + typeImages[detail.transaction.type])" mode="aspectFit" /></view><text :class="['detail-type-badge', detail.transaction.type.toLowerCase()]">{{ label(detail.transaction.type) }}</text></view>
         <MoneyDisplay class="detail-amount" :prefix="detail.transaction.type === 'EXPENSE' ? '− ' : detail.transaction.type === 'INCOME' ? '＋ ' : ''" :value="detail.effectiveCents" />
         <view :class="['detail-status', { refunded: detail.refundedCents }]"><text class="status-dot" />{{ detail.effectiveCents === 0 ? '已退款' : detail.refundedCents ? '部分退款' : '已完成' }}<MoneyDisplay v-if="detail.refundedCents" prefix=" · " :value="detail.refundedCents" /></view>
         <view class="detail-orbit orbit-one" /><view class="detail-orbit orbit-two" />

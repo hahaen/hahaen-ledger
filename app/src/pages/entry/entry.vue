@@ -8,6 +8,7 @@ import { request } from '../../utils/api'
 import { cents, inputYuan, localDateTime } from '../../utils/money'
 import { calculateAmount, validLocalDateTime, backToLedger } from '../../utils/entry'
 import { stringId } from '../../utils/id'
+import { staticResource } from '../../utils/staticResource'
 
 type EntryType = 'EXPENSE' | 'INCOME' | 'TRANSFER' | 'REPAYMENT'
 const ledger = useLedger()
@@ -237,7 +238,7 @@ async function save(afterSave: 'home' | 'again') {
         <text class="entry-account-picker-title">{{ modal === 'to' ? (type === 'REPAYMENT' ? '选择信贷账户' : '选择转入账户') : (type === 'TRANSFER' ? '请选择转出账户' : '选择资金账户') }}</text>
         <scroll-view scroll-y class="entry-account-choice-list" @touchmove.stop>
           <view v-if="!pickerAccounts.length" class="list-empty">暂无可用账户<button class="text-button" @click="modal = ''; uni.switchTab({ url: '/pages/assets/assets' })">去资产页添加账户</button></view>
-          <button v-for="(account, index) in pickerAccounts" v-else :key="account.id" :disabled="isSameAccountSelection(index)" :class="['entry-account-choice-item', { selected: index === draftAccountIndex }]" @click="selectAccount(index)"><image class="entry-account-choice-icon" :src="account.kind === 'CREDIT' ? '/static/prototype/credit-account.png' : '/static/prototype/funds-account.png'" mode="aspectFit" /><text class="entry-account-choice-name">{{ account.name }}</text><MoneyDisplay class="entry-account-choice-balance" :value="account.kind === 'CREDIT' ? -account.balanceCents : account.balanceCents" /><text class="entry-account-choice-state">{{ index === draftAccountIndex ? '✓' : '›' }}</text></button>
+          <button v-for="(account, index) in pickerAccounts" v-else :key="account.id" :disabled="isSameAccountSelection(index)" :class="['entry-account-choice-item', { selected: index === draftAccountIndex }]" @click="selectAccount(index)"><image class="entry-account-choice-icon" :src="staticResource(account.kind === 'CREDIT' ? 'prototype/credit-account.png' : 'prototype/funds-account.png')" mode="aspectFit" /><text class="entry-account-choice-name">{{ account.name }}</text><MoneyDisplay class="entry-account-choice-balance" :value="account.kind === 'CREDIT' ? -account.balanceCents : account.balanceCents" /><text class="entry-account-choice-state">{{ index === draftAccountIndex ? '✓' : '›' }}</text></button>
         </scroll-view>
         <view class="entry-account-picker-actions"><button class="entry-account-picker-cancel" @click="modal = ''">取消</button><button class="entry-account-picker-confirm" @click="confirmModal">完成</button></view>
       </view>

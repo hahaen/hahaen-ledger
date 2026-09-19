@@ -7,6 +7,7 @@ import { Account, AccountKind, Transaction, TransactionPage, useLedger } from '.
 import { request } from '../../utils/api'
 import { formatYuan } from '../../utils/money'
 import { stringId } from '../../utils/id'
+import { staticResource } from '../../utils/staticResource'
 
 const ledger = useLedger()
 const account = ref<Account | null>(null)
@@ -198,7 +199,7 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
         <view class="asset-create-handle" />
         <text class="repay-title">还款 · {{ account?.name }}</text>
         <view class="repay-copy">当前欠款 <MoneyDisplay :value="account?.balanceCents" />，还款后恢复相应可用额度。</view>
-        <button class="repay-account-picker" :disabled="saving" @click="openRepayAccountPicker"><image class="repay-account-icon" src="/static/prototype/funds-account.png" mode="aspectFit" /><view class="repay-account-copy"><text class="repay-account-label">还款账户</text><text class="repay-account-name">{{ selectedRepayFund?.name || '请选择还款账户' }}</text></view><view class="repay-account-balance"><template v-if="selectedRepayFund"><text>余额</text><MoneyDisplay :value="selectedRepayFund.balanceCents" /></template><text v-else>请选择账户</text><text class="arrow">›</text></view></button>
+        <button class="repay-account-picker" :disabled="saving" @click="openRepayAccountPicker"><image class="repay-account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="repay-account-copy"><text class="repay-account-label">还款账户</text><text class="repay-account-name">{{ selectedRepayFund?.name || '请选择还款账户' }}</text></view><view class="repay-account-balance"><template v-if="selectedRepayFund"><text>余额</text><MoneyDisplay :value="selectedRepayFund.balanceCents" /></template><text v-else>请选择账户</text><text class="arrow">›</text></view></button>
         <view class="repay-amount-row"><text>还款金额</text><view class="repay-amount-money"><input v-model="repayAmount" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="saving" /></view></view>
         <view class="repay-actions"><button class="repay-cancel" :disabled="saving" @click="repayOpen = false">取消</button><button class="repay-confirm" :disabled="saving" @click="repay">{{ saving ? '还款中…' : '确认还款' }}</button></view>
       </view>
@@ -207,7 +208,7 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
       <view class="repay-account-modal" role="dialog" aria-modal="true" aria-label="选择还款账户">
         <view class="asset-create-handle" />
         <text class="repay-title">选择还款账户</text>
-        <view class="repay-choice-list"><button v-for="fund in fundAccounts" :key="fund.id" :class="['repay-choice-item', { selected: repayFundId === fund.id }]" :disabled="saving" @click="selectRepayAccount(fund.id)"><image class="repay-account-icon" src="/static/prototype/funds-account.png" mode="aspectFit" /><view class="repay-account-copy"><text class="repay-account-name">{{ fund.name }}</text><view class="repay-choice-balance"><text>可用余额</text><MoneyDisplay :value="fund.balanceCents" /></view></view><text class="repay-choice-check">{{ repayFundId === fund.id ? '✓' : '' }}</text></button></view>
+        <view class="repay-choice-list"><button v-for="fund in fundAccounts" :key="fund.id" :class="['repay-choice-item', { selected: repayFundId === fund.id }]" :disabled="saving" @click="selectRepayAccount(fund.id)"><image class="repay-account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="repay-account-copy"><text class="repay-account-name">{{ fund.name }}</text><view class="repay-choice-balance"><text>可用余额</text><MoneyDisplay :value="fund.balanceCents" /></view></view><text class="repay-choice-check">{{ repayFundId === fund.id ? '✓' : '' }}</text></button></view>
         <button class="repay-return" :disabled="saving" @click="returnToRepay">返回还款</button>
       </view>
     </view>

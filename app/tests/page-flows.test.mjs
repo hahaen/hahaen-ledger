@@ -17,6 +17,7 @@ const run = (source, dependencies = {}, uni = defaultUni) => {
 }
 const money = run(await readFile(new URL('../src/utils/money.ts', import.meta.url), 'utf8'))
 const entryUtils = run(await readFile(new URL('../src/utils/entry.ts', import.meta.url), 'utf8'), { './money': money })
+const staticResources = { staticResource: path => `https://hahaen.xyz/minio-api/haji/wx/${path}` }
 const deferred = () => { let resolve; let reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no }); return { promise, resolve, reject } }
 async function entryPage(ledger, request = async () => ({})) {
   const hooks = {}
@@ -322,6 +323,7 @@ test('我的页退出登录使用系统确认弹层并阻止重复提交', async
     '../../utils/file': { currentAvatar: async () => undefined, uploadAvatar: async () => ({}) },
     '../../utils/api': { request: async () => ({}) },
     '../../stores/ledger': { useLedger: () => ({ state: { token: 'test-session' }, logout: async () => { logoutCalls++; await pending.promise } }) },
+    '../../utils/staticResource': staticResources,
   }, { ...defaultUni, showToast: options => events.toasts.push(options) })
 
   assert.doesNotMatch(source, /uni\.showModal/)
@@ -373,6 +375,7 @@ test('个人中心首次设置密码随资料保存提交，展示成功弹层 0
     '@dcloudio/uni-app': { onLoad: fn => { hooks.load = fn } },
     '../../stores/ledger': { useLedger: () => ledger },
     '../../utils/file': { currentAvatar: async () => null, uploadAvatar: async () => ({}) },
+    '../../utils/staticResource': staticResources,
     '../../utils/api': { request: async (url, options = {}) => {
       requests.push({ url, options })
       if (url === '/api/app/user/profile' && !options.method) return { userId: '7', nickname: '账本主人', loginAccount: '', passwordConfigured: false, avatarAuthorized: true }
@@ -406,6 +409,7 @@ test('个人中心新头像上传后立即本地预览，点击保存才关联�
     '@dcloudio/uni-app': { onLoad() {} },
     '../../stores/ledger': { useLedger: () => ({ state: { token: 'test-session' } }) },
     '../../utils/file': { uploadAvatar: async () => ({ fileId: '18', viewUrl: 'new-avatar-preview', objectKey: 'avatars/7/new.jpg' }), currentAvatar: async () => null },
+    '../../utils/staticResource': staticResources,
     '../../utils/api': { request: async (url, options = {}) => {
       requests.push({ url, options })
       return { userId: '7', nickname: '新昵称', loginAccount: 'fixedaccount', passwordConfigured: true, avatarAuthorized: true, avatarFileUrl: 'avatars/7/new.jpg' }
@@ -438,7 +442,7 @@ test('个人中心返回始终切换到我的页', async () => {
   const page = run(source + '\nexport { backToMine };', {
     '@dcloudio/uni-app': { onLoad() {} },
     '../../stores/ledger': { useLedger: () => ({ state: { token: 'test-session' } }) },
-    '../../utils/file': {}, '../../utils/api': {}, '../../utils/passwordCrypto': {},
+    '../../utils/file': {}, '../../utils/api': {}, '../../utils/passwordCrypto': {}, '../../utils/staticResource': staticResources,
   }, { ...defaultUni, switchTab: options => tabSwitches.push(options) })
 
   page.backToMine()
@@ -524,7 +528,7 @@ test('个人中心头像按钮动态创建原生 H5 文件输入框', async () =
     const page = run(source + '\nexport { handleAvatarClick, avatarFileInput, uploading, saving };', {
       '@dcloudio/uni-app': { onLoad() {} },
       '../../stores/ledger': { useLedger: () => ({ state: { token: 'test-session' } }) },
-      '../../utils/file': {}, '../../utils/api': {}, '../../utils/passwordCrypto': {}, '../../utils/entry': {},
+      '../../utils/file': {}, '../../utils/api': {}, '../../utils/passwordCrypto': {}, '../../utils/entry': {}, '../../utils/staticResource': staticResources,
     }, { ...defaultUni, chooseImage() {} })
     page.handleAvatarClick()
     page.handleAvatarClick()

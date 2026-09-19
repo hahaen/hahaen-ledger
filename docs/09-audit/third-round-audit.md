@@ -1,5 +1,12 @@
 # 第三轮工程审计报告
 
+## 2026-09-17 追加：微信小程序静态图片外置
+
+- 已确认上传失败的构建目录为 3841.50 KB，超过报错接口的 2 MB 限制。主要来源是 `src/static/` 的 8 个 PNG，其中品牌图还出现一次构建重复副本。
+- 已将固定视觉资源统一切换至 `https://hahaen.xyz/minio-api/haji/wx/` 下的对象；在迁移前逐一执行 HEAD，8 个对象均为 HTTP 200 且 Content-Length 与本地原图一致。原图保留于 `app/offloaded-static-assets/wx/`，不再参与 uni-app 小程序构建。
+- PASS：前端回归 55/55、`pnpm run typecheck`、`pnpm run build:mp-weixin`、构建目录体积核对 270.19 KB、`git diff --check`。未改动数据库、后端、API、认证、用户头像上传或账务逻辑。
+- NOT_RUN：未重新导入微信开发者工具执行上传，也未在真机验证远端图片加载。详细档案：`docs/10-iterations/2026/09/mini-program-static-image-offload/`。
+
 ## 2026-09-17 追加：新增记账页微信小程序顶部控件
 
 - 新增记账页将 `screen-nav` 移到 `.entry-content` 外，避免顶部导航与主体滚动层混用；微信小程序条件编译为页面状态栏后的自定义导航预留 44px，类型切换按钮显式锁定 38px 高度、零内边距、单倍行高、flex 居中和 `::after` 清理。

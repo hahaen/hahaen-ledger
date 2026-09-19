@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Transaction, useLedger } from '../stores/ledger'
 import MoneyDisplay from './MoneyDisplay.vue'
 import { formatYuan } from '../utils/money'
+import { staticResource } from '../utils/staticResource'
 const props = defineProps<{ transaction: Transaction }>()
 const emit = defineEmits<{ open: [id: string] }>()
 const ledger = useLedger()
@@ -23,7 +24,7 @@ const description = computed(() => {
 </script>
 <template>
   <button class="transaction-item" :aria-label="`查看${kind.label} ${formatYuan(transaction.amountCents)}元详情`" @click="emit('open', transaction.id)">
-    <view :class="['type-icon', transaction.type.toLowerCase()]"><image :src="`/static/prototype/${kind.image}`" mode="aspectFit" /></view>
+    <view :class="['type-icon', transaction.type.toLowerCase()]"><image :src="staticResource(`prototype/${kind.image}`)" mode="aspectFit" /></view>
     <view class="transaction-copy"><view class="transaction-title-row"><text :class="['type-label', transaction.type.toLowerCase()]">{{ kind.label }}</text><text v-if="transaction.hasRefund" class="refund-mark">退</text></view><text class="transaction-note">{{ description }}</text></view>
     <MoneyDisplay :class="['transaction-amount', transaction.type.toLowerCase()]" :prefix="kind.sign" :value="transaction.amountCents" /><text class="arrow">›</text>
   </button>

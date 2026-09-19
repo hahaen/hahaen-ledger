@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { request } from '../utils/api'
+import { staticResource } from '../utils/staticResource'
 import { encryptH5AuthPassword } from '../utils/passwordCrypto'
 import { useLedger } from '../stores/ledger'
 
@@ -100,7 +101,7 @@ onMounted(loadCaptcha)
     <view class="auth-shell">
       <view class="auth-header">
         <view class="auth-brand">
-          <image class="auth-brand-image" src="/static/brand.png" mode="aspectFit" />
+          <image class="auth-brand-image" :src="staticResource('brand.png')" mode="aspectFit" />
           <text class="auth-brand-name">哈记账</text>
         </view>
         <view class="auth-context-row">

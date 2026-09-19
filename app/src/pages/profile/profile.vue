@@ -5,6 +5,7 @@ import { currentAvatar, uploadAvatar, uploadAvatarFromMiniPath, type FileViewUrl
 import { request } from '../../utils/api'
 import { encryptPassword } from '../../utils/passwordCrypto'
 import { useLedger } from '../../stores/ledger'
+import { staticResource } from '../../utils/staticResource'
 
 type Profile = {
   userId: string
@@ -17,7 +18,8 @@ type Profile = {
 
 const ACCOUNT_PATTERN = /^[a-z0-9]{2,64}$/
 const ledger = useLedger()
-const avatarUrl = ref('/static/brand.png')
+const DEFAULT_AVATAR_URL = staticResource('brand.png')
+const avatarUrl = ref(DEFAULT_AVATAR_URL)
 const avatarConfigured = ref(false)
 const nickname = ref('')
 const loginAccount = ref('')
@@ -82,7 +84,7 @@ async function loadProfile() {
     passwordConfigured.value = profile.passwordConfigured
     avatarConfigured.value = profile.avatarAuthorized
     pendingAvatar.value = null
-    avatarUrl.value = '/static/brand.png'
+    avatarUrl.value = DEFAULT_AVATAR_URL
     if (profile.avatarFileUrl) {
       const avatar = await currentAvatar()
       if (avatar?.viewUrl) avatarUrl.value = avatar.viewUrl

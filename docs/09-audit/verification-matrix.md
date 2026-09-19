@@ -2,6 +2,17 @@
 
 更新日期：2026-09-17。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
 
+## 2026-09-17：微信小程序静态图片外置以降低上传包体积
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| MinIO 固定视觉资源 | PASS | `haji/wx/` 下 8 个对象的匿名 HEAD 均为 HTTP 200，Content-Length 与本地原图逐一一致 |
+| 小程序图片引用与原图保留 | PASS（静态） | 页面统一使用 `staticResource`；8 个原图已迁至 `app/offloaded-static-assets/wx/`，不在 uni-app 自动复制的 `src/static/` 中 |
+| 前端回归、TypeScript 与小程序构建 | PASS | `pnpm exec node --test tests/*.test.mjs` 55/55、`pnpm run typecheck`、`pnpm run build:mp-weixin` 均完成 |
+| 小程序构建目录尺寸 | PASS | `app/dist/build/mp-weixin` 实测 270.19 KB，小于报错接口的 2 MB 限制 |
+| 微信开发者工具重新导入和上传 | NOT_RUN | 需用户基于本轮 `dist/build/mp-weixin` 产物执行实际上传 |
+| 真机公网图片加载 | NOT_RUN | 未在真实微信网络环境加载图片 |
+
 ## 2026-09-17：微信小程序个人中心底部按钮可见性
 
 | 范围 | 状态 | 证据/限制 |

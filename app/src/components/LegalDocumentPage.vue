@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { legalDocuments, type LegalDocumentType } from '../constants/legalDocuments'
+import { staticResource } from '../utils/staticResource'
 
 const props = defineProps<{ type: LegalDocumentType }>()
 const document = computed(() => legalDocuments[props.type])
@@ -24,7 +25,7 @@ function backToAuth() {
       </view>
 
       <view class="about-hero legal-hero">
-        <view class="about-brand"><image src="/static/brand.png" mode="aspectFill" /><text>哈记账</text></view>
+        <view class="about-brand"><image :src="staticResource('brand.png')" mode="aspectFill" /><text>哈记账</text></view>
         <text class="about-eyebrow">{{ document.eyebrow }}</text>
         <text class="about-hero-title">{{ document.heroTitle }}</text>
         <text class="about-hero-copy">{{ document.heroCopy }}</text>
@@ -44,7 +45,7 @@ function backToAuth() {
       </view>
 
       <view class="about-note legal-note"><text class="about-note-icon">✦</text><view class="about-note-copy"><text>请完整阅读</text><text>如不同意本协议或隐私协议，请勿注册、登录或继续使用服务。</text></view></view>
-      <view class="about-footer"><image src="/static/brand.png" mode="aspectFill" /><text>哈记账 · {{ document.title }}</text><text>简单记账，安心生活</text></view>
+      <view class="about-footer"><image :src="staticResource('brand.png')" mode="aspectFill" /><text>哈记账 · {{ document.title }}</text><text>简单记账，安心生活</text></view>
     </scroll-view>
   </view>
 </template>

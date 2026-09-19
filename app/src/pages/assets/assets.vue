@@ -6,6 +6,7 @@ import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import { request } from '../../utils/api'
 import { Account, AccountKind, AssetOverview, useLedger } from '../../stores/ledger'
+import { staticResource } from '../../utils/staticResource'
 
 const ledger = useLedger()
 const state = ledger.state
@@ -145,14 +146,14 @@ onShow(() => { void load() })
         <button class="account-heading" :aria-expanded="creditsExpanded" @click="creditsExpanded = !creditsExpanded"><text>信贷账户</text><view class="account-toggle">{{ creditsExpanded ? '收起' : '展开' }}</view></button>
         <view v-if="creditsExpanded" class="account-list">
           <view v-if="!credits.length" class="list-empty">暂无信贷账户</view>
-          <view v-for="account in credits" :key="account.id" role="button" :aria-label="account.name" :class="['account-item', { 'reorder-selected': reorderingAccountId === account.id }]" @click="handleAccountRowTap(account)" @longpress="startReorder(account)"><image class="account-icon credit" src="/static/prototype/credit-account.png" mode="aspectFit" /><view class="account-main"><view class="account-name-row"><text class="account-name">{{ account.name }}</text><text v-if="!account.includedInNetAsset" class="account-exclusion-badge">不计入</text></view><view class="credit-available"><text>可用</text><MoneyDisplay :value="account.creditLimitCents - account.balanceCents" /></view></view><view class="account-balance liability"><text class="balance-caption">欠款</text><MoneyDisplay :value="account.balanceCents" /></view><view v-if="reorderingKind === 'CREDIT'" class="account-reorder-action" @click.stop.prevent="handleAccountTap(account)">交换</view><text v-else class="arrow">›</text></view>
+          <view v-for="account in credits" :key="account.id" role="button" :aria-label="account.name" :class="['account-item', { 'reorder-selected': reorderingAccountId === account.id }]" @click="handleAccountRowTap(account)" @longpress="startReorder(account)"><image class="account-icon credit" :src="staticResource('prototype/credit-account.png')" mode="aspectFit" /><view class="account-main"><view class="account-name-row"><text class="account-name">{{ account.name }}</text><text v-if="!account.includedInNetAsset" class="account-exclusion-badge">不计入</text></view><view class="credit-available"><text>可用</text><MoneyDisplay :value="account.creditLimitCents - account.balanceCents" /></view></view><view class="account-balance liability"><text class="balance-caption">欠款</text><MoneyDisplay :value="account.balanceCents" /></view><view v-if="reorderingKind === 'CREDIT'" class="account-reorder-action" @click.stop.prevent="handleAccountTap(account)">交换</view><text v-else class="arrow">›</text></view>
         </view>
       </view>
       <view class="account-section">
         <button class="account-heading" :aria-expanded="fundsExpanded" @click="fundsExpanded = !fundsExpanded"><text>资金账户</text><view class="account-toggle">{{ fundsExpanded ? '收起' : '展开' }}</view></button>
         <view v-if="fundsExpanded" class="account-list">
           <view v-if="!funds.length" class="list-empty">暂无资金账户</view>
-          <view v-for="account in funds" :key="account.id" role="button" :aria-label="account.name" :class="['account-item', { 'reorder-selected': reorderingAccountId === account.id }]" @click="handleAccountRowTap(account)" @longpress="startReorder(account)"><image class="account-icon" src="/static/prototype/funds-account.png" mode="aspectFit" /><view class="account-main"><view class="account-name-row"><text class="account-name">{{ account.name }}</text><text v-if="!account.includedInNetAsset" class="account-exclusion-badge">不计入</text></view></view><view class="account-balance"><MoneyDisplay :value="account.balanceCents" /></view><view v-if="reorderingKind === 'FUND'" class="account-reorder-action" @click.stop.prevent="handleAccountTap(account)">交换</view><text v-else class="arrow">›</text></view>
+          <view v-for="account in funds" :key="account.id" role="button" :aria-label="account.name" :class="['account-item', { 'reorder-selected': reorderingAccountId === account.id }]" @click="handleAccountRowTap(account)" @longpress="startReorder(account)"><image class="account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="account-main"><view class="account-name-row"><text class="account-name">{{ account.name }}</text><text v-if="!account.includedInNetAsset" class="account-exclusion-badge">不计入</text></view></view><view class="account-balance"><MoneyDisplay :value="account.balanceCents" /></view><view v-if="reorderingKind === 'FUND'" class="account-reorder-action" @click.stop.prevent="handleAccountTap(account)">交换</view><text v-else class="arrow">›</text></view>
         </view>
       </view>
     </template>

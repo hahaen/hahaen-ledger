@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { backToLedger } from '../../utils/entry'
+import { staticResource } from '../../utils/staticResource'
 
 const openFaq = ref('quick-start')
 
@@ -30,7 +31,7 @@ function showReserved(message: string) {
       </view>
 
       <view class="about-hero">
-        <view class="about-brand"><image src="/static/brand.png" mode="aspectFill" /><text>哈记账</text></view>
+        <view class="about-brand"><image :src="staticResource('brand.png')" mode="aspectFill" /><text>哈记账</text></view>
         <text class="about-eyebrow">A LITTLE BOOKKEEPER</text>
         <text class="about-hero-title">记账，从简单开始</text>
         <text class="about-hero-copy">记录每一笔，让生活更清晰。<br />这里整理了常用功能和使用说明。</text>
@@ -65,7 +66,7 @@ function showReserved(message: string) {
       </view>
 
       <view class="about-note"><text class="about-note-icon">✦</text><view class="about-note-copy"><text>需要反馈？</text><text>告诉我们哪里还可以更好，帮助哈记账变得更顺手。</text></view><button class="about-status" @click="showReserved('反馈暂未开放')">暂未开放</button></view>
-      <view class="about-footer"><image src="/static/brand.png" mode="aspectFill" /><text>哈记账 · v1.0</text><text>简单记账，安心生活</text></view>
+      <view class="about-footer"><image :src="staticResource('brand.png')" mode="aspectFill" /><text>哈记账 · v1.0</text><text>简单记账，安心生活</text></view>
     </scroll-view>
   </view>
 </template>

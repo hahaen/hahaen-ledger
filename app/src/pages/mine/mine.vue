@@ -5,6 +5,7 @@ import BottomNav from '../../components/BottomNav.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import { currentAvatar } from '../../utils/file'
 import { request } from '../../utils/api'
+import { staticResource } from '../../utils/staticResource'
 import { useLedger } from '../../stores/ledger'
 
 type Profile = {
@@ -17,7 +18,8 @@ type Profile = {
 }
 
 const ledger = useLedger()
-const avatarUrl = ref('/static/brand.png')
+const DEFAULT_AVATAR_URL = staticResource('brand.png')
+const avatarUrl = ref(DEFAULT_AVATAR_URL)
 const profile = ref<Profile | null>(null)
 const loading = ref(false)
 const loggingOut = ref(false)
@@ -31,13 +33,13 @@ const avatarStatus = computed(() => {
 async function loadProfile() {
   if (!ledger.state.token) {
     profile.value = null
-    avatarUrl.value = '/static/brand.png'
+    avatarUrl.value = DEFAULT_AVATAR_URL
     return
   }
   loading.value = true
   try {
     profile.value = await request<Profile>('/api/app/user/profile')
-    avatarUrl.value = '/static/brand.png'
+    avatarUrl.value = DEFAULT_AVATAR_URL
     if (profile.value.avatarFileUrl) {
       try {
         const avatar = await currentAvatar()
@@ -91,7 +93,7 @@ async function confirmLogout() {
     // logout() 无论服务端响应如何都会清除本地会话，页面切换到未登录状态即可。
   } finally {
     profile.value = null
-    avatarUrl.value = '/static/brand.png'
+    avatarUrl.value = DEFAULT_AVATAR_URL
     logoutOpen.value = false
     loggingOut.value = false
     // #ifdef H5
