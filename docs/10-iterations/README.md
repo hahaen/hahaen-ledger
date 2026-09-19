@@ -1,6 +1,7 @@
 # 10｜迭代档案
 
 - [2026-09 Jenkins 与 Docker Compose 部署脚本](2026/09/jenkins-compose-deployment/README.md)：为前后端任务提供 SSH/Compose 部署基础。
+- [2026-09 正式 MinIO 预签名 PUT 代理修复](2026/09/minio-presigned-put-proxy/README.md)：补齐 Nginx 到 MinIO 的签名 PUT 反向代理配置，线上探针已通过，真实页面回归待用户重试确认。
 
 本目录按 `YYYY/MM/feature-key/` 保存历史变更。每个重大功能、Bug、数据库、权限、基础设施或设计整改，都应有一个独立 feature-key，避免把多次变更混成无法审计的长文档。
 

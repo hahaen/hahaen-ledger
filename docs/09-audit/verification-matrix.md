@@ -1,6 +1,18 @@
 # 当前验证矩阵
 
-更新日期：2026-09-19。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
+更新日期：2026-09-20。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
+
+## 2026-09-20：正式 MinIO 预签名 PUT 代理修复
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 正式 Nginx 配置备份与修改 | PASS | `/home/hahaen/nginx/conf.d/default.conf` 已备份；仅补充 MinIO PUT 代理的 Connection、chunked transfer 和请求体大小配置。 |
+| Nginx 配置测试与 reload | PASS | 服务器 `docker exec nginx nginx -t` 成功，随后已执行 `docker exec nginx nginx -s reload`。 |
+| 正式域名 SigV4 PUT | PASS | 随机临时对象经 `https://hahaen.xyz/minio-api/` 返回 HTTP 200；MinIO 读回成功并清理。 |
+| 真实 H5 头像文件链路 | PASS | 2026-09-19 16:45:39 UTC 真实日志连续显示 `upload-url 200`、预签名 MinIO PUT 200、`complete 200`、`view-url 200` 和对象 GET 200。 |
+| 资料保存按钮 | NOT_RUN | 本次只验收头像文件上传、确认和预览链路，未点击资料保存按钮。 |
+
+详见 `docs/10-iterations/2026/09/minio-presigned-put-proxy/`。
 
 ## 2026-09-19：生产后端日志挂载到宿主机
 

@@ -10,7 +10,11 @@ services:
       - /home/hahaen/haji-prod.env
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Shanghai
+      JAVA_TOOL_OPTIONS: "-Dio.netty.noUnsafe=true -Duser.timezone=Asia/Shanghai"
     volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
       - /home/hahaen/log/haji:/home/hahaen/log/haji
     expose:
       - "8080"

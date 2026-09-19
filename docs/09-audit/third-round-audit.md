@@ -1,5 +1,13 @@
 # 第三轮工程审计报告
 
+## 2026-09-20 追加：正式 MinIO 预签名 PUT 代理修复
+
+- 已定位正式环境头像失败链路：`upload-url` 返回 200 后，公网 `/minio-api/` 的预签名 PUT 返回 403；后端 Endpoint、Bucket、时间、MinIO 可用性及 SigV4 内网 Host 均核对通过。
+- 正式服务器 `/home/hahaen/nginx/conf.d/default.conf` 已先备份，再补充 `proxy_set_header Connection ""`、`chunked_transfer_encoding off` 和 `client_max_body_size 0`；`docker exec nginx nginx -t` PASS，并已 reload。
+- PASS（运行态）：通过正式域名对随机临时对象执行同类 SigV4 PUT 返回 HTTP 200，MinIO `mc stat` 读回成功，临时对象清理成功；Nginx access log 同时记录该 PUT 为 200。
+- PASS（运行态）：用户在正式 H5 页面重试后，日志取得 `upload-url 200`、真实预签名 PUT 200、`complete 200`、`view-url 200` 和对象 GET 200 的连续证据；本次未点击资料保存按钮，未将资料保存结果纳入结论。
+- 详细档案：`docs/10-iterations/2026/09/minio-presigned-put-proxy/`。
+
 ## 2026-09-19 追加：生产后端日志挂载到宿主机
 
 - `docker-compose.prod.yml` 将宿主机 `/home/hahaen/log/haji` 绑定到容器内同一路径，Jenkins 后续按现有 Compose 流程部署时自动生效。
