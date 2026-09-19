@@ -64,6 +64,7 @@ hahaen:
     login-enabled: ${WECHAT_LOGIN_ENABLED:false}
   minio:
     endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
+    public-url-prefix: ${MINIO_PUBLIC_URL_PREFIX:http://127.0.0.1:9000}
     access-key: ${MINIO_ACCESS_KEY:root}
     secret-key: ${MINIO_SECRET_KEY:root}
     bucket: ${MINIO_BUCKET:haji-dev}

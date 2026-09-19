@@ -2,6 +2,18 @@
 
 更新日期：2026-09-19。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
 
+## 2026-09-19：MinIO 正式环境文件回显 URL
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 内网存储 Endpoint 与客户端签名 URL 分离 | PASS（代码/静态） | 后端继续用 `MINIO_ENDPOINT` 执行对象操作和签名；签名 URL 返回前将来源前缀改为 `MINIO_PUBLIC_URL_PREFIX`。 |
+| 生产公网前缀配置 | PASS（配置/静态） | `application-prod.yml` 要求部署环境提供 `MINIO_PUBLIC_URL_PREFIX`；Nginx 示例去掉 `/minio-api` 路径前缀并代理到同一内部 Endpoint。 |
+| Maven 编译/打包 | PASS（跳过测试） | `cd server; mvn -q -DskipTests package` exit 0；仅证明编译/打包，不代表签名链路可用。 |
+| 自动化测试 | NOT_RUN | 本轮未运行 Maven 测试。 |
+| 生产 Nginx、真实签名 URL 与客户端回显 | NOT_RUN | 未访问正式服务器验证 Nginx 生效配置、签名 PUT/GET 和 H5/微信端加载；部署与运行态验收仍需在生产环境执行。 |
+
+详见 `docs/10-iterations/2026/09/minio-public-preview-url/`。
+
 ## 2026-09-19：新增记账页 H5 触摸滚动
 
 | 范围 | 状态 | 证据/限制 |

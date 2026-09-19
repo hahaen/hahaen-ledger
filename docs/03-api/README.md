@@ -90,7 +90,7 @@ H5 账号服务端会 trim 并转为小写，格式为 2–64 位英文字母或
 
 账单附件的数据库枚举已预留 `TRANSACTION_ATTACHMENT`，但当前业务 Service/前端不应把它当成首版可用能力。
 
-资料响应的 `avatarFileUrl` 是稳定的 MinIO 对象 Key，不是完整 URL；页面只能通过头像预览接口取得短时效 `viewUrl`。文件预览响应同时返回当前用户自己的 `objectKey`，用于刷新前端资料状态，不能拿它拼接 MinIO 地址。
+资料响应的 `avatarFileUrl` 是稳定的 MinIO 对象 Key，不是完整 URL；页面只能通过头像预览接口取得短时效 `viewUrl`。文件预览响应同时返回当前用户自己的 `objectKey`，用于刷新前端资料状态，不能拿它拼接 MinIO 地址。上传和预览 URL 由后端以内网 `MINIO_ENDPOINT` 签名；生产环境返回给客户端前会将 URL 前缀替换为 `MINIO_PUBLIC_URL_PREFIX`，对象路径、查询签名和 10 分钟有效期不变。
 
 ## 维护规则
 

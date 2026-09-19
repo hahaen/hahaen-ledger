@@ -21,7 +21,7 @@
 
 ## 文件与配置
 
-MinIO 密钥只在后端配置，浏览器只获得短时效上传/预览 URL。文件元数据必须绑定当前用户，删除和预览要再次校验归属并过滤逻辑删除。`app_user.avatar_file_url` 仅保存稳定对象 Key，绝不保存完整 MinIO URL 或签名参数。头像确认时服务端重新读取对象并核验大小、SHA-256、MIME 与图片文件头；相同用户同摘要的已就绪头像复用已有对象。当前只应开放 `AVATAR`；`TRANSACTION_ATTACHMENT` 只是 Schema 预留。
+MinIO 密钥只在后端配置，浏览器只获得短时效上传/预览 URL。文件元数据必须绑定当前用户，删除和预览要再次校验归属并过滤逻辑删除。`app_user.avatar_file_url` 仅保存稳定对象 Key，绝不保存完整 MinIO URL 或签名参数。头像确认时服务端重新读取对象并核验大小、SHA-256、MIME 与图片文件头；相同用户同摘要的已就绪头像复用已有对象。当前只应开放 `AVATAR`；`TRANSACTION_ATTACHMENT` 只是 Schema 预留。生产 `MINIO_ENDPOINT` 可使用内网地址，但客户端 URL 前缀须配置为公网 `MINIO_PUBLIC_URL_PREFIX`；代理需要去掉外部路径前缀并向 MinIO 保留签名使用的内部 Host。
 
 生产环境必须显式提供固定 H5 RSA 私钥、数据库/Redis/MinIO 凭证、CORS 和微信配置；配置文件中的生成兜底不能作为生产安全控制。Redis Key 统一以 `haji:` 开头，不含环境名，不执行清库命令。
 

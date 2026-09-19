@@ -44,6 +44,7 @@
 - [profile-center-management](profile-center-management/README.md)：个人中心资料、首次账号设置和密码修改闭环（2026-09-11）。
 - [avatar-object-key-dedup](avatar-object-key-dedup/README.md)：头像改存稳定对象 Key，上传内容校验和同图去重（2026-09-11）。
 - [minio-date-filename-object-key](minio-date-filename-object-key/README.md)：新上传对象 Key 改用上海日期目录和原文件名加 UUID。
+- [minio-public-preview-url](minio-public-preview-url/README.md)：MinIO 内网访问地址与客户端可访问的签名 URL 前缀分离，修复正式环境文件回显。
 - [mine-avatar-preview-only](mine-avatar-preview-only/README.md)：我的页顶部头像仅展示，点击无响应（2026-09-12）。
 - [profile-avatar-local-preview](profile-avatar-local-preview/README.md)：个人中心头像选择后立即本地预览，点击保存才关联当前头像（2026-09-12）。
 - [profile-back-to-mine](profile-back-to-mine/README.md)：个人中心返回固定进入“我的”页（2026-09-12）。

@@ -1,5 +1,14 @@
 # 第三轮工程审计报告
 
+## 2026-09-19 追加：MinIO 正式环境文件回显 URL
+
+- 生产 MinIO SDK 仍访问 `MINIO_ENDPOINT` 内网地址；上传和预览的短时签名 URL 返回给客户端前替换为部署环境提供的 `MINIO_PUBLIC_URL_PREFIX`。
+- Nginx 示例通过去除 `/minio-api` 前缀后代理到配置的同一 MinIO Endpoint，保留 `$proxy_host` 以匹配签名 Host。
+- PASS（代码/静态）：URL 改写逻辑、生产配置和代理示例已同步；无数据库或前端接口结构变化。
+- PASS（仅构建）：`cd server; mvn -q -DskipTests package` exit 0；自动化测试为 NOT_RUN。
+- NOT_RUN：正式 Nginx 检查、MinIO 签名 PUT/GET 与真实页面回显尚未执行。
+- 详细档案：`docs/10-iterations/2026/09/minio-public-preview-url/`。
+
 ## 2026-09-19 追加：新增记账页 H5 触摸滚动
 
 - 新增记账页仅 `.entry-content` 是可滚动内容区，H5 页面使用固定数字键盘覆盖底部区域；H5 条件编译样式为该容器增加 iOS Safari 惯性触摸滚动。
