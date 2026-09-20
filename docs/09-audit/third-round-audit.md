@@ -527,9 +527,20 @@ PASS：恢复首页最近记账日期行的设计稿边距、字号和单行收�
 
 ## 2026-09-20 追加：微信小程序转发
 
-- 新增 `app/src/utils/wechatShare.ts`，在 `MP-WEIXIN` 条件下注册 `onShareAppMessage`；八个登录后业务页统一分享固定标题并回到首页，不携带账单或用户隐私参数。H5 不注册该生命周期，未新增后端、数据库或 API。
-- PASS：转发专测 9/9、H5 生产构建、微信小程序生产构建；微信产物已确认包含转发注册模块。
-- PARTIAL：全量前端 Node 回归 67/69，剩余 2 项为工作区既有 mine 模板断言与当前 tap-feedback 标记不匹配。
+- `app/src/utils/wechatShare.ts` 在 `MP-WEIXIN` 条件下注册 `onShareAppMessage`；`pages.json` 全部 14 个页面统一分享固定标题并回到首页，不携带当前路由、账单或用户隐私参数。H5 不注册该生命周期，未新增后端、数据库或 API。
+- PASS：转发专测 15/15、H5 生产构建、微信小程序生产构建；微信产物已确认 14/14 页面引用统一转发模块。
+- PARTIAL：全量前端 Node 回归 75/77，剩余 2 项为工作区既有 mine 模板断言与当前 tap-feedback 标记不匹配。
 - PASS：`pnpm run typecheck`，`vue-tsc --noEmit` exit 0。
+- BLOCKED：`app/package.json` 未配置 lint script。
 - NOT_RUN：微信开发者工具/真机右上角实际转发及接收方打开首页，需导入 `app/dist/build/mp-weixin` 后验收。
 - 完整档案：`docs/10-iterations/2026/09/wechat-mini-share/`。
+
+## 2026-09-20 追加：微信小程序个人中心密码加密兼容
+
+- 根因是个人中心复用了仅浏览器可用的 `crypto.subtle`，微信小程序缺少 Web Crypto 时在请求前抛出“请使用 HTTPS 浏览器”错误。
+- 新增微信平台工具层：继续读取既有 SPKI 公钥，使用 RSA-OAEP、SHA-256、MGF1-SHA-256 加密，并只使用 `wx.getRandomValues` 生成 32 字节 OAEP 种子；H5 路径、后端接口和数据库均不变。
+- PASS：密码互操作专测 2/2、TypeScript、H5/微信小程序生产构建、构建产物调用链静态核对、后端 53/53。
+- PARTIAL：全量前端回归 75/77，2 项为当前 mine 模板与既有断言不匹配；本次未修改该页面或断言。
+- BLOCKED：项目无 lint script。
+- NOT_RUN：微信开发者工具/真机首次设置及修改密码、真实 DEV API 和数据库 BCrypt 落库验收。
+- 完整档案：`docs/10-iterations/2026/09/wechat-mini-password-encryption/`。

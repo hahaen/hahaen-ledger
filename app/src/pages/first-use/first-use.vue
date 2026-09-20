@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import NativeNavigation from '../../components/NativeNavigation.vue'
 import { handleMpTouchStart } from '../../utils/tapFeedback'
+import { registerWechatShare } from '../../utils/wechatShare'
+
+registerWechatShare()
 
 function enter() { uni.setStorageSync('first-use-complete', true); uni.reLaunch({ url: '/pages/index/index' }) }
 </script>

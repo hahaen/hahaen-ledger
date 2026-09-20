@@ -755,13 +755,30 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 | 范围 | 状态 | 证据/限制 |
 | --- | --- | --- |
 | 统一转发标题与入口 | PASS（静态+产物） | `wechatShare.ts` 返回固定标题 `哈记账｜简单记账，安心生活` 和 `/pages/index/index`，微信产物包含 `onShareAppMessage` 注册。 |
-| 隐私边界 | PASS（静态） | 不把账单 ID、金额、账户名、用户 ID 或当前详情路径放入转发参数。 |
-| 业务页覆盖 | PASS（静态） | 首页、日历、资产、我的、账单详情、账户详情、帮助、个人中心均注册；认证、协议、首次使用和新增/编辑记账页未注册。 |
-| 转发专测 | PASS | `pnpm exec node --test tests/wechat-share.test.mjs`，9/9。 |
+| 隐私边界 | PASS（静态） | 不把当前页面路径、账单 ID、金额、账户名、用户 ID 或查询参数放入转发参数。 |
+| 全页面覆盖 | PASS（静态+产物） | `pages.json` 全部 14 个页面均注册；转发专测动态读取页面清单，微信产物 14/14 页面引用统一模块。 |
+| 转发专测 | PASS | `pnpm exec node --test tests/wechat-share.test.mjs`，15/15。 |
 | H5/微信小程序生产构建 | PASS | `pnpm run build:h5`、`pnpm run build:mp-weixin`。 |
 | Git 空白检查 | PASS | `git diff --check` 无 whitespace error；仅有工作区既有 CRLF→LF warning。 |
-| 全量前端回归 | PARTIAL | 67/69；2 项为工作区既有 mine 模板断言与 tap-feedback 标记不匹配。 |
+| 全量前端回归 | PARTIAL | 75/77；2 项为工作区既有 mine 模板断言与 tap-feedback 标记不匹配。 |
 | TypeScript | PASS | `pnpm run typecheck`，`vue-tsc --noEmit` exit 0。 |
+| Lint | BLOCKED | `pnpm run lint` 返回 `ERR_PNPM_NO_SCRIPT`，项目未配置 lint script。 |
 | 微信开发者工具/真机实际转发 | NOT_RUN | 需导入 `app/dist/build/mp-weixin` 后从右上角菜单实际转发；构建产物不能替代运行验收。 |
 
 完整档案：[wechat-mini-share](../10-iterations/2026/09/wechat-mini-share/README.md)。
+
+## 2026-09-20：微信小程序个人中心密码加密兼容
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| RSA-OAEP 互操作 | PASS | 新增专测 2/2；小程序兼容路径使用 SHA-256、MGF1-SHA-256 和 32 字节安全随机种子，生成的 Base64 密文可由 Node 服务端同规格私钥解密并还原中文密码。 |
+| 弱随机数降级防护 | PASS | `wx.getRandomValues` 失败时测试确认直接拒绝，不使用 `Math.random`。 |
+| TypeScript 与双端构建 | PASS | `pnpm run typecheck`、`pnpm run build:mp-weixin`、`pnpm run build:h5` 均成功。 |
+| 构建产物调用链 | PASS（静态） | 小程序产物由 `passwordCrypto.js` 静态调用 `passwordCryptoMp.js`；H5 产物不包含 node-forge，实现未污染 H5 加密路径。 |
+| 后端回归 | PASS | `mvn test`，53/53；后端接口和解密实现未修改。 |
+| 全量前端回归 | PARTIAL | 75/77；2 项为当前 mine 模板与既有断言不匹配，与本次密码加密文件无关。 |
+| Lint | BLOCKED | `app/package.json` 未配置 lint script。 |
+| 微信开发者工具/真机设置密码 | NOT_RUN | 尚未导入产物，以真实登录态分别执行首次设置密码和修改密码；构建与算法互操作测试不能替代运行验收。 |
+| DEV API、数据库密码落库 | NOT_RUN | 未连接真实 DEV 会话和数据库执行资料保存或改密，不宣称 BCrypt 落库闭环。 |
+
+完整档案：[wechat-mini-password-encryption](../10-iterations/2026/09/wechat-mini-password-encryption/README.md)。

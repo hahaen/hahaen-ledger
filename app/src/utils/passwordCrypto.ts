@@ -1,4 +1,7 @@
 import { request } from './api'
+// #ifdef MP-WEIXIN
+import { encryptMiniProgramPassword } from './passwordCryptoMp'
+// #endif
 
 type PasswordKeyVO = { publicKey: string; insecurePasswordAllowed: boolean }
 export type H5AuthPasswordPayload =
@@ -42,7 +45,12 @@ async function loadPublicKey(): Promise<string> {
 export async function encryptPassword(password: string): Promise<string> {
   const cryptoApi = globalThis.crypto
   if (!cryptoApi?.subtle || typeof TextEncoder === 'undefined' || typeof atob === 'undefined' || typeof btoa === 'undefined') {
+    // #ifdef MP-WEIXIN
+    return encryptMiniProgramPassword(password, await loadPublicKey())
+    // #endif
+    // #ifndef MP-WEIXIN
     throw new Error('当前环境不支持安全密码加密，请使用 HTTPS 浏览器重试')
+    // #endif
   }
 
   const publicKey = await cryptoApi.subtle.importKey(

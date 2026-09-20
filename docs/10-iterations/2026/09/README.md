@@ -1,5 +1,7 @@
 # 2026 年 09 月迭代索引
 
+- [wechat-mini-password-encryption](wechat-mini-password-encryption/README.md)：修复微信小程序个人中心设置或修改密码缺少 Web Crypto 时无法生成 RSA-OAEP 密文的问题（2026-09-20）。
+
 本月档案集中记录业务域重置、数据库基线、用户、文件与资产账户表设计、资产账户排序、H5 认证/MinIO 接入，以及 H5 页面回归和运行环境整改。
 
 首页、日历、资产三模块的业务实现、测试和验证证据见 [`home-calendar-assets/`](home-calendar-assets/)。该迭代明确不修改数据库结构和 Flyway。`docs-comprehensive-audit/` 记录 2026-09-08 对全部 `docs/` 的真实性审计、规范修正和剩余风险。
