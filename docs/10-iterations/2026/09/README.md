@@ -36,6 +36,8 @@
 - [transaction-create-exit-no-discard](transaction-create-exit-no-discard/README.md)：新增记账退出不提示放弃修改，编辑态保护保持不变（2026-09-17）。
 - [negative-account-balances](negative-account-balances/README.md)：支出、转账和还款允许资金账户透支，并允许支出使用信贷账户（2026-09-19）。
 - [h5-entry-touch-scroll](h5-entry-touch-scroll/README.md)：修复新增记账页在 iOS H5 中的触摸滚动体验，微信布局不变（2026-09-19）。
+- [h5-entry-page-scroll](h5-entry-page-scroll/README.md)：修复新增与编辑记账页 H5 手机视口下主体无法完整上滑，明确 flex 滚动边界（2026-09-20）。
+- [tap-feedback](tap-feedback/README.md)：为微信小程序与 H5 的按钮和可点击控件增加轻触反馈（2026-09-20）。
 - [global-ui-cross-platform-optimization](global-ui-cross-platform-optimization/README.md)：全局 UI、布局、交互及 H5/微信小程序跨端适配复查（2026-09-16）。
 - [calendar-mini-selected-state](calendar-mini-selected-state/README.md)：修复微信小程序日历选中日期不可见的跨端节点渲染问题（2026-09-17）。
 - [mini-color-theme-compatibility](mini-color-theme-compatibility/README.md)：修复微信小程序主题色变量回退导致的多页面颜色与 H5 不一致（2026-09-17）。

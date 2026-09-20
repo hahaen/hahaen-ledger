@@ -36,10 +36,16 @@ page, :root {
 }
 view, scroll-view, text, button, input, textarea, picker, image { box-sizing:border-box; }
 body { margin:0; background:#f7f8f7; }
+.app-shell { min-height:100vh; }
 button { margin:0; padding:0; border:0; border-radius:0; color:inherit; background:transparent; font:inherit; line-height:normal; }
 button::after { border:0; }
 button[disabled] { opacity:.55; }
-button:active { opacity:.85; }
+button, [role="button"], switch, picker, a[href], .account-reorder-action { -webkit-tap-highlight-color:transparent; }
+button:not([disabled]), [role="button"]:not([aria-disabled="true"]), switch, picker, a[href], .account-reorder-action { transition:transform .12s ease, opacity .12s ease, filter .12s ease; }
+button:active:not([disabled]), [role="button"]:active:not([aria-disabled="true"]), switch:active, picker:active, a[href]:active, .account-reorder-action:active { transform:scale(.985); opacity:.86; filter:brightness(.99); }
+@media (prefers-reduced-motion:reduce) {
+  button:not([disabled]), [role="button"]:not([aria-disabled="true"]), switch, picker, a[href], .account-reorder-action { transition:none; }
+}
 input, textarea { font:inherit; }
 .page { min-height:100vh; padding:calc(20px + var(--status-bar-height, 0px) + env(safe-area-inset-top, 0px)) 16px calc(108px + env(safe-area-inset-bottom)); }
 .home-page { display:flex; flex-direction:column; height:100vh; min-height:0; overflow:hidden; }
@@ -301,6 +307,8 @@ html, body, .page, .entry-content, .uni-scroll-view { scrollbar-width:none; }
 .entry-date-picker-modal { height:calc(100dvh - 52px); }
 .entry-value-picker-modal { height:calc(100dvh - 52px); }
 .entry-note-picker-modal { height:calc(100dvh - 52px); }
+.entry-page { height:100dvh; min-height:0; overflow:hidden; }
+.entry-content { flex:1 1 0; width:100%; height:0; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
 /* #endif */
 /* #ifdef MP-WEIXIN */
 /* 小程序安全区和状态栏描述同一顶部区域，使用较大值，并放在页面基础规则之后避免被覆盖。 */

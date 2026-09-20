@@ -182,7 +182,7 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
           <view class="asset-create-row"><text>账户名称</text><input v-model="formName" maxlength="20" placeholder="请输入账户名称" aria-required="true" :disabled="saving" /></view>
           <view v-if="formKind === 'FUND'" class="asset-create-row"><text>余额</text><view class="asset-create-money"><input v-model="fundBalance" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="saving" /></view></view>
           <template v-else><view class="asset-create-row"><text>总额度</text><view class="asset-create-money"><input v-model="creditLimit" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="saving" /></view></view><view class="asset-create-row"><text>当前欠款</text><view class="asset-create-money"><input v-model="currentDebt" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="saving" /></view></view></template>
-          <view class="asset-create-row asset-create-switch"><text>计入净资产</text><switch :checked="included" aria-required="true" :disabled="saving" color="#49AD9C" @change="onIncluded" /></view>
+          <view class="asset-create-row asset-create-switch"><text>计入净资产</text><switch data-tap-feedback="true" :checked="included" aria-required="true" :disabled="saving" color="#49AD9C" @change="onIncluded" /></view>
         </view>
         <view class="asset-create-actions"><button class="asset-create-cancel" :disabled="saving" @click="editing = false">取消</button><button class="asset-create-save" :disabled="saving" @click="save">{{ saving ? '保存中…' : '保存账户' }}</button></view>
       </view>

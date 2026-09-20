@@ -720,3 +720,32 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 | 真实 H5/微信页面退出操作 | NOT_RUN | 本次未取得真实登录态；构建和静态回归不能替代页面运行验收。 |
 
 完整档案：[transaction-create-exit-no-discard](../10-iterations/2026/09/transaction-create-exit-no-discard/README.md)。
+
+## 2026-09-20：新增与编辑记账页 H5 手机滚动边界
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| H5 flex 滚动边界 | PASS（静态） | H5 条件区明确设置 `.entry-page` 动态视口高度，以及 `.entry-content` `flex:1 1 0`、`height:0`、`min-height:0`、`overflow-y:auto` 和 iOS 惯性滚动；数字键盘继续固定。 |
+| 布局回归 | PASS | `pnpm exec node --test tests/responsive-layout.test.mjs`，9/9。 |
+| TypeScript 与 H5 构建 | PASS | `pnpm run typecheck`、`pnpm run build:h5` 均成功。 |
+| 微信小程序构建 | PASS（产物） | `pnpm run build:mp-weixin` 成功；H5 条件样式不代表真实小程序运行验收。 |
+| 全量前端回归 | PARTIAL | 53 PASS、3 FAIL；失败为既有测试夹具缺少 `uni.vibrateShort`，不涉及本次样式改动。 |
+| H5 手机运行时 | PARTIAL | 只读 390×844 夹具确认主体可滚动尺寸大于可视高度；真实登录账务和 iOS Safari 触摸滑动未完成。 |
+| 微信开发者工具/真机 | NOT_RUN | 未导入产物操作真实页面。 |
+
+完整档案：[h5-entry-page-scroll](../10-iterations/2026/09/h5-entry-page-scroll/README.md)。
+
+## 2026-09-20：全局按钮与可点击控件轻触反馈
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 两端共享按压样式 | PASS | prototype.scss 覆盖按钮、role=button、switch、picker、链接和资产排序操作；新增静态回归通过。 |
+| H5 轻触振动代码与产物 | PASS（代码/产物） | App 捕获 pointerdown 并调用 navigator.vibrate(8)；浏览器支持情况需设备确认。 |
+| 微信轻振动代码与产物 | PASS（代码/产物） | App WXML 包含 capture-bind:touchstart，构建 JS 包含 uni.vibrateShort。 |
+| 前端 Node 回归 | PASS | pnpm exec node --test tests/*.test.mjs，60/60。 |
+| TypeScript | PASS | pnpm run typecheck。 |
+| H5/微信小程序生产构建 | PASS | pnpm run build:h5、pnpm run build:mp-weixin。 |
+| H5 移动浏览器实际点击/振动 | NOT_RUN | 未取得真实移动浏览器登录态并操作页面。 |
+| 微信开发者工具/真机实际点击/振动 | NOT_RUN | 未导入产物进行真实页面和物理振动验收。 |
+
+完整档案：[tap-feedback](../10-iterations/2026/09/tap-feedback/README.md)。

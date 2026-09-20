@@ -516,3 +516,11 @@ PASS：恢复首页最近记账日期行的设计稿边距、字号和单行收�
 - PASS：前端 Node 回归 55/55、类型检查、H5/微信小程序生产构建和 `git diff --check`。
 - NOT_RUN：未在真实登录 H5 或微信开发者工具中操作退出；构建与静态回归不替代运行时验收。
 - 完整档案：`docs/10-iterations/2026/09/transaction-create-exit-no-discard/`。
+
+## 2026-09-20 追加：新增与编辑记账页 H5 手机滚动边界
+
+针对上一轮仅增加惯性滚动仍无法覆盖用户手机现象的问题，H5 `.entry-content` 明确设置 `flex:1 1 0`、`height:0`、`min-height:0` 与 `overflow-y:auto`，固定数字键盘和微信小程序样式未改。布局静态回归、TypeScript 和 H5/微信小程序构建已执行；只读 H5 手机尺寸夹具确认主体滚动高度大于可视高度。真实 iOS Safari、真实登录账务数据和微信开发者工具仍未执行，详见 `docs/10-iterations/2026/09/h5-entry-page-scroll/README.md`。
+
+## 2026-09-20 追加：全局按钮与可点击控件轻触反馈
+
+共享样式为按钮、role=button、开关、选择器、链接和资产排序操作增加轻微按压反馈；H5 在浏览器支持时调用轻振动，微信小程序通过 App 外层触摸捕获调用 uni.vibrateShort。日历格、资产账户行、未登录昵称和开关补充可识别标记，未改变业务点击回调。前端 Node 回归 60/60、类型检查、H5/微信小程序生产构建为 PASS；H5 移动浏览器和微信开发者工具/真机的真实物理振动仍为 NOT_RUN，详见 docs/10-iterations/2026/09/tap-feedback/README.md。

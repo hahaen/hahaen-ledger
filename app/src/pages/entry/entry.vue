@@ -131,17 +131,8 @@ function updateAmount() {
   if (!completedExpression) { amount.value = ''; return }
   try { amount.value = calculateAmount(completedExpression) } catch { amount.value = '' }
 }
-function vibrateCalculatorKey() {
-  // #ifdef MP-WEIXIN
-  uni.vibrateShort({ type: 'light', fail: () => {} })
-  // #endif
-  // #ifdef H5
-  if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(10)
-  // #endif
-}
 function appendKey(key: string) {
   if (locked.value) return
-  vibrateCalculatorKey()
   formError.value = ''
   if (key === 'C') { expression.value = ''; amount.value = ''; return }
   if (key === '⌫') { expression.value = expression.value.slice(0, -1); updateAmount(); return }
@@ -204,7 +195,6 @@ onLoad(query => {
 })
 async function save(afterSave: 'home' | 'again') {
   if (locked.value) return
-  vibrateCalculatorKey()
   saving.value = true
   try {
     formError.value = ''

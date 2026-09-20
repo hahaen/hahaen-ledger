@@ -16,6 +16,10 @@
 
 H5 条件编译样式已为 `.entry-content` 增加 iOS Safari 惯性触摸滚动，微信小程序样式与固定数字键盘未改。自动化测试、构建和 iOS Safari 真机触摸验收均为 NOT_RUN；详细记录见 `../h5-entry-touch-scroll/README.md`。
 
+## 2026-09-20 追加：新增与编辑记账页 H5 手机滚动边界
+
+针对上一轮仅增加惯性滚动仍无法覆盖用户手机现象的问题，H5 `.entry-content` 明确设置 `flex:1 1 0`、`height:0`、`min-height:0` 与 `overflow-y:auto`，固定数字键盘和微信小程序样式未改。布局静态回归、TypeScript 和 H5 构建已执行；只读 H5 手机尺寸夹具确认主体滚动高度大于可视高度。真实 iOS Safari、真实登录账务数据和微信开发者工具仍未执行，详见 `../h5-entry-page-scroll/README.md`。
+
 ## 2026-09-19 追加：账户负余额与信贷支出
 
 资金账户支出、转账和还款允许低于 0；支出可选择信贷账户，超出可用额度时显示提示但仍可保存，溢缴可由负欠款表达。前后端测试、类型检查及 H5/微信构建状态以后续 `../negative-account-balances/08-commands.md` 为准；Flyway/MySQL、DEV API、登录态页面和真机验收仍需实际环境证据。详见 `../negative-account-balances/README.md`。
@@ -141,3 +145,7 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 ## 2026-09-17 追加：新增记账退出不提示放弃修改
 
 新增记账退出不再显示放弃确认，输入金额、备注、选择账户和类型切换均不会触发弹层；编辑已有账单仍保留未保存修改保护。前端 Node 回归 55/55、类型检查及 H5/微信小程序生产构建 PASS；真实登录态下的退出操作仍为 NOT_RUN。详细记录见 `../transaction-create-exit-no-discard/`。
+
+## 2026-09-20 追加：全局按钮与可点击控件轻触反馈
+
+共享样式增加两端一致的轻微按压反馈；H5 捕获式调用浏览器轻振动，微信 App 外层捕获式调用 uni.vibrateShort。前端 Node 回归 60/60、类型检查和 H5/微信小程序生产构建 PASS；真实 H5 移动浏览器及微信开发者工具/真机物理振动验收 NOT_RUN。详细记录见 `../tap-feedback/`。

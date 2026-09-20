@@ -122,7 +122,7 @@ onShow(() => {
         <image :src="avatarUrl" mode="aspectFill" />
       </view>
       <view class="profile-copy">
-        <text class="profile-name" :class="{ 'profile-login-name': !loggedIn }" :role="loggedIn ? undefined : 'button'" :aria-label="loggedIn ? undefined : '登录'" @click="!loggedIn && openLogin()">{{ loggedIn ? nickname : '登录哈记账' }}</text>
+        <text class="profile-name" :class="{ 'profile-login-name': !loggedIn }" :role="loggedIn ? undefined : 'button'" :data-tap-feedback="!loggedIn ? 'true' : undefined" :aria-label="loggedIn ? undefined : '登录'" @click="!loggedIn && openLogin()">{{ loggedIn ? nickname : '登录哈记账' }}</text>
         <text v-if="loading || avatarStatus" class="profile-status">{{ loading ? '正在加载个人资料…' : avatarStatus }}</text>
       </view>
     </view>

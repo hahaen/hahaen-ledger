@@ -1,13 +1,26 @@
 <script setup lang="ts">
 import { onLaunch } from '@dcloudio/uni-app'
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useLedger } from './stores/ledger'
 import { setAuthExpiredHandler } from './utils/api'
 import { currentH5Path, H5_LOGIN_PATH, installH5AuthGuard, isH5AuthPath, shouldRedirectAuthenticatedH5UserToHome } from './utils/h5AuthGuard'
+import { installH5TapFeedback, triggerTapFeedback } from './utils/tapFeedback'
 const ledger = useLedger()
 const initialized = ref(false)
 const mpLoginError = ref('')
 let mpRecoveryPromise: Promise<void> | undefined
+let removeH5TapFeedback = () => {}
+
+onMounted(() => { removeH5TapFeedback = installH5TapFeedback() })
+onBeforeUnmount(() => removeH5TapFeedback())
+
+function handleMpTouchStart(event: unknown) {
+  // #ifdef MP-WEIXIN
+  const target = (event as { target?: { tagName?: string; dataset?: Record<string, unknown> } })?.target
+  const tagName = String(target?.tagName || '').toLowerCase()
+  if (tagName === 'button' || target?.dataset?.tapFeedback === 'true') triggerTapFeedback()
+  // #endif
+}
 
 // #ifdef MP-WEIXIN
 function redirectMpAuthPageToHome() {
@@ -97,5 +110,5 @@ onLaunch(async () => {
     <text class="profile-error">{{ mpLoginError }}</text>
     <button class="primary-btn" @click="retryMpLogin">重试微信登录</button>
   </view>
-  <slot v-else />
+  <view v-else class="app-shell" @touchstart.capture="handleMpTouchStart"><slot /></view>
 </template>

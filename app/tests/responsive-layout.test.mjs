@@ -54,6 +54,11 @@ test('帮助页和固定资料操作栏使用动态视口与底部安全区', ()
   assert.match(styles, /\.profile-actions \{[^}]*env\(safe-area-inset-bottom\)/)
 })
 
+test('H5 新增和编辑记账页明确把主体作为可触摸滚动的 flex 容器', () => {
+  assert.match(prototype, /\.entry-page \{ height:100dvh; min-height:0; overflow:hidden; \}/)
+  assert.match(prototype, /\.entry-content \{ flex:1 1 0; width:100%; height:0; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; \}/)
+})
+
 test('微信小程序资料保存按钮显式覆盖原生按钮外观', () => {
   assert.match(styles, /\.profile-save-action \{[^}]*color:#fff;[^}]*background-color:#49ad9c;/)
   assert.match(styles, /\.profile-save-action::after \{[^}]*display:none;[^}]*border:0;/)
