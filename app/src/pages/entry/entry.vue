@@ -10,6 +10,7 @@ import { cents, formatYuan, inputYuan, localDateTime } from '../../utils/money'
 import { calculateAmount, creditExpenseOverLimitCents, validLocalDateTime, backToLedger } from '../../utils/entry'
 import { stringId } from '../../utils/id'
 import { staticResource } from '../../utils/staticResource'
+import { handleMpTouchStart } from '../../utils/tapFeedback'
 
 type EntryType = 'EXPENSE' | 'INCOME' | 'TRANSFER' | 'REPAYMENT'
 const ledger = useLedger()
@@ -237,26 +238,26 @@ async function save(afterSave: 'home' | 'again') {
 </script>
 
 <template>
-  <view class="page entry-page">
+  <view class="page entry-page" @touchstart.capture="handleMpTouchStart">
     <NativeNavigation variant="screen" :title="isEdit ? '编辑记账' : '新增记账'" compact :full-width="false" @back="back" />
     <view class="entry-content">
-      <view v-if="loading" class="list-empty">正在加载账户与账单…</view><view v-else-if="loadError" class="list-empty">{{ loadError }}<button class="text-button" @click="initialize">重新加载</button></view>
+      <view v-if="loading" class="list-empty">正在加载账户与账单…</view><view v-else-if="loadError" class="list-empty">{{ loadError }}<button data-tap-feedback="true" class="text-button" @click="initialize">重新加载</button></view>
       <view v-if="isEdit && !loading && !loadError" :class="['entry-edit-type', type.toLowerCase()]"><text class="entry-edit-type-label">当前账单类型</text><text class="entry-edit-type-value">{{ typeLabel }}记账</text></view>
-      <view v-if="!isEdit" :class="['entry-type', { 'single-type': type === 'REPAYMENT' }]"><button v-for="option in typeOptions" :key="option.value" :disabled="locked || !!refundedCents" :class="{ active: type === option.value, 'income-active': type === 'INCOME' && type === option.value, 'transfer-active': type === 'TRANSFER' && type === option.value }" @click="setType(option.value)">{{ option.label }}</button></view>
-      <view class="amount-panel"><text class="amount-label">{{ type === 'REPAYMENT' ? '还款金额' : type === 'TRANSFER' ? '转账金额' : '记账金额' }}</text><view class="amount-display"><text :class="['amount-value', { 'amount-placeholder': !amount, 'long-amount': amount.length > 10 }]">{{ amount || '输入金额' }}</text></view><button class="calculation-line" :aria-label="expression ? `当前算式：${expression}` : '支持加减乘除连续计算'" @click="appendKey('=')">{{ expression || '支持 + − × ÷ 连续计算' }}</button></view>
+      <view v-if="!isEdit" :class="['entry-type', { 'single-type': type === 'REPAYMENT' }]"><button data-tap-feedback="true" v-for="option in typeOptions" :key="option.value" :disabled="locked || !!refundedCents" :class="{ active: type === option.value, 'income-active': type === 'INCOME' && type === option.value, 'transfer-active': type === 'TRANSFER' && type === option.value }" @click="setType(option.value)">{{ option.label }}</button></view>
+      <view class="amount-panel"><text class="amount-label">{{ type === 'REPAYMENT' ? '还款金额' : type === 'TRANSFER' ? '转账金额' : '记账金额' }}</text><view class="amount-display"><text :class="['amount-value', { 'amount-placeholder': !amount, 'long-amount': amount.length > 10 }]">{{ amount || '输入金额' }}</text></view><button data-tap-feedback="true" class="calculation-line" :aria-label="expression ? `当前算式：${expression}` : '支持加减乘除连续计算'" @click="appendKey('=')">{{ expression || '支持 + − × ÷ 连续计算' }}</button></view>
       <view v-if="creditOverLimitCents > 0" class="credit-over-limit-hint">本次会超出信用卡可用额度 {{ formatYuan(creditOverLimitCents) }} 元，仍可继续记账。</view>
       <view class="fields-card">
-        <button class="field-row" :disabled="locked || !!refundedCents" @click="openModal('account')"><text class="field-icon">{{ paired ? '↗' : '◉' }}</text><text class="field-label">{{ type === 'REPAYMENT' ? '还款账户' : type === 'TRANSFER' ? '转出账户' : type === 'EXPENSE' ? '支出账户' : '资金账户' }}</text><text class="field-value">{{ accounts[accountIndex]?.name || '请选择' }}</text><text class="arrow">›</text></button>
-        <button v-if="paired" class="field-row" :disabled="locked || !!refundedCents" @click="openModal('to')"><text class="field-icon">↘</text><text class="field-label">{{ type === 'REPAYMENT' ? '信贷账户' : '转入账户' }}</text><text class="field-value">{{ targetAccounts[toIndex]?.name || '请选择' }}</text><text class="arrow">›</text></button>
-        <button class="field-row" :disabled="locked" @click="openModal('date')"><text class="field-icon">◷</text><text class="field-label">日期与时间</text><text class="field-value">{{ dateTime.replace('T', ' ').slice(0, 16) }}</text><text class="arrow">›</text></button>
-        <button class="field-row" :disabled="locked" @click="openModal('note')"><text class="field-icon">⌁</text><text class="field-label">备注</text><text :class="['field-value', { placeholder: !note }]">{{ note || '写点说明...' }}</text></button>
+        <button data-tap-feedback="true" class="field-row" :disabled="locked || !!refundedCents" @click="openModal('account')"><text class="field-icon">{{ paired ? '↗' : '◉' }}</text><text class="field-label">{{ type === 'REPAYMENT' ? '还款账户' : type === 'TRANSFER' ? '转出账户' : type === 'EXPENSE' ? '支出账户' : '资金账户' }}</text><text class="field-value">{{ accounts[accountIndex]?.name || '请选择' }}</text><text class="arrow">›</text></button>
+        <button data-tap-feedback="true" v-if="paired" class="field-row" :disabled="locked || !!refundedCents" @click="openModal('to')"><text class="field-icon">↘</text><text class="field-label">{{ type === 'REPAYMENT' ? '信贷账户' : '转入账户' }}</text><text class="field-value">{{ targetAccounts[toIndex]?.name || '请选择' }}</text><text class="arrow">›</text></button>
+        <button data-tap-feedback="true" class="field-row" :disabled="locked" @click="openModal('date')"><text class="field-icon">◷</text><text class="field-label">日期与时间</text><text class="field-value">{{ dateTime.replace('T', ' ').slice(0, 16) }}</text><text class="arrow">›</text></button>
+        <button data-tap-feedback="true" class="field-row" :disabled="locked" @click="openModal('note')"><text class="field-icon">⌁</text><text class="field-label">备注</text><text :class="['field-value', { placeholder: !note }]">{{ note || '写点说明...' }}</text></button>
       </view>
     </view>
     <view class="keypad" aria-label="金额键盘">
       <view v-for="key in ['1', '2', '3', '⌫', '4', '5', '6', '+−', '7', '8', '9', '×÷', 'C', '0', '.', 'confirm']" :key="key" :class="['keypad-cell', { 'keypad-pair': key === '+−' || key === '×÷' }]">
-        <template v-if="key === '+−' || key === '×÷'"><button v-for="operator in key.split('')" :key="operator" class="key" :disabled="locked" @click="appendKey(operator)">{{ operator }}</button></template>
-        <button v-else-if="key === 'confirm'" class="key key-confirm" :disabled="locked" @click="save('home')">{{ saving ? '保存中' : '确定' }}</button>
-        <button v-else :class="['key', { 'key-text': key === 'C', 'key-backspace': key === '⌫' }]" :aria-label="key === 'C' ? '保存并重新记账' : key === '⌫' ? '退格' : key" :disabled="locked" @click="key === 'C' ? save('again') : appendKey(key)">{{ key === 'C' ? '再记' : key }}</button>
+        <template v-if="key === '+−' || key === '×÷'"><button data-tap-feedback="true" v-for="operator in key.split('')" :key="operator" class="key" :disabled="locked" @click="appendKey(operator)">{{ operator }}</button></template>
+        <button data-tap-feedback="true" v-else-if="key === 'confirm'" class="key key-confirm" :disabled="locked" @click="save('home')">{{ saving ? '保存中' : '确定' }}</button>
+        <button data-tap-feedback="true" v-else :class="['key', { 'key-text': key === 'C', 'key-backspace': key === '⌫' }]" :aria-label="key === 'C' ? '保存并重新记账' : key === '⌫' ? '退格' : key" :disabled="locked" @click="key === 'C' ? save('again') : appendKey(key)">{{ key === 'C' ? '再记' : key }}</button>
       </view>
     </view>
     <view v-if="successVisible" class="entry-success-toast" role="status" aria-live="polite"><view class="entry-success-icon">✓</view><text>记账成功</text></view>
@@ -265,7 +266,7 @@ async function save(afterSave: 'home' | 'again') {
         <view class="asset-create-handle" />
         <text class="account-delete-title">放弃修改？</text>
         <text class="account-delete-copy">当前内容尚未保存，离开后将丢失已修改的内容。</text>
-        <view class="account-delete-actions"><button class="account-delete-cancel" :disabled="saving" @click="closeDiscard">继续编辑</button><button class="account-delete-confirm" :disabled="saving" @click="confirmDiscard">放弃修改</button></view>
+        <view class="account-delete-actions"><button data-tap-feedback="true" class="account-delete-cancel" :disabled="saving" @click="closeDiscard">继续编辑</button><button data-tap-feedback="true" class="account-delete-confirm" :disabled="saving" @click="confirmDiscard">放弃修改</button></view>
       </view>
     </view>
     <view v-if="modal === 'account' || modal === 'to'" class="entry-account-picker-backdrop" @click.self="modal = ''" @touchmove.stop.prevent>
@@ -273,10 +274,10 @@ async function save(afterSave: 'home' | 'again') {
         <view class="entry-account-picker-handle" />
         <text class="entry-account-picker-title">{{ modal === 'to' ? (type === 'REPAYMENT' ? '选择信贷账户' : '选择转入账户') : (type === 'TRANSFER' ? '请选择转出账户' : type === 'EXPENSE' ? '选择支出账户' : '选择资金账户') }}</text>
         <scroll-view scroll-y class="entry-account-choice-list" @touchmove.stop>
-          <view v-if="!pickerAccounts.length" class="list-empty">暂无可用账户<button class="text-button" @click="modal = ''; uni.switchTab({ url: '/pages/assets/assets' })">去资产页添加账户</button></view>
-          <button v-for="(account, index) in pickerAccounts" v-else :key="account.id" :disabled="isSameAccountSelection(index)" :class="['entry-account-choice-item', { selected: index === draftAccountIndex }]" @click="selectAccount(index)"><image class="entry-account-choice-icon" :src="staticResource(account.kind === 'CREDIT' ? 'prototype/credit-account.png' : 'prototype/funds-account.png')" mode="aspectFit" /><text class="entry-account-choice-name">{{ account.name }}</text><MoneyDisplay class="entry-account-choice-balance" :value="account.kind === 'CREDIT' ? -account.balanceCents : account.balanceCents" /><text class="entry-account-choice-state">{{ index === draftAccountIndex ? '✓' : '›' }}</text></button>
+          <view v-if="!pickerAccounts.length" class="list-empty">暂无可用账户<button data-tap-feedback="true" class="text-button" @click="modal = ''; uni.switchTab({ url: '/pages/assets/assets' })">去资产页添加账户</button></view>
+          <button data-tap-feedback="true" v-for="(account, index) in pickerAccounts" v-else :key="account.id" :disabled="isSameAccountSelection(index)" :class="['entry-account-choice-item', { selected: index === draftAccountIndex }]" @click="selectAccount(index)"><image class="entry-account-choice-icon" :src="staticResource(account.kind === 'CREDIT' ? 'prototype/credit-account.png' : 'prototype/funds-account.png')" mode="aspectFit" /><text class="entry-account-choice-name">{{ account.name }}</text><MoneyDisplay class="entry-account-choice-balance" :value="account.kind === 'CREDIT' ? -account.balanceCents : account.balanceCents" /><text class="entry-account-choice-state">{{ index === draftAccountIndex ? '✓' : '›' }}</text></button>
         </scroll-view>
-        <view class="entry-account-picker-actions"><button class="entry-account-picker-cancel" @click="modal = ''">取消</button><button class="entry-account-picker-confirm" @click="confirmModal">完成</button></view>
+        <view class="entry-account-picker-actions"><button data-tap-feedback="true" class="entry-account-picker-cancel" @click="modal = ''">取消</button><button data-tap-feedback="true" class="entry-account-picker-confirm" @click="confirmModal">完成</button></view>
       </view>
     </view>
     <view v-else-if="modal === 'date'" class="entry-date-picker-backdrop" @click.self="modal = ''" @touchmove.stop.prevent>
@@ -284,10 +285,10 @@ async function save(afterSave: 'home' | 'again') {
         <view class="entry-date-picker-handle" />
         <text class="entry-date-picker-title">日期与时间</text>
         <view class="entry-date-picker-fields">
-          <button class="entry-date-picker-row" @click="dateTimePicker = 'date'"><text>记账日期</text><view class="entry-date-picker-value"><text>{{ formatPickerDate(draftDate) }}</text><text class="entry-date-picker-arrow">›</text></view></button>
-          <button class="entry-date-picker-row" @click="dateTimePicker = 'time'"><text>记账时间</text><view class="entry-date-picker-value"><text>{{ draftTime }}</text><text class="entry-date-picker-arrow">›</text></view></button>
+          <button data-tap-feedback="true" class="entry-date-picker-row" @click="dateTimePicker = 'date'"><text>记账日期</text><view class="entry-date-picker-value"><text>{{ formatPickerDate(draftDate) }}</text><text class="entry-date-picker-arrow">›</text></view></button>
+          <button data-tap-feedback="true" class="entry-date-picker-row" @click="dateTimePicker = 'time'"><text>记账时间</text><view class="entry-date-picker-value"><text>{{ draftTime }}</text><text class="entry-date-picker-arrow">›</text></view></button>
         </view>
-        <view class="entry-date-picker-actions"><button class="entry-date-picker-cancel" @click="modal = ''">取消</button><button class="entry-date-picker-confirm" @click="confirmModal">确定</button></view>
+        <view class="entry-date-picker-actions"><button data-tap-feedback="true" class="entry-date-picker-cancel" @click="modal = ''">取消</button><button data-tap-feedback="true" class="entry-date-picker-confirm" @click="confirmModal">确定</button></view>
       </view>
     </view>
     <view v-else-if="modal === 'note'" class="entry-note-picker-backdrop" @click.self="modal = ''" @touchmove.stop.prevent>
@@ -296,7 +297,7 @@ async function save(afterSave: 'home' | 'again') {
         <text class="entry-note-picker-title">添加备注</text>
         <textarea v-model="draftNote" class="entry-note-picker-input" maxlength="100" placeholder="记录一点上下文，例如：和朋友聚餐" :show-confirm-bar="false" />
         <text class="entry-note-picker-count">{{ draftNote.length }} / 100</text>
-        <view class="entry-note-picker-actions"><button class="entry-note-picker-cancel" @click="modal = ''">取消</button><button class="entry-note-picker-confirm" @click="confirmModal">完成</button></view>
+        <view class="entry-note-picker-actions"><button data-tap-feedback="true" class="entry-note-picker-cancel" @click="modal = ''">取消</button><button data-tap-feedback="true" class="entry-note-picker-confirm" @click="confirmModal">完成</button></view>
       </view>
     </view>
     <EntryDateTimePicker v-if="dateTimePicker" :mode="dateTimePicker" :value="dateTimePicker === 'date' ? draftDate : draftTime" @close="dateTimePicker = ''" @select="selectDateTimeValue" />

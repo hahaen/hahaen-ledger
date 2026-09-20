@@ -7,6 +7,8 @@ import { currentAvatar } from '../../utils/file'
 import { request } from '../../utils/api'
 import { staticResource } from '../../utils/staticResource'
 import { useLedger } from '../../stores/ledger'
+import { handleMpTouchStart } from '../../utils/tapFeedback'
+import { registerWechatShare } from '../../utils/wechatShare'
 
 type Profile = {
   userId: string
@@ -18,6 +20,7 @@ type Profile = {
 }
 
 const ledger = useLedger()
+registerWechatShare()
 const DEFAULT_AVATAR_URL = staticResource('brand.png')
 const avatarUrl = ref(DEFAULT_AVATAR_URL)
 const profile = ref<Profile | null>(null)
@@ -114,7 +117,7 @@ onShow(() => {
 </script>
 
 <template>
-  <view class="page mine-page">
+  <view class="page mine-page" @touchstart.capture="handleMpTouchStart">
     <PageHeader />
 
     <view class="profile-card">
@@ -135,18 +138,18 @@ onShow(() => {
     <view class="settings-group">
       <text class="settings-label">更多</text>
       <view class="settings-list">
-        <button class="setting-item" aria-label="个人中心" @click="openProfile">
+            <button class="setting-item" data-tap-feedback="true" aria-label="个人中心" @click="openProfile">
           <text class="setting-icon setting-icon-profile">个</text>
           <text class="setting-text">个人中心</text>
           <text class="setting-arrow">›</text>
         </button>
-        <button class="setting-item" @click="openHelp">
+            <button class="setting-item" data-tap-feedback="true" @click="openHelp">
           <text class="setting-icon setting-icon-help">?</text>
           <text class="setting-text">关于与帮助</text>
           <text class="setting-arrow">›</text>
         </button>
         <!-- #ifdef H5 -->
-        <button v-if="loggedIn" class="setting-item logout-item" :disabled="loggingOut" @click="openLogout">
+            <button v-if="loggedIn" class="setting-item logout-item" data-tap-feedback="true" :disabled="loggingOut" @click="openLogout">
           <text class="setting-icon logout-icon" style="transform: translateY(-3px);">⎆</text>
           <text class="setting-text">{{ loggingOut ? '退出中…' : '退出登录' }}</text>
           <text class="setting-arrow">›</text>
@@ -161,8 +164,8 @@ onShow(() => {
         <text class="account-delete-title">退出登录？</text>
         <text class="account-delete-copy">退出后需要重新登录，确定退出当前账号吗？</text>
         <view class="account-delete-actions">
-          <button class="account-delete-cancel" :disabled="loggingOut" @click="closeLogout">取消</button>
-          <button class="account-delete-confirm" :disabled="loggingOut" @click="confirmLogout">{{ loggingOut ? '退出中…' : '退出登录' }}</button>
+          <button data-tap-feedback="true" class="account-delete-cancel" :disabled="loggingOut" @click="closeLogout">取消</button>
+          <button data-tap-feedback="true" class="account-delete-confirm" :disabled="loggingOut" @click="confirmLogout">{{ loggingOut ? '退出中…' : '退出登录' }}</button>
         </view>
       </view>
     </view>

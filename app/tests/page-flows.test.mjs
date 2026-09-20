@@ -8,10 +8,11 @@ import ts from 'typescript'
 const require = createRequire(import.meta.url)
 const transpile = source => ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS } }).outputText
 const defaultUni = { getStorageSync: () => '', setStorageSync() {}, showToast() {}, navigateBack() {}, switchTab() {} }
+const defaultWechatShare = { registerWechatShare() {} }
 const run = (source, dependencies = {}, uni = defaultUni) => {
   const exports = {}
   new Function('require', 'exports', 'uni', 'getCurrentPages', 'setTimeout', transpile(source))(
-    name => dependencies[name] || require(name), exports,
+    name => dependencies[name] || (name === '../../utils/wechatShare' ? defaultWechatShare : require(name)), exports,
     uni, () => [], callback => { callback(); return 0 })
   return exports
 }

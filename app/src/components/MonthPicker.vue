@@ -30,10 +30,10 @@ onMounted(async () => {
       <view class="month-picker-handle" />
       <text class="month-picker-title">日期</text>
       <view class="date-picker-columns">
-        <view class="date-picker-column"><text class="date-picker-label">年份</text><scroll-view scroll-y :scroll-top="yearScrollTop" class="date-picker-scroll"><button v-for="value in years" :key="value" :class="['date-picker-option', { selected: year === value }]" @click="selectYear(value)">{{ value }}年</button></scroll-view></view>
-        <view class="date-picker-column"><text class="date-picker-label">月份</text><scroll-view scroll-y :scroll-top="monthScrollTop" class="date-picker-scroll"><button v-for="value in months" :key="value" :class="['date-picker-option', { selected: month === value }]" @click="selectMonth(value)">{{ value }}月</button></scroll-view></view>
+        <view class="date-picker-column"><text class="date-picker-label">年份</text><scroll-view scroll-y :scroll-top="yearScrollTop" class="date-picker-scroll"><button data-tap-feedback="true" v-for="value in years" :key="value" :class="['date-picker-option', { selected: year === value }]" @click="selectYear(value)">{{ value }}年</button></scroll-view></view>
+        <view class="date-picker-column"><text class="date-picker-label">月份</text><scroll-view scroll-y :scroll-top="monthScrollTop" class="date-picker-scroll"><button data-tap-feedback="true" v-for="value in months" :key="value" :class="['date-picker-option', { selected: month === value }]" @click="selectMonth(value)">{{ value }}月</button></scroll-view></view>
       </view>
-      <view class="month-picker-actions"><button class="month-picker-cancel" @click="emit('close')">取消</button><button class="month-picker-confirm" @click="emit('select', `${year}-${String(month).padStart(2, '0')}`)">确定</button></view>
+      <view class="month-picker-actions"><button data-tap-feedback="true" class="month-picker-cancel" @click="emit('close')">取消</button><button data-tap-feedback="true" class="month-picker-confirm" @click="emit('select', `${year}-${String(month).padStart(2, '0')}`)">确定</button></view>
     </view>
   </view>
 </template>

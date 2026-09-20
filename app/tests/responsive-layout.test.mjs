@@ -25,7 +25,7 @@ test('各业务页面顶部导航共享微信胶囊定位且记账类型按钮�
   const navigation = await read('components/NativeNavigation.vue')
   const metrics = await read('utils/nativeNavigation.ts')
   const pageHeader = await read('components/PageHeader.vue')
-  assert.match(entry, /<view class="page entry-page">\s*<NativeNavigation variant="screen"[\s\S]*\s*<view class="entry-content">/)
+  assert.match(entry, /<view class="page entry-page"[^>]*>\s*<NativeNavigation variant="screen"[\s\S]*\s*<view class="entry-content">/)
   assert.match(navigation, /getNativeMenuMetrics\(\)/)
   assert.match(navigation, /height: `\$\{menu\.height\}px`/)
   assert.match(metrics, /uni\.getMenuButtonBoundingClientRect\(\)/)

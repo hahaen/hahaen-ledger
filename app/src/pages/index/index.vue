@@ -7,8 +7,11 @@ import TransactionRow from '../../components/TransactionRow.vue'
 import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import { Summary, Transaction, useLedger } from '../../stores/ledger'
 import { localDateTime } from '../../utils/money'
+import { handleMpTouchStart } from '../../utils/tapFeedback'
+import { registerWechatShare } from '../../utils/wechatShare'
 
 const ledger = useLedger()
+registerWechatShare()
 const state = ledger.state
 const month = ref(localDateTime().slice(0, 7))
 const loading = ref(false)
@@ -110,7 +113,7 @@ onPullDownRefresh(async () => { await load(true); uni.stopPullDownRefresh() })
 </script>
 
 <template>
-  <view class="page home-page">
+  <view class="page home-page" @touchstart.capture="handleMpTouchStart">
     <PageHeader />
     <view class="summary-card">
       <text class="summary-kicker">{{ monthTitle }} · 日均消费</text>
@@ -121,19 +124,19 @@ onPullDownRefresh(async () => { await load(true); uni.stopPullDownRefresh() })
     <view class="section-row"><text class="section-title">最近记账</text></view>
     <scroll-view scroll-y :show-scrollbar="false" class="home-recent-list transaction-list" :refresher-enabled="true" :refresher-triggered="loading || recentLoading" @refresherrefresh="() => load(true)" @scrolltolower="loadMore">
       <view v-if="recentLoading" class="list-empty">正在加载账单…</view>
-      <view v-else-if="recentLoadError && !groups.length" class="list-empty">暂时无法加载账单<button class="text-button" @click="retry">重试</button></view>
+      <view v-else-if="recentLoadError && !groups.length" class="list-empty">暂时无法加载账单<button data-tap-feedback="true" class="text-button" @click="retry">重试</button></view>
       <template v-else>
-        <view v-if="!groups.length" class="list-empty"><view class="empty-art" />暂无记账记录<button v-if="hasMore" class="text-button" @click="loadMore">加载更早账单</button></view>
+        <view v-if="!groups.length" class="list-empty"><view class="empty-art" />暂无记账记录<button data-tap-feedback="true" v-if="hasMore" class="text-button" @click="loadMore">加载更早账单</button></view>
         <view v-for="group in groups" :key="group[0]" class="date-group">
           <view class="date-heading"><text class="date-title">{{ dateTitle(group[0]) }}</text><view class="date-flow"><MoneyDisplay class="income" prefix="收 " :value="dayTotal(group[1], 'INCOME')" /><MoneyDisplay class="expense" prefix="支 " :value="dayTotal(group[1], 'EXPENSE')" /></view></view>
           <TransactionRow v-for="transaction in group[1]" :key="transaction.id" :transaction="transaction" @open="open" />
         </view>
         <view v-if="loadingMore" class="list-empty">正在加载更多账单…</view>
-        <view v-else-if="loadMoreError" class="list-empty">加载更多账单失败<button class="text-button" @click="loadMore">重试</button></view>
-        <view v-else-if="groups.length && hasMore" class="list-empty"><button class="text-button" @click="loadMore">加载更多账单</button></view>
+        <view v-else-if="loadMoreError" class="list-empty">加载更多账单失败<button data-tap-feedback="true" class="text-button" @click="loadMore">重试</button></view>
+        <view v-else-if="groups.length && hasMore" class="list-empty"><button data-tap-feedback="true" class="text-button" @click="loadMore">加载更多账单</button></view>
         <view v-else-if="groups.length && !hasMore" class="list-empty">没有更多账单了</view>
       </template>
     </scroll-view>
-    <button class="fab" aria-label="新增记账" @click="newEntry">＋</button><BottomNav active="home" />
+    <button data-tap-feedback="true" class="fab" aria-label="新增记账" @click="newEntry">＋</button><BottomNav active="home" />
   </view>
 </template>

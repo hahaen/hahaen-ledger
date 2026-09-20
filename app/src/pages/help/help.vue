@@ -3,8 +3,11 @@ import { ref } from 'vue'
 import NativeNavigation from '../../components/NativeNavigation.vue'
 import { backToLedger } from '../../utils/entry'
 import { staticResource } from '../../utils/staticResource'
+import { handleMpTouchStart } from '../../utils/tapFeedback'
+import { registerWechatShare } from '../../utils/wechatShare'
 
 const openFaq = ref('quick-start')
+registerWechatShare()
 
 const faqs = [
   { id: 'quick-start', title: '如何开始记一笔？', answer: '点击首页右下角的“＋”，选择支出、收入或转账，输入金额后选择账户并确认日期时间，最后点击“确定”即可。常用账户会优先为你保留。' },
@@ -23,7 +26,7 @@ function showReserved(message: string) {
 </script>
 
 <template>
-  <view class="help-page">
+  <view class="help-page" @touchstart.capture="handleMpTouchStart">
     <scroll-view scroll-y class="help-scroll">
       <NativeNavigation variant="help" title="关于与帮助" compact back-label="返回我的" @back="backToLedger" />
 
@@ -48,7 +51,7 @@ function showReserved(message: string) {
         <view class="about-heading"><view><text class="section-kicker">FAQ</text><text class="about-section-title">常见问题</text></view><text class="section-meta">点击查看</text></view>
         <view class="faq-list">
           <view v-for="faq in faqs" :key="faq.id" class="about-faq" :class="{ open: openFaq === faq.id }">
-            <button class="faq-question" :aria-expanded="openFaq === faq.id" @click="toggleFaq(faq.id)"><text>{{ faq.title }}</text><text class="faq-plus" /></button>
+            <button data-tap-feedback="true" class="faq-question" :aria-expanded="openFaq === faq.id" @click="toggleFaq(faq.id)"><text>{{ faq.title }}</text><text class="faq-plus" /></button>
             <text v-if="openFaq === faq.id" class="about-faq-answer">{{ faq.answer }}</text>
           </view>
         </view>
@@ -62,7 +65,7 @@ function showReserved(message: string) {
         </view>
       </view>
 
-      <view class="about-note"><text class="about-note-icon">✦</text><view class="about-note-copy"><text>需要反馈？</text><text>告诉我们哪里还可以更好，帮助哈记账变得更顺手。</text></view><button class="about-status" @click="showReserved('反馈暂未开放')">暂未开放</button></view>
+      <view class="about-note"><text class="about-note-icon">✦</text><view class="about-note-copy"><text>需要反馈？</text><text>告诉我们哪里还可以更好，帮助哈记账变得更顺手。</text></view><button data-tap-feedback="true" class="about-status" @click="showReserved('反馈暂未开放')">暂未开放</button></view>
       <view class="about-footer"><image :src="staticResource('brand.png')" mode="aspectFill" /><text>哈记账 · v1.0</text><text>简单记账，安心生活</text></view>
     </scroll-view>
   </view>

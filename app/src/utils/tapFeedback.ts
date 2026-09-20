@@ -38,3 +38,17 @@ export function installH5TapFeedback() {
   // #endif
   return () => {}
 }
+
+export function handleMpTouchStart(event: unknown) {
+  // #ifdef MP-WEIXIN
+  const target = (event as { target?: { dataset?: Record<string, unknown>; disabled?: boolean; ariaDisabled?: string } })?.target
+  const marked = String(target?.dataset?.tapFeedback || '') === 'true'
+  if (!target?.disabled && target?.ariaDisabled !== 'true' && marked) triggerTapFeedback()
+  // #endif
+}
+
+export function handleMpDirectTouchStart() {
+  // #ifdef MP-WEIXIN
+  triggerTapFeedback()
+  // #endif
+}

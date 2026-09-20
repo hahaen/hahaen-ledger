@@ -7,8 +7,11 @@ import PageHeader from '../../components/PageHeader.vue'
 import { request } from '../../utils/api'
 import { Account, AccountKind, AssetOverview, useLedger } from '../../stores/ledger'
 import { staticResource } from '../../utils/staticResource'
+import { handleMpTouchStart } from '../../utils/tapFeedback'
+import { registerWechatShare } from '../../utils/wechatShare'
 
 const ledger = useLedger()
+registerWechatShare()
 const state = ledger.state
 const overview = ref<AssetOverview | null>(null)
 const loading = ref(false)
@@ -137,40 +140,40 @@ onShow(() => { void load() })
 </script>
 
 <template>
-  <view class="page assets-page">
+  <view class="page assets-page" @touchstart.capture="handleMpTouchStart">
     <PageHeader />
     <view class="asset-hero"><text class="asset-label">净资产</text><MoneyDisplay class="asset-net" :value="overview?.netAssetsCents" /><view class="asset-breakdown"><view><text>总资产</text><MoneyDisplay class="breakdown-value" :value="overview?.totalAssetsCents" /></view><view><text>总负债</text><MoneyDisplay class="breakdown-value liability" :value="overview?.totalLiabilitiesCents" /></view></view></view>
     <view v-if="loading" class="card empty">正在加载资产…</view>
-    <view v-else-if="error" class="card empty">暂时无法加载资产<button class="text-button" @click="retry">重试</button></view>
+    <view v-else-if="error" class="card empty">暂时无法加载资产<button data-tap-feedback="true" class="text-button" @click="retry">重试</button></view>
     <template v-else>
       <view class="account-section">
-        <button class="account-heading" :aria-expanded="creditsExpanded" @click="creditsExpanded = !creditsExpanded"><text>信贷账户</text><view class="account-toggle">{{ creditsExpanded ? '收起' : '展开' }}</view></button>
+        <button data-tap-feedback="true" class="account-heading" :aria-expanded="creditsExpanded" @click="creditsExpanded = !creditsExpanded"><text>信贷账户</text><view class="account-toggle">{{ creditsExpanded ? '收起' : '展开' }}</view></button>
         <view v-if="creditsExpanded" class="account-list">
           <view v-if="!credits.length" class="list-empty">暂无信贷账户</view>
-          <view v-for="account in credits" :key="account.id" role="button" data-tap-feedback="true" :aria-label="account.name" :class="['account-item', { 'reorder-selected': reorderingAccountId === account.id }]" @click="handleAccountRowTap(account)" @longpress="startReorder(account)"><image class="account-icon credit" :src="staticResource('prototype/credit-account.png')" mode="aspectFit" /><view class="account-main"><view class="account-name-row"><text class="account-name">{{ account.name }}</text><text v-if="!account.includedInNetAsset" class="account-exclusion-badge">不计入</text></view><view class="credit-available"><text>可用</text><MoneyDisplay :value="account.creditLimitCents - account.balanceCents" /></view></view><view class="account-balance liability"><text class="balance-caption">{{ account.balanceCents < 0 ? '溢缴' : '欠款' }}</text><MoneyDisplay :value="account.balanceCents" /></view><view v-if="reorderingKind === 'CREDIT'" class="account-reorder-action" @click.stop.prevent="handleAccountTap(account)">交换</view><text v-else class="arrow">›</text></view>
+          <view v-for="account in credits" :key="account.id" role="button" data-tap-feedback="true" :aria-label="account.name" :class="['account-item', { 'reorder-selected': reorderingAccountId === account.id }]" @click="handleAccountRowTap(account)" @longpress="startReorder(account)"><image class="account-icon credit" :src="staticResource('prototype/credit-account.png')" mode="aspectFit" /><view class="account-main"><view class="account-name-row"><text class="account-name">{{ account.name }}</text><text v-if="!account.includedInNetAsset" class="account-exclusion-badge">不计入</text></view><view class="credit-available"><text>可用</text><MoneyDisplay :value="account.creditLimitCents - account.balanceCents" /></view></view><view class="account-balance liability"><text class="balance-caption">{{ account.balanceCents < 0 ? '溢缴' : '欠款' }}</text><MoneyDisplay :value="account.balanceCents" /></view><view v-if="reorderingKind === 'CREDIT'" class="account-reorder-action" data-tap-feedback="true" @click.stop.prevent="handleAccountTap(account)">交换</view><text v-else class="arrow">›</text></view>
         </view>
       </view>
       <view class="account-section">
-        <button class="account-heading" :aria-expanded="fundsExpanded" @click="fundsExpanded = !fundsExpanded"><text>资金账户</text><view class="account-toggle">{{ fundsExpanded ? '收起' : '展开' }}</view></button>
+        <button data-tap-feedback="true" class="account-heading" :aria-expanded="fundsExpanded" @click="fundsExpanded = !fundsExpanded"><text>资金账户</text><view class="account-toggle">{{ fundsExpanded ? '收起' : '展开' }}</view></button>
         <view v-if="fundsExpanded" class="account-list">
           <view v-if="!funds.length" class="list-empty">暂无资金账户</view>
-          <view v-for="account in funds" :key="account.id" role="button" data-tap-feedback="true" :aria-label="account.name" :class="['account-item', { 'reorder-selected': reorderingAccountId === account.id }]" @click="handleAccountRowTap(account)" @longpress="startReorder(account)"><image class="account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="account-main"><view class="account-name-row"><text class="account-name">{{ account.name }}</text><text v-if="!account.includedInNetAsset" class="account-exclusion-badge">不计入</text></view></view><view class="account-balance"><MoneyDisplay :value="account.balanceCents" /></view><view v-if="reorderingKind === 'FUND'" class="account-reorder-action" @click.stop.prevent="handleAccountTap(account)">交换</view><text v-else class="arrow">›</text></view>
+          <view v-for="account in funds" :key="account.id" role="button" data-tap-feedback="true" :aria-label="account.name" :class="['account-item', { 'reorder-selected': reorderingAccountId === account.id }]" @click="handleAccountRowTap(account)" @longpress="startReorder(account)"><image class="account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="account-main"><view class="account-name-row"><text class="account-name">{{ account.name }}</text><text v-if="!account.includedInNetAsset" class="account-exclusion-badge">不计入</text></view></view><view class="account-balance"><MoneyDisplay :value="account.balanceCents" /></view><view v-if="reorderingKind === 'FUND'" class="account-reorder-action" data-tap-feedback="true" @click.stop.prevent="handleAccountTap(account)">交换</view><text v-else class="arrow">›</text></view>
         </view>
       </view>
     </template>
-    <button class="fab" aria-label="新增资产账户" @click="openCreate">＋</button><BottomNav active="assets" />
+    <button data-tap-feedback="true" class="fab" aria-label="新增资产账户" @click="openCreate">＋</button><BottomNav active="assets" />
     <view v-if="createOpen" class="asset-create-backdrop" @click.self="closeCreate" @touchmove.stop.prevent>
       <view class="asset-create-modal" role="dialog" aria-modal="true" aria-label="新增资产账户" @click.stop>
         <view class="asset-create-handle" />
         <text class="asset-create-title">{{ createKind === 'FUND' ? '新增资产账户' : '新增信贷账户' }}</text>
-        <view class="asset-type-tabs"><button :class="{ active: createKind === 'FUND' }" :aria-pressed="createKind === 'FUND'" @click="createKind = 'FUND'">资金账户</button><button class="credit-choice" :class="{ active: createKind === 'CREDIT' }" :aria-pressed="createKind === 'CREDIT'" @click="createKind = 'CREDIT'">信贷账户</button></view>
+        <view class="asset-type-tabs"><button data-tap-feedback="true" :class="{ active: createKind === 'FUND' }" :aria-pressed="createKind === 'FUND'" @click="createKind = 'FUND'">资金账户</button><button data-tap-feedback="true" class="credit-choice" :class="{ active: createKind === 'CREDIT' }" :aria-pressed="createKind === 'CREDIT'" @click="createKind = 'CREDIT'">信贷账户</button></view>
         <view class="asset-create-fields">
           <view class="asset-create-row"><text>账户名称</text><input v-model="createName" maxlength="20" :placeholder="createKind === 'CREDIT' ? '例如：xx信用卡' : '例如：微信'" aria-required="true" :disabled="savingAccount" /></view>
           <view v-if="createKind === 'FUND'" class="asset-create-row"><text>余额</text><view class="asset-create-money"><input v-model="createBalance" type="digit" inputmode="decimal" aria-required="true" :disabled="savingAccount" /></view></view>
           <template v-else><view class="asset-create-row"><text>总额度</text><view class="asset-create-money"><input v-model="createCreditLimit" type="digit" inputmode="decimal" aria-required="true" :disabled="savingAccount" /></view></view><view class="asset-create-row"><text>当前欠款</text><view class="asset-create-money"><input v-model="createCurrentDebt" type="digit" inputmode="decimal" aria-required="true" :disabled="savingAccount" /></view></view></template>
           <view class="asset-create-row asset-create-switch"><text>计入净资产</text><switch data-tap-feedback="true" :checked="createIncluded" aria-required="true" :disabled="savingAccount" color="#49AD9C" @change="onIncluded" /></view>
         </view>
-        <view class="asset-create-actions"><button class="asset-create-cancel" :disabled="savingAccount" @click="createOpen = false">取消</button><button class="asset-create-save" :disabled="savingAccount" @click="saveAccount">{{ savingAccount ? '保存中…' : '保存账户' }}</button></view>
+        <view class="asset-create-actions"><button data-tap-feedback="true" class="asset-create-cancel" :disabled="savingAccount" @click="createOpen = false">取消</button><button data-tap-feedback="true" class="asset-create-save" :disabled="savingAccount" @click="saveAccount">{{ savingAccount ? '保存中…' : '保存账户' }}</button></view>
       </view>
     </view>
   </view>

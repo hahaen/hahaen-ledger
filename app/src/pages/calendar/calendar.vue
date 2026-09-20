@@ -9,12 +9,15 @@ import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import { request } from '../../utils/api'
 import { Transaction, TransactionType, useLedger } from '../../stores/ledger'
 import { localDateTime } from '../../utils/money'
+import { handleMpTouchStart } from '../../utils/tapFeedback'
+import { registerWechatShare } from '../../utils/wechatShare'
 
 type CalendarDay = { date: string; day: number; currentMonth: boolean; today: boolean; hasRecords: boolean; expenseCents: number; incomeCents: number; balanceCents: number }
 type CalendarMonth = { month: string; days: CalendarDay[] }
 type DayDetail = { date: string; expenseCents: number; incomeCents: number; balanceCents: number; transactions: Transaction[] }
 
 const ledger = useLedger()
+registerWechatShare()
 const cursor = ref(new Date())
 const selected = ref(localDateTime().slice(0, 10))
 const days = ref<CalendarDay[]>([])
@@ -104,19 +107,19 @@ onPullDownRefresh(async () => { try { await loadMonth() } finally { uni.stopPull
 </script>
 
 <template>
-  <view class="page calendar-page">
+  <view class="page calendar-page" @touchstart.capture="handleMpTouchStart">
     <PageHeader subtitle="按日期回看每一笔生活" />
     <view class="calendar-card">
-      <view class="calendar-toolbar"><button class="calendar-month" aria-label="选择月份" @click="monthOpen = true">{{ monthTitle }}</button><view class="calendar-controls"><button aria-label="上个月" @click="moveMonth(-1)">‹</button><button class="calendar-today" @click="today">今天</button><button aria-label="下个月" @click="moveMonth(1)">›</button></view></view>
+      <view class="calendar-toolbar"><button data-tap-feedback="true" class="calendar-month" aria-label="选择月份" @click="monthOpen = true">{{ monthTitle }}</button><view class="calendar-controls"><button data-tap-feedback="true" aria-label="上个月" @click="moveMonth(-1)">‹</button><button data-tap-feedback="true" class="calendar-today" @click="today">今天</button><button data-tap-feedback="true" aria-label="下个月" @click="moveMonth(1)">›</button></view></view>
       <view class="week-row"><text v-for="label in weekLabels" :key="label">{{ label }}</text></view>
       <view v-if="loading" class="list-empty">正在加载月历…</view>
-      <view v-else-if="error" class="list-empty">暂时无法加载月历<button class="text-button" @click="loadMonth">重试</button></view>
+      <view v-else-if="error" class="list-empty">暂时无法加载月历<button data-tap-feedback="true" class="text-button" @click="loadMonth">重试</button></view>
       <view v-else class="calendar-grid"><view v-for="day in visibleDays" :key="day.date" :class="['calendar-cell', { muted: !day.currentMonth, selected: selected === day.date, today: day.today }]" role="button" data-tap-feedback="true" :aria-label="day.date" :aria-pressed="selected === day.date" :aria-disabled="!day.currentMonth" @click="day.currentMonth && selectDay(day)"><view class="day-num">{{ day.day }}</view><view class="calendar-dots"><text v-for="type in dayTypes(day.date)" :key="type" :class="['calendar-dot', dotClass(type)]" /></view></view></view>
       <view class="calendar-legend"><view><text class="calendar-dot expense-dot" />支出</view><view><text class="calendar-dot income-dot" />收入</view><view><text class="calendar-dot neutral-dot" />转账</view><view><text class="calendar-dot repayment-dot" />还款</view></view>
       <view v-if="!loading && !dayLoading && !error && !dayError && detail" class="day-summary"><view><text>当日支出</text><MoneyDisplay class="day-total expense" :value="detail?.expenseCents" /></view><view><text>当日收入</text><MoneyDisplay class="day-total income" :value="detail?.incomeCents" /></view><view><text>当日结余</text><MoneyDisplay class="day-total" :value="detail?.balanceCents" /></view></view>
     </view>
     <view class="date-heading calendar-date"><view><text class="date-title">{{ selectedTitle }}</text><text class="date-week">{{ selectedWeek }}</text></view><text class="section-meta">{{ detail?.transactions.length || 0 }} 笔</text></view>
-    <scroll-view scroll-y :show-scrollbar="false" class="calendar-transaction-list transaction-list"><view v-if="loading || dayLoading" class="list-empty">正在加载当天账单…</view><view v-else-if="error" class="list-empty">请先重试加载月历</view><view v-else-if="dayError" class="list-empty">暂时无法加载当天账单<button class="text-button" @click="loadDay(selected)">重试</button></view><view v-else-if="!detail?.transactions.length" class="list-empty">这一天还没有记账记录</view><template v-else><TransactionRow v-for="transaction in detail.transactions" :key="transaction.id" :transaction="transaction" @open="open" /></template></scroll-view>
+    <scroll-view scroll-y :show-scrollbar="false" class="calendar-transaction-list transaction-list"><view v-if="loading || dayLoading" class="list-empty">正在加载当天账单…</view><view v-else-if="error" class="list-empty">请先重试加载月历</view><view v-else-if="dayError" class="list-empty">暂时无法加载当天账单<button data-tap-feedback="true" class="text-button" @click="loadDay(selected)">重试</button></view><view v-else-if="!detail?.transactions.length" class="list-empty">这一天还没有记账记录</view><template v-else><TransactionRow v-for="transaction in detail.transactions" :key="transaction.id" :transaction="transaction" @open="open" /></template></scroll-view>
     <BottomNav active="calendar" />
     <MonthPicker v-if="monthOpen" :value="monthKey" @close="monthOpen = false" @select="cursor = new Date($event + '-01T00:00:00'); monthOpen = false; loadMonth()" />
   </view>

@@ -6,7 +6,7 @@
 
 - 共享 `prototype.scss` 为按钮、`role="button"`、`switch`、`picker`、链接和资产排序操作增加微小按压缩放/透明度反馈。
 - H5 在 App 挂载时安装捕获式 `pointerdown` 监听，跳过禁用控件并抑制 40ms 内重复反馈。
-- 微信小程序通过 App 外层捕获触摸事件识别按钮和 `data-tap-feedback` 控件，调用轻振动 API。
+- 微信小程序通过各实际页面根节点捕获触摸事件识别带 `data-tap-feedback` 标记的控件，调用轻振动 API。
 - 遵守 `prefers-reduced-motion`：H5 关闭振动和 CSS 过渡；现有记账键盘震动增加 API 存在性保护。
 
 ## 档案

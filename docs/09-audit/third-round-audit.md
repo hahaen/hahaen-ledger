@@ -523,4 +523,13 @@ PASS：恢复首页最近记账日期行的设计稿边距、字号和单行收�
 
 ## 2026-09-20 追加：全局按钮与可点击控件轻触反馈
 
-共享样式为按钮、role=button、开关、选择器、链接和资产排序操作增加轻微按压反馈；H5 在浏览器支持时调用轻振动，微信小程序通过 App 外层触摸捕获调用 uni.vibrateShort。日历格、资产账户行、未登录昵称和开关补充可识别标记，未改变业务点击回调。前端 Node 回归 60/60、类型检查、H5/微信小程序生产构建为 PASS；H5 移动浏览器和微信开发者工具/真机的真实物理振动仍为 NOT_RUN，详见 docs/10-iterations/2026/09/tap-feedback/README.md。
+共享样式为按钮、role=button、开关、选择器、链接和资产排序操作增加轻微按压反馈；H5 在浏览器支持时调用轻振动，微信小程序改为各实际页面根节点捕获触摸调用 uni.vibrateShort，不依赖 App slot 冒泡。日历格、资产账户行、未登录昵称和开关补充可识别标记，未改变业务点击回调。前端 Node 回归 60/60、类型检查、H5/微信小程序生产构建为 PASS；H5 移动浏览器和微信开发者工具/真机的真实物理振动仍为 NOT_RUN，详见 docs/10-iterations/2026/09/tap-feedback/README.md。
+
+## 2026-09-20 追加：微信小程序转发
+
+- 新增 `app/src/utils/wechatShare.ts`，在 `MP-WEIXIN` 条件下注册 `onShareAppMessage`；八个登录后业务页统一分享固定标题并回到首页，不携带账单或用户隐私参数。H5 不注册该生命周期，未新增后端、数据库或 API。
+- PASS：转发专测 9/9、H5 生产构建、微信小程序生产构建；微信产物已确认包含转发注册模块。
+- PARTIAL：全量前端 Node 回归 67/69，剩余 2 项为工作区既有 mine 模板断言与当前 tap-feedback 标记不匹配。
+- PASS：`pnpm run typecheck`，`vue-tsc --noEmit` exit 0。
+- NOT_RUN：微信开发者工具/真机右上角实际转发及接收方打开首页，需导入 `app/dist/build/mp-weixin` 后验收。
+- 完整档案：`docs/10-iterations/2026/09/wechat-mini-share/`。

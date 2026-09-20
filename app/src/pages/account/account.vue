@@ -9,8 +9,11 @@ import { request } from '../../utils/api'
 import { formatYuan } from '../../utils/money'
 import { stringId } from '../../utils/id'
 import { staticResource } from '../../utils/staticResource'
+import { handleMpTouchStart } from '../../utils/tapFeedback'
+import { registerWechatShare } from '../../utils/wechatShare'
 
 const ledger = useLedger()
+registerWechatShare()
 const account = ref<Account | null>(null)
 const records = ref<Transaction[]>([])
 const id = ref('')
@@ -163,15 +166,15 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
 </script>
 
 <template>
-  <view class="page detail-page account-page">
+  <view class="page detail-page account-page" @touchstart.capture="handleMpTouchStart">
     <NativeNavigation variant="screen" title="账户详情" compact :page-top-extra="20" @back="uni.navigateBack()" />
     <view v-if="loading && !account" class="card empty">正在加载账户…</view>
-    <view v-else-if="loadError" class="card empty">暂时无法加载账户<button class="text-button" @click="load">重试</button></view>
+    <view v-else-if="loadError" class="card empty">暂时无法加载账户<button data-tap-feedback="true" class="text-button" @click="load">重试</button></view>
     <template v-else>
       <template v-if="account">
         <view :class="['detail-hero', 'fund-hero', { 'credit-hero': formKind === 'CREDIT' }]"><view class="fund-heading"><view><text class="fund-name">{{ account.name }}</text><text class="account-desc">{{ formKind === 'FUND' ? '资金账户' : '信贷账户' }}</text></view><text class="fund-included">{{ account.includedInNetAsset ? '计入净资产' : '不计入净资产' }}</text></view><text class="fund-balance-label">{{ formKind === 'FUND' ? '当前余额' : (account.balanceCents < 0 ? '溢缴余额' : '当前欠款') }}</text><MoneyDisplay class="detail-amount" :value="account.balanceCents" /><view v-if="formKind === 'CREDIT'" class="credit-stats"><view>总额度<MoneyDisplay :value="account.creditLimitCents" /></view><view>可用额度<MoneyDisplay :value="account.creditLimitCents - account.balanceCents" /></view></view><view class="detail-orbit orbit-one" /></view>
-        <view class="detail-section"><view class="detail-section-heading"><text class="section-title">账户流水</text><text class="section-meta">{{ records.length }} 笔记录</text></view><view class="filter-row"><button v-for="filter in filters" :key="filter.value" :class="{ active: recordFilter === filter.value }" @click="recordFilter = filter.value; loadRecords()">{{ filter.label }}</button></view><scroll-view scroll-y :show-scrollbar="false" class="account-record-list"><view v-if="!records.length" class="fund-empty"><text class="empty-symbol">◷</text><text class="empty-title">暂无相关记录</text><text>这个账户的收支会在这里呈现</text></view><view v-for="group in groupedRecords" :key="group[0]" class="date-group"><view class="date-heading"><text class="date-title">{{ group[0] }}</text><text class="section-meta">{{ group[1].length }} 笔</text></view><view class="transaction-list"><TransactionRow v-for="record in group[1]" :key="record.id" :transaction="record" @open="openTransaction" /></view></view></scroll-view></view>
-        <view class="detail-actions"><button class="detail-action" :disabled="saving || deleting" @click="editing = true">编辑账户</button><button v-if="formKind === 'CREDIT'" class="detail-action refund" :disabled="saving || deleting || account.balanceCents <= 0" @click="openRepay">{{ account.balanceCents > 0 ? '还款' : account.balanceCents < 0 ? '有溢缴款' : '已还清' }}</button><button class="detail-action delete" :disabled="saving || deleting" @click="remove">删除账号</button></view>
+        <view class="detail-section"><view class="detail-section-heading"><text class="section-title">账户流水</text><text class="section-meta">{{ records.length }} 笔记录</text></view><view class="filter-row"><button data-tap-feedback="true" v-for="filter in filters" :key="filter.value" :class="{ active: recordFilter === filter.value }" @click="recordFilter = filter.value; loadRecords()">{{ filter.label }}</button></view><scroll-view scroll-y :show-scrollbar="false" class="account-record-list"><view v-if="!records.length" class="fund-empty"><text class="empty-symbol">◷</text><text class="empty-title">暂无相关记录</text><text>这个账户的收支会在这里呈现</text></view><view v-for="group in groupedRecords" :key="group[0]" class="date-group"><view class="date-heading"><text class="date-title">{{ group[0] }}</text><text class="section-meta">{{ group[1].length }} 笔</text></view><view class="transaction-list"><TransactionRow v-for="record in group[1]" :key="record.id" :transaction="record" @open="openTransaction" /></view></view></scroll-view></view>
+        <view class="detail-actions"><button data-tap-feedback="true" class="detail-action" :disabled="saving || deleting" @click="editing = true">编辑账户</button><button data-tap-feedback="true" v-if="formKind === 'CREDIT'" class="detail-action refund" :disabled="saving || deleting || account.balanceCents <= 0" @click="openRepay">{{ account.balanceCents > 0 ? '还款' : account.balanceCents < 0 ? '有溢缴款' : '已还清' }}</button><button data-tap-feedback="true" class="detail-action delete" :disabled="saving || deleting" @click="remove">删除账号</button></view>
       </template>
     </template>
     <view v-if="editing" class="asset-create-backdrop" @click.self="!saving && (editing = false)" @touchmove.stop.prevent>
@@ -184,7 +187,7 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
           <template v-else><view class="asset-create-row"><text>总额度</text><view class="asset-create-money"><input v-model="creditLimit" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="saving" /></view></view><view class="asset-create-row"><text>当前欠款</text><view class="asset-create-money"><input v-model="currentDebt" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="saving" /></view></view></template>
           <view class="asset-create-row asset-create-switch"><text>计入净资产</text><switch data-tap-feedback="true" :checked="included" aria-required="true" :disabled="saving" color="#49AD9C" @change="onIncluded" /></view>
         </view>
-        <view class="asset-create-actions"><button class="asset-create-cancel" :disabled="saving" @click="editing = false">取消</button><button class="asset-create-save" :disabled="saving" @click="save">{{ saving ? '保存中…' : '保存账户' }}</button></view>
+        <view class="asset-create-actions"><button data-tap-feedback="true" class="asset-create-cancel" :disabled="saving" @click="editing = false">取消</button><button data-tap-feedback="true" class="asset-create-save" :disabled="saving" @click="save">{{ saving ? '保存中…' : '保存账户' }}</button></view>
       </view>
     </view>
     <view v-if="deleteOpen" class="asset-create-backdrop" @click.self="!deleting && (deleteOpen = false)" @touchmove.stop.prevent>
@@ -192,7 +195,7 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
         <view class="asset-create-handle" />
         <text class="account-delete-title">删除这个账户?</text>
         <text class="account-delete-copy">删除“{{ account?.name }}”后，该账户将从资产列表移除，其余额不再计入净资产。历史账单仍会保留。</text>
-        <view class="account-delete-actions"><button class="account-delete-cancel" :disabled="deleting" @click="deleteOpen = false">取消</button><button class="account-delete-confirm" :disabled="deleting" @click="confirmRemove">{{ deleting ? '删除中…' : '确认删除' }}</button></view>
+        <view class="account-delete-actions"><button data-tap-feedback="true" class="account-delete-cancel" :disabled="deleting" @click="deleteOpen = false">取消</button><button data-tap-feedback="true" class="account-delete-confirm" :disabled="deleting" @click="confirmRemove">{{ deleting ? '删除中…' : '确认删除' }}</button></view>
       </view>
     </view>
     <view v-if="repayOpen" class="asset-create-backdrop" @click.self="!saving && (repayOpen = false)" @touchmove.stop.prevent>
@@ -200,17 +203,17 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
         <view class="asset-create-handle" />
         <text class="repay-title">还款 · {{ account?.name }}</text>
         <view class="repay-copy">当前欠款 <MoneyDisplay :value="account?.balanceCents" />，还款后恢复相应可用额度。</view>
-        <button class="repay-account-picker" :disabled="saving" @click="openRepayAccountPicker"><image class="repay-account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="repay-account-copy"><text class="repay-account-label">还款账户</text><text class="repay-account-name">{{ selectedRepayFund?.name || '请选择还款账户' }}</text></view><view class="repay-account-balance"><template v-if="selectedRepayFund"><text>余额</text><MoneyDisplay :value="selectedRepayFund.balanceCents" /></template><text v-else>请选择账户</text><text class="arrow">›</text></view></button>
+        <button data-tap-feedback="true" class="repay-account-picker" :disabled="saving" @click="openRepayAccountPicker"><image class="repay-account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="repay-account-copy"><text class="repay-account-label">还款账户</text><text class="repay-account-name">{{ selectedRepayFund?.name || '请选择还款账户' }}</text></view><view class="repay-account-balance"><template v-if="selectedRepayFund"><text>余额</text><MoneyDisplay :value="selectedRepayFund.balanceCents" /></template><text v-else>请选择账户</text><text class="arrow">›</text></view></button>
         <view class="repay-amount-row"><text>还款金额</text><view class="repay-amount-money"><input v-model="repayAmount" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="saving" /></view></view>
-        <view class="repay-actions"><button class="repay-cancel" :disabled="saving" @click="repayOpen = false">取消</button><button class="repay-confirm" :disabled="saving" @click="repay">{{ saving ? '还款中…' : '确认还款' }}</button></view>
+        <view class="repay-actions"><button data-tap-feedback="true" class="repay-cancel" :disabled="saving" @click="repayOpen = false">取消</button><button data-tap-feedback="true" class="repay-confirm" :disabled="saving" @click="repay">{{ saving ? '还款中…' : '确认还款' }}</button></view>
       </view>
     </view>
     <view v-if="repayAccountOpen" class="asset-create-backdrop repay-picker-backdrop" @click.self="!saving && (repayAccountOpen = false)" @touchmove.stop.prevent>
       <view class="repay-account-modal" role="dialog" aria-modal="true" aria-label="选择还款账户">
         <view class="asset-create-handle" />
         <text class="repay-title">选择还款账户</text>
-        <view class="repay-choice-list"><button v-for="fund in fundAccounts" :key="fund.id" :class="['repay-choice-item', { selected: repayFundId === fund.id }]" :disabled="saving" @click="selectRepayAccount(fund.id)"><image class="repay-account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="repay-account-copy"><text class="repay-account-name">{{ fund.name }}</text><view class="repay-choice-balance"><text>账户余额</text><MoneyDisplay :value="fund.balanceCents" /></view></view><text class="repay-choice-check">{{ repayFundId === fund.id ? '✓' : '' }}</text></button></view>
-        <button class="repay-return" :disabled="saving" @click="returnToRepay">返回还款</button>
+        <view class="repay-choice-list"><button data-tap-feedback="true" v-for="fund in fundAccounts" :key="fund.id" :class="['repay-choice-item', { selected: repayFundId === fund.id }]" :disabled="saving" @click="selectRepayAccount(fund.id)"><image class="repay-account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="repay-account-copy"><text class="repay-account-name">{{ fund.name }}</text><view class="repay-choice-balance"><text>账户余额</text><MoneyDisplay :value="fund.balanceCents" /></view></view><text class="repay-choice-check">{{ repayFundId === fund.id ? '✓' : '' }}</text></button></view>
+        <button data-tap-feedback="true" class="repay-return" :disabled="saving" @click="returnToRepay">返回还款</button>
       </view>
     </view>
   </view>

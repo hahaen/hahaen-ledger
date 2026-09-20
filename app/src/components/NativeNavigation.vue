@@ -52,12 +52,12 @@ const menuAlignedStyle = computed(() => {
     <text>哈记账</text>
   </view>
   <view v-else-if="variant === 'screen'" :class="['screen-nav', { 'menu-aligned': menu, compact }]" :style="menuAlignedStyle">
-    <button class="back nav-side" :aria-label="backLabel" :disabled="backDisabled" @click="emit('back')">‹</button>
+    <button data-tap-feedback="true" class="back nav-side" :aria-label="backLabel" :disabled="backDisabled" @click="emit('back')">‹</button>
     <text class="page-title">{{ title }}</text>
     <view class="nav-side" />
   </view>
   <view v-else :class="['help-nav', { 'menu-aligned': menu, compact }]" :style="menuAlignedStyle">
-    <button class="help-back" :aria-label="backLabel" @click="emit('back')">‹</button>
+    <button data-tap-feedback="true" class="help-back" :aria-label="backLabel" @click="emit('back')">‹</button>
     <text class="help-title">{{ title }}</text>
     <view class="help-nav-side" />
   </view>

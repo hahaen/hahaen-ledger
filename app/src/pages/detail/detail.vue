@@ -9,10 +9,13 @@ import { backToLedger } from '../../utils/entry'
 import { stringId } from '../../utils/id'
 import { staticResource } from '../../utils/staticResource'
 import { Transaction, useLedger } from '../../stores/ledger'
+import { handleMpTouchStart } from '../../utils/tapFeedback'
+import { registerWechatShare } from '../../utils/wechatShare'
 
 type Refund = { id: string; refundNo: string; amountCents: number; createdAt: string }
 type Detail = { transaction: Transaction; refundedCents: number; effectiveCents: number; refunds: Refund[] }
 const ledger = useLedger()
+registerWechatShare()
 const detail = ref<Detail | null>(null)
 const id = ref('')
 const refundAmount = ref('')
@@ -137,10 +140,10 @@ function remove() { openDelete({ type: 'transaction' }) }
 </script>
 
 <template>
-  <view class="page detail-page">
+  <view class="page detail-page" @touchstart.capture="handleMpTouchStart">
     <NativeNavigation variant="screen" title="账单详情" compact back-label="返回" :back-disabled="saving" @back="backToLedger" />
     <view v-if="loading && !detail" class="card empty">正在加载账单…</view>
-    <view v-else-if="error && !detail" class="card empty">{{ error }}<button class="text-button" @click="load">重试</button></view>
+    <view v-else-if="error && !detail" class="card empty">{{ error }}<button data-tap-feedback="true" class="text-button" @click="load">重试</button></view>
     <template v-else-if="detail">
       <view :class="['detail-hero', detail.transaction.type.toLowerCase()]">
         <view class="detail-hero-heading"><view :class="['type-icon', detail.transaction.type.toLowerCase()]"><image :src="staticResource('prototype/' + typeImages[detail.transaction.type])" mode="aspectFit" /></view><text :class="['detail-type-badge', detail.transaction.type.toLowerCase()]">{{ label(detail.transaction.type) }}</text></view>
@@ -157,8 +160,8 @@ function remove() { openDelete({ type: 'transaction' }) }
         </view>
       </view>
       <view class="detail-section"><view class="detail-section-heading"><text class="section-kicker">RECORD</text><text class="section-title">记录来源</text></view><view class="detail-meta-card"><view><text>账单类型</text><text class="meta-value">{{ label(detail.transaction.type) }}</text></view><view><text>记录编号</text><text class="meta-value">{{ detail.transaction.transactionNo }}</text></view></view></view>
-      <view v-if="detail.refunds.length" class="detail-section refund-section"><view class="detail-section-heading"><view class="refund-section-heading"><text class="section-kicker">REFUND RECORD</text><text class="section-title">退款记录</text></view><text class="section-meta">{{ detail.refunds.length }} 笔</text></view><view class="refund-record-card"><view class="refund-total-row"><text>累计退款</text><MoneyDisplay class="liability" :value="detail.refundedCents" /></view><view v-for="(record, index) in detail.refunds" :key="record.id" class="refund-record-item"><text class="field-icon">↩</text><view class="account-main"><text class="account-name">第 {{ index + 1 }} 笔退款</text><text class="account-desc">{{ record.createdAt.replace('T', ' ').slice(0, 16) }}</text></view><MoneyDisplay class="liability" :value="record.amountCents" /><button class="refund-delete" :disabled="saving || loading" @click="removeRefund(record.id)">删除</button></view></view></view>
-      <view class="detail-actions"><button class="detail-action" :disabled="saving || loading" @click="edit">编辑</button><button v-if="['EXPENSE', 'INCOME'].includes(detail.transaction.type)" class="detail-action refund" :disabled="!detail.effectiveCents || saving || loading" @click="openRefund">{{ detail.effectiveCents ? '退款' : '已退款' }}</button><button class="detail-action delete" :disabled="saving || loading" @click="remove">删除</button></view>
+      <view v-if="detail.refunds.length" class="detail-section refund-section"><view class="detail-section-heading"><view class="refund-section-heading"><text class="section-kicker">REFUND RECORD</text><text class="section-title">退款记录</text></view><text class="section-meta">{{ detail.refunds.length }} 笔</text></view><view class="refund-record-card"><view class="refund-total-row"><text>累计退款</text><MoneyDisplay class="liability" :value="detail.refundedCents" /></view><view v-for="(record, index) in detail.refunds" :key="record.id" class="refund-record-item"><text class="field-icon">↩</text><view class="account-main"><text class="account-name">第 {{ index + 1 }} 笔退款</text><text class="account-desc">{{ record.createdAt.replace('T', ' ').slice(0, 16) }}</text></view><MoneyDisplay class="liability" :value="record.amountCents" /><button data-tap-feedback="true" class="refund-delete" :disabled="saving || loading" @click="removeRefund(record.id)">删除</button></view></view></view>
+      <view class="detail-actions"><button data-tap-feedback="true" class="detail-action" :disabled="saving || loading" @click="edit">编辑</button><button data-tap-feedback="true" v-if="['EXPENSE', 'INCOME'].includes(detail.transaction.type)" class="detail-action refund" :disabled="!detail.effectiveCents || saving || loading" @click="openRefund">{{ detail.effectiveCents ? '退款' : '已退款' }}</button><button data-tap-feedback="true" class="detail-action delete" :disabled="saving || loading" @click="remove">删除</button></view>
     </template>
     <view v-if="refundOpen && detail" class="refund-backdrop" @click.self="!saving && (refundOpen = false)" @touchmove.stop.prevent>
       <view class="refund-modal" role="dialog" aria-modal="true" aria-label="填写退款金额">
@@ -170,7 +173,7 @@ function remove() { openDelete({ type: 'transaction' }) }
           <view class="refund-input-wrap"><input v-model="refundAmount" type="digit" maxlength="12" :disabled="saving" :placeholder="inputYuan(detail.effectiveCents)" aria-label="本次退款金额（元）" /></view>
         </view>
         <text v-if="refundError" class="refund-error">{{ refundError }}</text>
-        <view class="refund-actions"><button class="refund-cancel" :disabled="saving" @click="refundOpen = false">取消</button><button class="refund-confirm" :disabled="saving" @click="refund">{{ saving ? '退款中…' : '确认退款' }}</button></view>
+        <view class="refund-actions"><button data-tap-feedback="true" class="refund-cancel" :disabled="saving" @click="refundOpen = false">取消</button><button data-tap-feedback="true" class="refund-confirm" :disabled="saving" @click="refund">{{ saving ? '退款中…' : '确认退款' }}</button></view>
       </view>
     </view>
     <view v-if="deleteOpen" class="asset-create-backdrop" @click.self="!saving && (deleteOpen = false)" @touchmove.stop.prevent>
@@ -179,7 +182,7 @@ function remove() { openDelete({ type: 'transaction' }) }
         <text class="account-delete-title">{{ deleteTitle }}</text>
         <text class="account-delete-copy">{{ deleteCopy }}</text>
         <text v-if="deleteError" class="account-delete-error">{{ deleteError }}</text>
-        <view class="account-delete-actions"><button class="account-delete-cancel" :disabled="saving" @click="deleteOpen = false">取消</button><button class="account-delete-confirm" :disabled="saving" @click="confirmDelete">{{ saving ? '删除中…' : '确认删除' }}</button></view>
+        <view class="account-delete-actions"><button data-tap-feedback="true" class="account-delete-cancel" :disabled="saving" @click="deleteOpen = false">取消</button><button data-tap-feedback="true" class="account-delete-confirm" :disabled="saving" @click="confirmDelete">{{ saving ? '删除中…' : '确认删除' }}</button></view>
       </view>
     </view>
   </view>

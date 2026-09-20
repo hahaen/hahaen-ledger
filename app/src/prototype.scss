@@ -36,7 +36,6 @@ page, :root {
 }
 view, scroll-view, text, button, input, textarea, picker, image { box-sizing:border-box; }
 body { margin:0; background:#f7f8f7; }
-.app-shell { min-height:100vh; }
 button { margin:0; padding:0; border:0; border-radius:0; color:inherit; background:transparent; font:inherit; line-height:normal; }
 button::after { border:0; }
 button[disabled] { opacity:.55; }

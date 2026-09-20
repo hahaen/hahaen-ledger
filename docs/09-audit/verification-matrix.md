@@ -741,7 +741,7 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 | --- | --- | --- |
 | 两端共享按压样式 | PASS | prototype.scss 覆盖按钮、role=button、switch、picker、链接和资产排序操作；新增静态回归通过。 |
 | H5 轻触振动代码与产物 | PASS（代码/产物） | App 捕获 pointerdown 并调用 navigator.vibrate(8)；浏览器支持情况需设备确认。 |
-| 微信轻振动代码与产物 | PASS（代码/产物） | App WXML 包含 capture-bind:touchstart，构建 JS 包含 uni.vibrateShort。 |
+| 微信轻振动代码与产物 | PASS（代码/产物） | 各页面 WXML 根节点包含 capture-bind:touchstart，构建 JS 包含 uni.vibrateShort。 |
 | 前端 Node 回归 | PASS | pnpm exec node --test tests/*.test.mjs，60/60。 |
 | TypeScript | PASS | pnpm run typecheck。 |
 | H5/微信小程序生产构建 | PASS | pnpm run build:h5、pnpm run build:mp-weixin。 |
@@ -749,3 +749,19 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 | 微信开发者工具/真机实际点击/振动 | NOT_RUN | 未导入产物进行真实页面和物理振动验收。 |
 
 完整档案：[tap-feedback](../10-iterations/2026/09/tap-feedback/README.md)。
+
+## 2026-09-20：微信小程序转发
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 统一转发标题与入口 | PASS（静态+产物） | `wechatShare.ts` 返回固定标题 `哈记账｜简单记账，安心生活` 和 `/pages/index/index`，微信产物包含 `onShareAppMessage` 注册。 |
+| 隐私边界 | PASS（静态） | 不把账单 ID、金额、账户名、用户 ID 或当前详情路径放入转发参数。 |
+| 业务页覆盖 | PASS（静态） | 首页、日历、资产、我的、账单详情、账户详情、帮助、个人中心均注册；认证、协议、首次使用和新增/编辑记账页未注册。 |
+| 转发专测 | PASS | `pnpm exec node --test tests/wechat-share.test.mjs`，9/9。 |
+| H5/微信小程序生产构建 | PASS | `pnpm run build:h5`、`pnpm run build:mp-weixin`。 |
+| Git 空白检查 | PASS | `git diff --check` 无 whitespace error；仅有工作区既有 CRLF→LF warning。 |
+| 全量前端回归 | PARTIAL | 67/69；2 项为工作区既有 mine 模板断言与 tap-feedback 标记不匹配。 |
+| TypeScript | PASS | `pnpm run typecheck`，`vue-tsc --noEmit` exit 0。 |
+| 微信开发者工具/真机实际转发 | NOT_RUN | 需导入 `app/dist/build/mp-weixin` 后从右上角菜单实际转发；构建产物不能替代运行验收。 |
+
+完整档案：[wechat-mini-share](../10-iterations/2026/09/wechat-mini-share/README.md)。

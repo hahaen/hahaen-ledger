@@ -23,7 +23,7 @@ const description = computed(() => {
 })
 </script>
 <template>
-  <button class="transaction-item" :aria-label="`查看${kind.label} ${formatYuan(transaction.amountCents)}元详情`" @click="emit('open', transaction.id)">
+  <button data-tap-feedback="true" class="transaction-item" :aria-label="`查看${kind.label} ${formatYuan(transaction.amountCents)}元详情`" @click="emit('open', transaction.id)">
     <view :class="['type-icon', transaction.type.toLowerCase()]"><image :src="staticResource(`prototype/${kind.image}`)" mode="aspectFit" /></view>
     <view class="transaction-copy"><view class="transaction-title-row"><text :class="['type-label', transaction.type.toLowerCase()]">{{ kind.label }}</text><text v-if="transaction.hasRefund" class="refund-mark">退</text></view><text class="transaction-note">{{ description }}</text></view>
     <MoneyDisplay :class="['transaction-amount', transaction.type.toLowerCase()]" :prefix="kind.sign" :value="transaction.amountCents" /><text class="arrow">›</text>

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import NativeNavigation from './NativeNavigation.vue'
 import { legalDocuments, type LegalDocumentType } from '../constants/legalDocuments'
 import { staticResource } from '../utils/staticResource'
+import { handleMpTouchStart } from '../utils/tapFeedback'
 
 const props = defineProps<{ type: LegalDocumentType }>()
 const document = computed(() => legalDocuments[props.type])
@@ -17,7 +18,7 @@ function backToAuth() {
 </script>
 
 <template>
-  <view class="help-page legal-page">
+  <view class="help-page legal-page" @touchstart.capture="handleMpTouchStart">
     <scroll-view scroll-y class="help-scroll">
       <NativeNavigation variant="help" :title="document.title" compact back-label="返回登录" @back="backToAuth" />
 

@@ -56,16 +56,16 @@ onMounted(async () => {
       <text class="entry-value-picker-title">{{ mode === 'date' ? '选择记账日期' : '选择记账时间' }}</text>
       <view :class="['entry-value-picker-columns', { 'two-columns': mode === 'time' }]">
         <template v-if="mode === 'date'">
-          <view class="entry-value-picker-column"><text>年份</text><scroll-view scroll-y :scroll-top="yearScrollTop" class="entry-value-picker-scroll"><button v-for="value in years" :key="value" :class="['entry-value-picker-option', { selected: year === value }]" @click="selectYear(value)">{{ value }}年</button></scroll-view></view>
-          <view class="entry-value-picker-column"><text>月份</text><scroll-view scroll-y :scroll-top="monthScrollTop" class="entry-value-picker-scroll"><button v-for="value in months" :key="value" :class="['entry-value-picker-option', { selected: month === value }]" @click="selectMonth(value)">{{ value }}月</button></scroll-view></view>
-          <view class="entry-value-picker-column"><text>日期</text><scroll-view scroll-y :scroll-top="dayScrollTop" class="entry-value-picker-scroll"><button v-for="value in days" :key="value" :class="['entry-value-picker-option', { selected: day === value }]" @click="selectDay(value)">{{ value }}日</button></scroll-view></view>
+          <view class="entry-value-picker-column"><text>年份</text><scroll-view scroll-y :scroll-top="yearScrollTop" class="entry-value-picker-scroll"><button data-tap-feedback="true" v-for="value in years" :key="value" :class="['entry-value-picker-option', { selected: year === value }]" @click="selectYear(value)">{{ value }}年</button></scroll-view></view>
+          <view class="entry-value-picker-column"><text>月份</text><scroll-view scroll-y :scroll-top="monthScrollTop" class="entry-value-picker-scroll"><button data-tap-feedback="true" v-for="value in months" :key="value" :class="['entry-value-picker-option', { selected: month === value }]" @click="selectMonth(value)">{{ value }}月</button></scroll-view></view>
+          <view class="entry-value-picker-column"><text>日期</text><scroll-view scroll-y :scroll-top="dayScrollTop" class="entry-value-picker-scroll"><button data-tap-feedback="true" v-for="value in days" :key="value" :class="['entry-value-picker-option', { selected: day === value }]" @click="selectDay(value)">{{ value }}日</button></scroll-view></view>
         </template>
         <template v-else>
-          <view class="entry-value-picker-column"><text>小时</text><scroll-view scroll-y :scroll-top="hourScrollTop" class="entry-value-picker-scroll"><button v-for="value in hours" :key="value" :class="['entry-value-picker-option', { selected: hour === value }]" @click="selectHour(value)">{{ String(value).padStart(2, '0') }}</button></scroll-view></view>
-          <view class="entry-value-picker-column"><text>分钟</text><scroll-view scroll-y :scroll-top="minuteScrollTop" class="entry-value-picker-scroll"><button v-for="value in minutes" :key="value" :class="['entry-value-picker-option', { selected: minute === value }]" @click="selectMinute(value)">{{ String(value).padStart(2, '0') }}</button></scroll-view></view>
+          <view class="entry-value-picker-column"><text>小时</text><scroll-view scroll-y :scroll-top="hourScrollTop" class="entry-value-picker-scroll"><button data-tap-feedback="true" v-for="value in hours" :key="value" :class="['entry-value-picker-option', { selected: hour === value }]" @click="selectHour(value)">{{ String(value).padStart(2, '0') }}</button></scroll-view></view>
+          <view class="entry-value-picker-column"><text>分钟</text><scroll-view scroll-y :scroll-top="minuteScrollTop" class="entry-value-picker-scroll"><button data-tap-feedback="true" v-for="value in minutes" :key="value" :class="['entry-value-picker-option', { selected: minute === value }]" @click="selectMinute(value)">{{ String(value).padStart(2, '0') }}</button></scroll-view></view>
         </template>
       </view>
-      <view class="entry-value-picker-actions"><button class="entry-value-picker-cancel" @click="emit('close')">取消</button><button class="entry-value-picker-confirm" @click="confirm">确定</button></view>
+      <view class="entry-value-picker-actions"><button data-tap-feedback="true" class="entry-value-picker-cancel" @click="emit('close')">取消</button><button data-tap-feedback="true" class="entry-value-picker-confirm" @click="confirm">确定</button></view>
     </view>
   </view>
 </template>

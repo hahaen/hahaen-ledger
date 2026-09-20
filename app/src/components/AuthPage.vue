@@ -4,6 +4,7 @@ import { request } from '../utils/api'
 import { staticResource } from '../utils/staticResource'
 import { encryptH5AuthPassword } from '../utils/passwordCrypto'
 import { useLedger } from '../stores/ledger'
+import { handleMpTouchStart } from '../utils/tapFeedback'
 
 type CaptchaVO = { captchaId: string; image: string; expiresInSeconds: number }
 type LoginVO = { token: string; userId: string; nickname: string }
@@ -95,7 +96,7 @@ onMounted(loadCaptcha)
 </script>
 
 <template>
-  <view class="auth-page">
+  <view class="auth-page" @touchstart.capture="handleMpTouchStart">
     <view class="auth-decoration auth-decoration-large" aria-hidden="true" />
     <view class="auth-decoration auth-decoration-small" aria-hidden="true" />
     <view class="auth-shell">
@@ -126,7 +127,7 @@ onMounted(loadCaptcha)
             <text class="auth-field-label">密码</text>
             <view class="auth-password-input">
               <input v-model="password" class="auth-input" :type="passwordVisible ? 'text' : 'password'" :password="!passwordVisible" :autocomplete="isLogin ? 'current-password' : 'new-password'" placeholder="请输入密码" @input="errorMessage = ''" />
-              <button class="auth-password-toggle" :aria-label="passwordVisible ? '隐藏密码' : '显示密码'" :title="passwordVisible ? '隐藏密码' : '显示密码'" @click="passwordVisible = !passwordVisible">
+              <button data-tap-feedback="true" class="auth-password-toggle" :aria-label="passwordVisible ? '隐藏密码' : '显示密码'" :title="passwordVisible ? '隐藏密码' : '显示密码'" @click="passwordVisible = !passwordVisible">
                 <view class="auth-password-eye" :class="{ visible: passwordVisible }" aria-hidden="true">
                   <view class="auth-password-eye-pupil" />
                 </view>
@@ -142,26 +143,26 @@ onMounted(loadCaptcha)
               <input v-model="captcha" class="auth-input" type="text" maxlength="4" placeholder="输入图形验证码" @input="errorMessage = ''" />
             </view>
           </view>
-          <button class="captcha-button" aria-label="刷新图形验证码" :disabled="captchaLoading" @click="refreshCaptcha">
+          <button data-tap-feedback="true" class="captcha-button" aria-label="刷新图形验证码" :disabled="captchaLoading" @click="refreshCaptcha">
             <image v-if="captchaImage" class="captcha-image" :src="captchaImage" mode="aspectFit" />
             <text v-else class="captcha-art">{{ captchaLoading ? '加载中…' : '点击重试' }}</text>
           </button>
         </view>
         <view class="auth-agreement">
-          <button class="auth-agreement-check" :class="{ checked: agreementAccepted }" :aria-checked="agreementAccepted" aria-label="同意用户协议和隐私协议" @click="agreementAccepted = !agreementAccepted"><text v-if="agreementAccepted">✓</text></button>
+          <button data-tap-feedback="true" class="auth-agreement-check" :class="{ checked: agreementAccepted }" :aria-checked="agreementAccepted" aria-label="同意用户协议和隐私协议" @click="agreementAccepted = !agreementAccepted"><text v-if="agreementAccepted">✓</text></button>
           <view class="auth-agreement-copy">
             <text>我已阅读并同意</text>
-            <button class="auth-agreement-link" @click.stop="openLegalDocument('agreement')">《用户协议》</button>
+            <button data-tap-feedback="true" class="auth-agreement-link" @click.stop="openLegalDocument('agreement')">《用户协议》</button>
             <text>和</text>
-            <button class="auth-agreement-link" @click.stop="openLegalDocument('privacy')">《隐私协议》</button>
+            <button data-tap-feedback="true" class="auth-agreement-link" @click.stop="openLegalDocument('privacy')">《隐私协议》</button>
           </view>
         </view>
         <text class="auth-code-status" :class="{ 'has-error': errorMessage }">
           <text class="auth-status-dot" aria-hidden="true" />
           {{ errorMessage || (!agreementAccepted ? '请先阅读并同意协议' : (isLogin ? '请输入右侧图形验证码' : '密码需为 8-64 位字符')) }}
         </text>
-        <button class="auth-submit" :class="{ enabled: canSubmit }" :disabled="!canSubmit" @click="submit">{{ submitting ? (isLogin ? '登录中…' : '注册中…') : (isLogin ? '登录' : '注册') }}</button>
-        <button class="auth-switch" @click="switchMode">{{ isLogin ? '还没有账号？去注册' : '已有账号？返回登录' }}</button>
+        <button data-tap-feedback="true" class="auth-submit" :class="{ enabled: canSubmit }" :disabled="!canSubmit" @click="submit">{{ submitting ? (isLogin ? '登录中…' : '注册中…') : (isLogin ? '登录' : '注册') }}</button>
+        <button data-tap-feedback="true" class="auth-switch" @click="switchMode">{{ isLogin ? '还没有账号？去注册' : '已有账号？返回登录' }}</button>
       </view>
 
     </view>
