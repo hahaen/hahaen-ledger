@@ -6,14 +6,14 @@
 
 - 后端：Java 25、Maven 3.9+（当前环境 Maven 3.6.3 可执行）、Spring Boot 3.5.5；依赖 MySQL 8、Redis 和 MinIO。
 - 前端：Node.js、pnpm；脚本定义在 `app/package.json`，包括 `dev:h5`、`build:h5`、`dev:mp-weixin`、`build:mp-weixin` 和 `typecheck`。
-- 后端默认激活 `dev` Profile，端口默认 8080；开发配置当前位于 `server/src/main/resources/application-dev.yml`，仓库没有同名 `application-dev.example.yml`，不要根据旧 README 复制不存在的文件。
+- 后端默认激活 `dev` Profile，端口默认 8080；`server/src/main/resources/application-dev.yml` 只保留安全默认值和环境变量引用。本机连接、账号和密码写入被 Git 忽略的 `server/application-dev.local.yml`；首次使用从 `server/application-dev.local.example.yml` 复制。
 - 前端环境文件位于 `app/env/`。当前工作区实际保留 `.env`/`.env.example` 及本机忽略的 mode 文件；使用前应以该目录实际文件为准，不能假设每个 mode 都有 `.example` 文件。
 
 ## 数据库与依赖
 
 Flyway 由应用启动执行，位置为 `classpath:db/migration`，当前仓库包含 V1–V4。开发 Profile 明确关闭 `baseline-on-migrate`；`application.yml` 的默认值不能替代真实环境的迁移历史检查。Redis 临时 Key 必须有 TTL，Sa-Token 会话和验证码 Key 使用 `haji:` 命名空间；禁止 `FLUSHALL`/`FLUSHDB`。MinIO 只能通过 `MinioStorageService` 访问，业务代码不保存永久 URL。
 
-生产环境必须通过环境变量提供数据库、Redis、MinIO、CORS、微信和 H5 RSA 私钥等配置；生产配置中的 `GENERATE` 仅是兜底值，不能作为生产密钥策略。真实凭证只放本地忽略文件或部署密钥系统，不能进入文档、命令和日志。
+dev 环境可在 `server/application-dev.local.yml` 配置数据库 URL/账号/密码、Redis、MinIO、CORS、微信和 H5 RSA 私钥；该文件受 `.gitignore` 保护，提交前仍需检查 Git 状态。生产环境必须通过环境变量提供同类配置；生产配置中的 `GENERATE` 仅是兜底值，不能作为生产密钥策略。真实凭证不能进入被跟踪文件、文档、命令和日志。
 
 生产后端文件日志配置为 `/home/hahaen/log/haji`。Docker Compose 将该宿主机目录 bind mount 到容器内同一路径；通过 Jenkins 使用仓库中的 `docker-compose.prod.yml` 部署后，可直接在宿主机查看该目录。首次启用挂载前，先备份需要保留的旧容器内日志，因为挂载会遮住容器原目录内容。应用控制台日志也可通过 `docker logs haji-server` 查看。
 

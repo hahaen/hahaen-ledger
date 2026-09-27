@@ -13,5 +13,9 @@ export default defineConfig(({ mode }) => {
     envDir,
     base: '/haji/',
     plugins: [uni()],
+    server: {
+      port: 5180,
+      strictPort: true,
+    },
   }
 })

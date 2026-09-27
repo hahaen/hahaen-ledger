@@ -16,7 +16,7 @@
 - MySQL 8、Redis 7.4、MinIO
 - 微信开发者工具（小程序构建产物导入 `app/dist/build/mp-weixin`）
 
-当前仓库实际使用 `server/src/main/resources/application-dev.yml` 作为 `dev` Profile 配置；该文件会从运行目录下可选加载被 Git 忽略的 `server/application-dev.local.yml`，模板为 `server/application-dev.local.example.yml`。真实数据库、Redis、MinIO、CORS、H5 RSA 私钥和微信配置应通过环境变量或本地忽略配置覆盖，不能提交真实凭证。H5 使用账号/密码/验证码认证；微信小程序使用后端 code2Session 自动登录。
+当前仓库使用 `server/src/main/resources/application-dev.yml` 作为 `dev` Profile 的安全默认配置，并从运行目录可选加载被 Git 忽略的 `server/application-dev.local.yml`。首次使用时，在仓库根目录执行 `cp server/application-dev.local.example.yml server/application-dev.local.yml`，再只在本地文件填写数据库、Redis、MinIO 等连接和账号密码；也可通过环境变量覆盖。禁止将本地文件或真实凭证提交到 Git。H5 使用账号/密码/验证码认证；微信小程序使用后端 code2Session 自动登录。
 
 ## 后端启动
 

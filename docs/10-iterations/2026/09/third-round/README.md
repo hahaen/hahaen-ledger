@@ -153,3 +153,8 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 ## 2026-09-20 追加：微信小程序个人中心密码加密兼容
 
 个人中心在微信小程序缺少浏览器 Web Crypto 时改由平台工具层生成同规格 RSA-OAEP/SHA-256 密文，随机种子只来自 `wx.getRandomValues`，不降级为明文或弱随机数。专测 2/2、TypeScript、H5/微信小程序生产构建、后端 53/53 和产物静态核对为 PASS；全量前端回归因 2 项既有 mine 模板断言失败为 PARTIAL；真实微信首次设置/修改密码及数据库落库为 NOT_RUN。详细记录见 `../wechat-mini-password-encryption/`。
+
+
+## 2026-09-27 追加：本地 dev 连接凭证隔离
+
+`application-dev.yml` 改为环境变量和无凭证默认配置，本机账号密码放入 Git 忽略的 `server/application-dev.local.yml`，模板为 `server/application-dev.local.example.yml`。静态核对结果为 PASS；Maven 测试因本机仅有 Java 17.0.3、项目要求 Java 25 而于编译阶段 BLOCKED，应用启动以及 MySQL/Redis/MinIO 连接为 NOT_RUN。明细见 `../local-dev-credentials/README.md`。

@@ -1,3 +1,4 @@
+- [2026-09 本地 dev 连接凭证隔离](2026/09/local-dev-credentials/README.md)：将个人连接与账号密码转入 Git 忽略的本机配置文件。
 # 10｜迭代档案
 
 - [2026-09 Jenkins 与 Docker Compose 部署脚本](2026/09/jenkins-compose-deployment/README.md)：为前后端任务提供 SSH/Compose 部署基础。

@@ -1,18 +1,18 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 spring:
   config:
     # 兼容从 server 目录、项目根目录以及 IntelliJ IDEA 启动。
     import: optional:file:./application-dev.local.yml,optional:file:./server/application-dev.local.yml
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/haji_dev?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_general_ci&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
-    username: root
-    password: root
+    url: ${MYSQL_URL:jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:haji_dev}?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_general_ci&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${MYSQL_USERNAME:}
+    password: ${MYSQL_PASSWORD:}
   data:
     redis:
-      host: 127.0.0.1
-      port: 6379
-      password:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
   flyway:
     enabled: true
     baseline-on-migrate: false
@@ -20,19 +20,19 @@ hahaen:
   auth:
     password-rsa-private-key: ${H5_PASSWORD_RSA_PRIVATE_KEY:GENERATE}
   cors:
-    allowed-origins: http://localhost:5173
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
   wechat:
     app-id: ${WECHAT_APP_ID:local-dev}
     app-secret: ${WECHAT_APP_SECRET:}
     login-enabled: ${WECHAT_LOGIN_ENABLED:false}
   minio:
-    endpoint: http://127.0.0.1:9000
-    access-key: root
-    secret-key: rootroot
-    bucket: haji-dev
+    endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
+    access-key: ${MINIO_ACCESS_KEY:}
+    secret-key: ${MINIO_SECRET_KEY:}
+    bucket: ${MINIO_BUCKET:haji-dev}
 logging:
   file:
-    path: D:/github/log/haji
+    path: /Users/hahaen/mi/github
   level:
     root: INFO
     com.hahaen.ledger: INFO

@@ -782,3 +782,13 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 | DEV API、数据库密码落库 | NOT_RUN | 未连接真实 DEV 会话和数据库执行资料保存或改密，不宣称 BCrypt 落库闭环。 |
 
 完整档案：[wechat-mini-password-encryption](../10-iterations/2026/09/wechat-mini-password-encryption/README.md)。
+
+
+## 2026-09-27：本地 dev 凭证配置隔离
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 跟踪配置凭证隔离 | PASS（静态） | dev Profile 将数据库、Redis、MinIO 等连接凭证改为环境变量/本地覆盖；本机配置文件由 `.gitignore` 忽略。 |
+| 本地模板 | PASS（静态） | `server/application-dev.local.example.yml` 仅含占位符，并记录复制路径。 |
+| Maven 测试 | BLOCKED | `mvn test -B -Dstyle.color=never` 编译阶段因当前 JDK 17.0.3 不支持发行版本 25 而失败；测试用例未运行。 |
+| 应用启动及基础设施连接 | NOT_RUN | 本轮未启动 Spring Boot，也未连接 MySQL、Redis 或 MinIO。 |

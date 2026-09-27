@@ -544,3 +544,8 @@ PASS：恢复首页最近记账日期行的设计稿边距、字号和单行收�
 - BLOCKED：项目无 lint script。
 - NOT_RUN：微信开发者工具/真机首次设置及修改密码、真实 DEV API 和数据库 BCrypt 落库验收。
 - 完整档案：`docs/10-iterations/2026/09/wechat-mini-password-encryption/`。
+
+
+## 2026-09-27 追加：本地 dev 连接凭证隔离
+
+`application-dev.yml` 已去除数据库、Redis、MinIO 账号密码默认值，连接参数改为环境变量并允许加载被 Git 忽略的 `server/application-dev.local.yml`；示例文件只包含占位符。静态配置与忽略规则核对为 PASS。`mvn test` 在 Java 17.0.3 环境中因项目要求 Java 25 而于编译阶段 BLOCKED，测试用例未运行；DEV 启动及真实基础设施连接为 NOT_RUN，不能据此宣称运行闭环。详细记录见 `../10-iterations/2026/09/local-dev-credentials/README.md`。
