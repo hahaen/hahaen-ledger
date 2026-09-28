@@ -1,6 +1,6 @@
 # 当前验证矩阵
 
-更新日期：2026-09-20。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
+更新日期：2026-09-28。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
 
 ## 2026-09-20：正式 MinIO 预签名 PUT 代理修复
 
@@ -805,3 +805,19 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 | 本地模板 | PASS（静态） | `server/application-dev.local.example.yml` 仅含占位符，并记录复制路径。 |
 | Maven 测试 | BLOCKED | `mvn test -B -Dstyle.color=never` 编译阶段因当前 JDK 17.0.3 不支持发行版本 25 而失败；测试用例未运行。 |
 | 应用启动及基础设施连接 | NOT_RUN | 本轮未启动 Spring Boot，也未连接 MySQL、Redis 或 MinIO。 |
+
+## 2026-09-28：独立物品管理
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 物品独立域/生命周期/权限/幂等/成本单测 | PASS | 11项新后端单测；购买当天、闰日、零元、盈利、退役冻结、删除审计和重试。 |
+| 真实DEV HTTP与数据库闭环 | PASS | V6已执行；Flyway/information_schema/Entity 22列一致；真实RSA登录、6并发重复创建、跨用户拒绝、退役/删除与记账零影响。隔离合成数据已清理。 |
+| 前端回归/类型/双端构建 | PASS | 82/82、vue-tsc、H5及mp-weixin成功。 |
+| H5只读视觉 | PASS | 320/375/414无横向溢出；列表、折线、表单失败保留和确认弹层；evidence中的PNG和JSON。 |
+| 后端打包 | PASS | Java25 -DskipTests package；仅打包证据。 |
+| 完整后端回归 | FAIL | 65项中63通过、1旧LoggingProfileConfigTest日志目录断言失败、1真实DEV测试默认跳过。真实DEV测试已显式另跑通过。 |
+| 真实H5添加/退役 | PASS | 正式H5构建在隔离DEV会话下，从页面添加399.99元物品并以100元售价退役，详情成本299.99元、汇总归零及退役条目刷新；dev-ui.json与真实截图。临时服务/合成数据已清理。 |
+| 微信工具/真机、真实H5删除按钮提交 | NOT_RUN | 微信仅构建；删除API与弹层取消已验证，真实页面删除未提交。 |
+| 整体客户端闭环 | PARTIAL | 剩余微信工具/真机、真实H5删除按钮提交与旧日志测试问题。无本轮外部BLOCKED。 |
+
+详见 [item-lifecycle](../10-iterations/2026/09/item-lifecycle/README.md)。

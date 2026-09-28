@@ -1,0 +1,60 @@
+{
+  "scope": "只读视觉夹具，真实DEV API另有独立验证",
+  "status": "PASS",
+  "checks": [
+    {
+      "width": 320,
+      "contentWidth": 320,
+      "navCount": 5,
+      "overflowing": 0,
+      "viewport": 320
+    },
+    {
+      "width": 375,
+      "contentWidth": 375,
+      "navCount": 5,
+      "overflowing": 0,
+      "viewport": 375
+    },
+    {
+      "width": 414,
+      "contentWidth": 414,
+      "navCount": 5,
+      "overflowing": 0,
+      "viewport": 414
+    },
+    {
+      "page": "retired-detail",
+      "width": 320,
+      "contentWidth": 320,
+      "name": "旧款相机",
+      "overflowing": 0,
+      "viewport": 320
+    },
+    {
+      "page": "retired-detail",
+      "width": 375,
+      "contentWidth": 375,
+      "name": "旧款相机",
+      "overflowing": 0,
+      "viewport": 375
+    },
+    {
+      "page": "retired-detail",
+      "width": 414,
+      "contentWidth": 414,
+      "name": "旧款相机",
+      "overflowing": 0,
+      "viewport": 414
+    }
+  ],
+  "interactions": [
+    "新增必填校验",
+    "只读写入拒绝后保留表单",
+    "在役详情折线绘制",
+    "退役表单",
+    "删除确认取消",
+    "退役筛选",
+    "负成本详情"
+  ]
+}

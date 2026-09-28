@@ -29,3 +29,7 @@
 ## 关联说明
 
 表分类和主表/关联表的判断见 [`table-classification.md`](table-classification.md)。所有业务表统一使用 `utf8mb4` 字符集和 `utf8mb4_general_ci` 排序规则。新增字段时需要同时核对 Migration、Entity、DTO/VO、TypeScript、测试和迭代档案。
+
+## personal_item（2026-09-28）
+
+V6新增独立物品主表，22列（12个身份/业务/幂等字段+10个正式审计字段），Entity继承BaseAuditEntity。用户外键，无账本/账户/账单外键；金额使用BIGINT分，日期DATE，状态ACTIVE/RETIRED。创建键(user_id,create_key)唯一、ascii_bin大小写精确比较，创建摘要create_hash用于退役后原请求重试。退役和删除键只绑定目标物品操作，不能用于重新退役或复活已删除记录。详情/统计排除deleted非0；删除显式写删除和更新审计。V6已在本机DEV配置指向的haji_dev执行，Flyway、information_schema与Entity逐列集合/审计默认值已验证。证据见 [dev-api.json](../10-iterations/2026/09/item-lifecycle/evidence/dev-api.json)。不得修改已执行V6。

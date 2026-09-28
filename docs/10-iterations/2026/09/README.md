@@ -55,3 +55,5 @@
 - [profile-avatar-local-preview](profile-avatar-local-preview/README.md)：个人中心头像选择后立即本地预览，点击保存才关联当前头像（2026-09-12）。
 - [profile-back-to-mine](profile-back-to-mine/README.md)：个人中心返回固定进入“我的”页（2026-09-12）。
 - [profile-save-auto-return](profile-save-auto-return/README.md)：个人中心保存成功后展示 0.5 秒提示并自动返回“我的”页（2026-09-12）。
+
+- [item-lifecycle](item-lifecycle/README.md)：独立物品五导航、生命周期、成本图及真实DEV验收（2026-09-28）。

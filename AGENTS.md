@@ -6,10 +6,10 @@
 
 哈记账是单用户、单账本、人民币记账应用，当前主要目标是微信小程序，同时保留 H5 构建能力。后端使用 Java 25、Spring Boot 3.5、MyBatis-Plus、Sa-Token、Flyway、MySQL 8、Spring Data Redis 和 MinIO；前端使用 Vue 3、TypeScript、uni-app、Vite、pnpm。
 
-- `server/src/main/java` 按 auth、user、book、account、transaction、asset、home、calendar、file 分域；Controller 只做协议适配，Service 承担业务与事务，Mapper 负责数据访问。
+- `server/src/main/java` 按 auth、user、book、account、transaction、asset、home、calendar、file、item 分域；Controller 只做协议适配，Service 承担业务与事务，Mapper 负责数据访问。
 - `server/src/main/resources/db/migration/` 是正式 Schema 的唯一来源；`sql/` 只放人工审计 SQL。
 - `app/src/pages` 是页面，`components` 是复用组件，`stores` 是跨页状态，`utils/api.ts` 是唯一 API 入口。
-- 底部导航只能是：首页、日历、资产、我的。统计、分类、凭证/OCR、预算、多人账本等首版能力必须明确显示未开放。
+- 底部导航为：首页、日历、资产、物品、我的。物品为按用户归属的独立功能，不关联账本、账户余额或记账。统计、分类、凭证/OCR、预算、多人账本等首版能力必须明确显示未开放。
 
 ## 需求与修改流程
 

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-defineProps<{ active: 'home' | 'calendar' | 'assets' | 'mine' }>()
+defineProps<{ active: 'home' | 'calendar' | 'assets' | 'items' | 'mine' }>()
 const items = [
   { key: 'home', label: '首页', icon: '⌂', path: 'index/index' },
   { key: 'calendar', label: '日历', icon: '◷', path: 'calendar/calendar' },
   { key: 'assets', label: '资产', icon: '▣', path: 'assets/assets' },
+  { key: 'items', label: '物品', icon: '◇', path: 'items/items' },
   { key: 'mine', label: '我的', icon: '◎', path: 'mine/mine' },
 ]
 // 页面已提供自定义导航，隐藏平台导航以避免重叠。

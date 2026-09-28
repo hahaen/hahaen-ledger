@@ -8,8 +8,8 @@
 - 跨页状态放在 `app/src/stores/ledger.ts`，复用 UI 放在 `app/src/components`。
 - 业务请求统一经 `app/src/utils/api.ts`；头像上传经 `app/src/utils/file.ts`，页面不得直接拼接后端请求或 MinIO 凭证。
 - H5 头像上传在 `utils/file.ts` 先校验 10MB 限额、以文件头识别 JPEG/PNG/WebP/GIF 实际类型并计算 SHA-256，再申请上传授权；不信任扩展名或浏览器 MIME。后端返回 `READY` 时直接取既有短时预览地址，禁止重复 PUT 同一图片。
-- `pages.json` 的底部导航固定为：首页、日历、资产、我的。记账、详情和账户详情是二级页面。
-- `BottomNav` 必须使用四项等宽的连续底栏；导航按钮显式清除平台默认边框、圆角、阴影和背景，仅当前项图标使用选中态薄荷绿背景。
+- `pages.json` 的底部导航固定为：首页、日历、资产、物品、我的。记账、详情和账户详情是二级页面。
+- `BottomNav` 必须使用五项等宽的连续底栏；导航按钮显式清除平台默认边框、圆角、阴影和背景，仅当前项图标使用选中态薄荷绿背景。
 - 微信平台差异使用条件编译；小程序登录分支调用 `uni.login` 后请求 `/api/app/auth/wechat-mini/login`，H5 继续使用账号密码认证。
 - 微信小程序在 `pages.json` 的全部页面通过 `app/src/utils/wechatShare.ts` 注册 `onShareAppMessage`，右上角转发统一回到首页且不携带当前页面、账单或用户参数；H5 不注册该生命周期。转发专测直接读取页面清单，新增页面未注册时应失败。
 - 新增/编辑记账页的主体内容由 `.entry-content` 独立滚动，数字键盘保持固定；H5 明确使用 `flex:1 1 0`、`height:0`、`overflow-y:auto` 和 iOS 惯性触摸滚动，避免手机视口下 flex 子项无法触摸上滑；小程序滚动规则保持原样。
@@ -57,3 +57,7 @@ uni-app H5 会把模板 `input[type=file]` 编译为普通文本输入，头像�
 ## 首页交互修正（2026-09-08）
 
 首页“当前年/月 · 日均消费”为普通文字，不提供月份选择；最近记账右侧不显示刷新按钮。年月与查询范围在加载时按当前日期更新。类型检查、H5 构建 PASS。档案：docs/10-iterations/2026/09/home-static-month/README.md。
+
+## 物品页（2026-09-28）
+
+items一级页位于资产右侧，item-detail为二级页。通过api.ts的itemApi调用，独立items.ts类型/日期/金额校验，不改变ledger记账状态。ItemEditor复用CenterModal创建/退役，保存失败保留数据及同一幂等键，修改请求内容则更换键。ItemCostChart采用uni canvas、日期等距横轴、人民币/天纵轴，最多31个历史采样点，resize时重绘。列表onShow刷新，筛选和分页响应序列保护；失败重试保持原分页操作。详情加载失败不显示操作按钮。

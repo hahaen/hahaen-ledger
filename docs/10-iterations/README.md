@@ -39,3 +39,5 @@
 
 - [微信小程序全页面自定义导航对齐](2026/09/wechat-custom-navigation-alignment/README.md)：修复小程序页头与微信胶囊按钮的位置及行高。
 - [微信小程序转发](2026/09/wechat-mini-share/README.md)：为全部小程序页面接入微信右上角转发，统一安全地回到首页。
+
+- [2026-09-28 独立物品管理](2026/09/item-lifecycle/README.md)：五导航、成本口径、V6迁移、真实DEV接口和视觉证据。

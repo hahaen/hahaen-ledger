@@ -3,10 +3,12 @@ import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { resolve, extname, sep } from 'node:path'
+import { loadEnv } from 'vite'
 
 const root = fileURLToPath(new URL('../dist/build/h5/', import.meta.url))
 const prototype = fileURLToPath(new URL('../../哈记账小程序_原型设计稿/', import.meta.url))
 const port = 18761
+const configuredApi = loadEnv('production', fileURLToPath(new URL('../env/', import.meta.url)), 'VITE_').VITE_API_BASE_URL?.replace(/\/+$/, '') || 'http://127.0.0.1:8080'
 const accounts = [
   { id: 1, name: '银行卡', kind: 'FUND', balanceCents: 860000, creditLimitCents: 0, includedInNetAsset: true, status: 'ACTIVE' },
   { id: 2, name: '微信', kind: 'FUND', balanceCents: 428000, creditLimitCents: 0, includedInNetAsset: true, status: 'ACTIVE' },
@@ -25,13 +27,35 @@ const totals = rows => {
   const sum = type => rows.filter(row => row.type === type).reduce((total, row) => total + row.amountCents, 0)
   return { expenseCents: sum('EXPENSE'), incomeCents: sum('INCOME'), balanceCents: sum('INCOME') - sum('EXPENSE') }
 }
+const itemFixtures = [
+  { id: '101', name: '降噪耳机', priceCents: 189900, purchasedOn: '2026-03-12', status: 'ACTIVE', retiredOn: null, resaleCents: null, serviceDays: 201, netCostCents: 189900, dailyCostCents: 189900 / 201 },
+  { id: '102', name: '咖啡机 · 清晨的陪伴', priceCents: 329900, purchasedOn: '2026-07-20', status: 'ACTIVE', retiredOn: null, resaleCents: null, serviceDays: 71, netCostCents: 329900, dailyCostCents: 329900 / 71 },
+  { id: '103', name: '旧款相机', priceCents: 300000, purchasedOn: '2025-09-29', status: 'RETIRED', retiredOn: '2026-09-28', resaleCents: 320000, serviceDays: 365, netCostCents: -20000, dailyCostCents: -20000 / 365 },
+]
 const contentTypes = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml' }
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${port}`)
-  const pathname = decodeURIComponent(url.pathname)
+  const pathname = decodeURIComponent(url.pathname).replace(/^\/haji(?=\/)/, '')
   const json = (data, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ code: status === 200 ? 0 : status, message: status === 200 ? '视觉验收数据' : '视觉验收环境不执行写入', data })) }
   if (pathname.startsWith('/api/')) {
     if (req.method !== 'GET') { json(null, 503); return }
+    if (req.method !== 'GET') { json(null, 405); return }
+    if (pathname === '/api/app/items') {
+      const status = url.searchParams.get('status') || 'ACTIVE'
+      const items = itemFixtures.filter(item => status === 'ALL' || item.status === status)
+      json({ asOf: '2026-09-28', totalAssetsCents: 519800, totalDailyCostCents: 189900 / 201 + 329900 / 71, activeCount: 2, retiredCount: 1, items, total: items.length, page: 1, pageSize: 20, hasMore: false }); return
+    }
+    if (/^\/api\/app\/items\/\d+$/.test(pathname)) {
+      const item = itemFixtures.find(item => item.id === pathname.split('/').pop())
+      if (!item) { json(null, 404); return }
+      const start = new Date(`${item.purchasedOn}T00:00:00Z`)
+      const costHistory = Array.from({ length: 31 }, (_, i) => {
+        const day = 1 + Math.floor(i * (item.serviceDays - 1) / 30)
+        const date = new Date(start.getTime() + (day - 1) * 86400000).toISOString().slice(0, 10)
+        return { date, day, dailyCostCents: (i === 30 ? item.netCostCents : item.priceCents) / day }
+      })
+      json({ item, asOf: '2026-09-28', costHistory }); return
+    }
     if (pathname === '/api/app/home/summary') { json({ month: url.searchParams.get('month'), dailyExpenseCents: 8640, expenseCents: 259200, incomeCents: 850000, balanceCents: 590800, transactions }); return }
     if (pathname === '/api/app/accounts') { json(accounts); return }
     if (pathname === '/api/app/assets/overview') { json({ totalAssetsCents: 1520000, totalLiabilitiesCents: 252000, netAssetsCents: 1268000, accounts }); return }
@@ -61,7 +85,7 @@ const server = createServer(async (req, res) => {
     if (!path.startsWith(resolve(base) + sep) && pathname !== '/哈记账.png') { res.writeHead(403).end(); return }
     let data = await readFile(path)
     const extension = extname(path)
-    if (!reference && extension === '.js') data = Buffer.from(data.toString().replaceAll('http://127.0.0.1:8080', `http://127.0.0.1:${port}`))
+    if (!reference && extension === '.js') data = Buffer.from(data.toString().replaceAll(configuredApi, `http://127.0.0.1:${port}`))
     if (!reference && extension === '.html') data = Buffer.from(data.toString().replace('<head>', `<head><script>localStorage.setItem('auth-token','visual-fixture-only');</script>`))
     res.writeHead(200, { 'Content-Type': contentTypes[extension] || 'application/octet-stream', 'Cache-Control': 'no-store', 'Content-Security-Policy': "connect-src 'self'" })
     res.end(data)

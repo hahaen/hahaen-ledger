@@ -28,3 +28,9 @@ node --test tests/entry.test.mjs tests/page-flows.test.mjs 通过 9 项前端回
 ## 头像对象 Key 与去重（2026-09-11）
 
 `AppFileServiceTest` 覆盖同一用户、同一 SHA-256 的已就绪头像直接复用既有对象 Key 且不插入新文件元数据。该单测不替代真实 MySQL/Flyway、MinIO PUT、服务端回读和 H5 已登录会话验证；这些项目必须保持独立证据。
+
+## 独立物品验收（2026-09-28）
+
+ItemServiceTest覆盖11项核心金额/日期/冻结/用户隔离/幂等/删除审计测试。ItemDevIntegrationTest默认跳过，显式-Ditem.dev.verify=true连接DEV依赖，通过真实HTTP RSA登录与6路并发创建，核对Flyway、information_schema与Entity。合成用户/物品在finally按精确ID清理，会话logout；不读取真实用户密码、不记录Token或验证码。H5只读夹具与真实API证据分开，微信构建不替代工具/真机。完整记录见 [物品验收](../10-iterations/2026/09/item-lifecycle/09-verification.md)。
+
+真实H5验收可显式追加-Ditem.ui.verify=true：ItemUiVerifier只在测试代码中启用localhost短期桥接，真实会话只驻留内存；手工从浏览器新增/退役后通过target/item-ui-complete结束，测试继续验证物品已退役和记账零影响并清理。默认测试不启动此服务，不输出/保存凭证。已执行证据见dev-ui.json；真实页面删除按钮提交和微信工具/真机仍NOT_RUN。

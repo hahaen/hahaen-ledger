@@ -553,3 +553,19 @@ PASS：恢复首页最近记账日期行的设计稿边距、字号和单行收�
 ## 2026-09-27 追加：本地 dev 连接凭证隔离
 
 `application-dev.yml` 已去除数据库、Redis、MinIO 账号密码默认值，连接参数改为环境变量并允许加载被 Git 忽略的 `server/application-dev.local.yml`；示例文件只包含占位符。静态配置与忽略规则核对为 PASS。`mvn test` 在 Java 17.0.3 环境中因项目要求 Java 25 而于编译阶段 BLOCKED，测试用例未运行；DEV 启动及真实基础设施连接为 NOT_RUN，不能据此宣称运行闭环。详细记录见 `../10-iterations/2026/09/local-dev-credentials/README.md`。
+
+## 2026-09-28：独立物品管理
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 物品独立域/生命周期/权限/幂等/成本单测 | PASS | 11项新后端单测；购买当天、闰日、零元、盈利、退役冻结、删除审计和重试。 |
+| 真实DEV HTTP与数据库闭环 | PASS | V6已执行；Flyway/information_schema/Entity 22列一致；真实RSA登录、6并发重复创建、跨用户拒绝、退役/删除与记账零影响。隔离合成数据已清理。 |
+| 前端回归/类型/双端构建 | PASS | 82/82、vue-tsc、H5及mp-weixin成功。 |
+| H5只读视觉 | PASS | 320/375/414无横向溢出；列表、折线、表单失败保留和确认弹层；evidence中的PNG和JSON。 |
+| 后端打包 | PASS | Java25 -DskipTests package；仅打包证据。 |
+| 完整后端回归 | FAIL | 65项中63通过、1旧LoggingProfileConfigTest日志目录断言失败、1真实DEV测试默认跳过。真实DEV测试已显式另跑通过。 |
+| 真实H5添加/退役 | PASS | 正式H5构建在隔离DEV会话下，从页面添加399.99元物品并以100元售价退役，详情成本299.99元、汇总归零及退役条目刷新；dev-ui.json与真实截图。临时服务/合成数据已清理。 |
+| 微信工具/真机、真实H5删除按钮提交 | NOT_RUN | 微信仅构建；删除API与弹层取消已验证，真实页面删除未提交。 |
+| 整体客户端闭环 | PARTIAL | 剩余微信工具/真机、真实H5删除按钮提交与旧日志测试问题。无本轮外部BLOCKED。 |
+
+详见 [item-lifecycle](../10-iterations/2026/09/item-lifecycle/README.md)。
