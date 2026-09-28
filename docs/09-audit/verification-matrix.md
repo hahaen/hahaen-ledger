@@ -750,6 +750,19 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 
 完整档案：[tap-feedback](../10-iterations/2026/09/tap-feedback/README.md)。
 
+## 2026-09-28：移除全局点击振动并保留金额键盘振动
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 普通按钮与可点击控件 | PASS（代码/静态） | H5 全局 pointer 监听、页面级小程序触摸捕获及无效标记已移除；共享 CSS 按压缩放保持。 |
+| 记账金额键盘振动 | PASS（代码/构建产物静态） | H5/微信振动 API 仅在计算器专用模块，由键盘按键触摸触发；禁用按键跳过。 |
+| 前端 Node 回归 | PASS | 76/76。 |
+| TypeScript | PASS | `pnpm run typecheck`。 |
+| H5/微信小程序生产构建 | PASS（仅构建） | `pnpm run build:h5`、`pnpm run build:mp-weixin`。 |
+| H5 移动浏览器/微信开发者工具或真机实际振动 | NOT_RUN | 未执行设备运行态触摸验收。 |
+
+详见 `docs/10-iterations/2026/09/global-click-vibration-remove/`。
+
 ## 2026-09-20：微信小程序转发
 
 | 范围 | 状态 | 证据/限制 |

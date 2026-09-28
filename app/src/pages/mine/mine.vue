@@ -7,7 +7,6 @@ import { currentAvatar } from '../../utils/file'
 import { request } from '../../utils/api'
 import { staticResource } from '../../utils/staticResource'
 import { useLedger } from '../../stores/ledger'
-import { handleMpTouchStart } from '../../utils/tapFeedback'
 import { registerWechatShare } from '../../utils/wechatShare'
 
 type Profile = {
@@ -117,7 +116,7 @@ onShow(() => {
 </script>
 
 <template>
-  <view class="page mine-page" @touchstart.capture="handleMpTouchStart">
+  <view class="page mine-page">
     <PageHeader />
 
     <view class="profile-card">
@@ -125,7 +124,7 @@ onShow(() => {
         <image :src="avatarUrl" mode="aspectFill" />
       </view>
       <view class="profile-copy">
-        <text class="profile-name" :class="{ 'profile-login-name': !loggedIn }" :role="loggedIn ? undefined : 'button'" :data-tap-feedback="!loggedIn ? 'true' : undefined" :aria-label="loggedIn ? undefined : '登录'" @click="!loggedIn && openLogin()">{{ loggedIn ? nickname : '登录哈记账' }}</text>
+        <text class="profile-name" :class="{ 'profile-login-name': !loggedIn }" :role="loggedIn ? undefined : 'button'"  :aria-label="loggedIn ? undefined : '登录'" @click="!loggedIn && openLogin()">{{ loggedIn ? nickname : '登录哈记账' }}</text>
         <text v-if="loading || avatarStatus" class="profile-status">{{ loading ? '正在加载个人资料…' : avatarStatus }}</text>
       </view>
     </view>
@@ -138,18 +137,18 @@ onShow(() => {
     <view class="settings-group">
       <text class="settings-label">更多</text>
       <view class="settings-list">
-            <button class="setting-item" data-tap-feedback="true" aria-label="个人中心" @click="openProfile">
+            <button class="setting-item" aria-label="个人中心" @click="openProfile">
           <text class="setting-icon setting-icon-profile">个</text>
           <text class="setting-text">个人中心</text>
           <text class="setting-arrow">›</text>
         </button>
-            <button class="setting-item" data-tap-feedback="true" @click="openHelp">
+            <button class="setting-item" @click="openHelp">
           <text class="setting-icon setting-icon-help">?</text>
           <text class="setting-text">关于与帮助</text>
           <text class="setting-arrow">›</text>
         </button>
         <!-- #ifdef H5 -->
-            <button v-if="loggedIn" class="setting-item logout-item" data-tap-feedback="true" :disabled="loggingOut" @click="openLogout">
+            <button v-if="loggedIn" class="setting-item logout-item" :disabled="loggingOut" @click="openLogout">
           <text class="setting-icon logout-icon" style="transform: translateY(-3px);">⎆</text>
           <text class="setting-text">{{ loggingOut ? '退出中…' : '退出登录' }}</text>
           <text class="setting-arrow">›</text>
@@ -164,8 +163,8 @@ onShow(() => {
         <text class="account-delete-title">退出登录？</text>
         <text class="account-delete-copy">退出后需要重新登录，确定退出当前账号吗？</text>
         <view class="account-delete-actions">
-          <button data-tap-feedback="true" class="account-delete-cancel" :disabled="loggingOut" @click="closeLogout">取消</button>
-          <button data-tap-feedback="true" class="account-delete-confirm" :disabled="loggingOut" @click="confirmLogout">{{ loggingOut ? '退出中…' : '退出登录' }}</button>
+          <button class="account-delete-cancel" :disabled="loggingOut" @click="closeLogout">取消</button>
+          <button class="account-delete-confirm" :disabled="loggingOut" @click="confirmLogout">{{ loggingOut ? '退出中…' : '退出登录' }}</button>
         </view>
       </view>
     </view>

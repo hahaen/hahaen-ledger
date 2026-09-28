@@ -7,7 +7,6 @@ import { request } from '../../utils/api'
 import { encryptPassword } from '../../utils/passwordCrypto'
 import { useLedger } from '../../stores/ledger'
 import { staticResource } from '../../utils/staticResource'
-import { handleMpTouchStart } from '../../utils/tapFeedback'
 import { registerWechatShare } from '../../utils/wechatShare'
 
 type Profile = {
@@ -275,11 +274,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <view class="page profile-page" @touchstart.capture="handleMpTouchStart">
+  <view class="page profile-page">
     <NativeNavigation variant="help" title="个人中心" back-label="返回我的" :page-top-extra="20" @back="backToMine" />
 
     <view v-if="loading" class="profile-loading">正在加载个人资料…</view>
-    <view v-else-if="loadError" class="profile-error"><text>{{ loadError }}</text><button data-tap-feedback="true" class="text-button" @click="loadProfile">重新加载</button></view>
+    <view v-else-if="loadError" class="profile-error"><text>{{ loadError }}</text><button class="text-button" @click="loadProfile">重新加载</button></view>
     <view v-else class="profile-content">
       <view class="profile-hero">
         <text class="profile-eyebrow">YOUR PROFILE</text>
@@ -289,7 +288,7 @@ onBeforeUnmount(() => {
       </view>
 
       <view class="profile-form-card">
-        <button data-tap-feedback="true" type="button" class="profile-avatar-row" :disabled="uploading || saving" @click="handleAvatarClick">
+        <button type="button" class="profile-avatar-row" :disabled="uploading || saving" @click="handleAvatarClick">
           <image :src="avatarUrl" mode="aspectFill" />
           <view class="profile-avatar-copy"><text>头像 <text class="profile-required">必填</text></text><text>{{ uploading ? '正在上传…' : pendingAvatar ? '新头像已准备，保存后生效' : '点击更换头像' }}</text></view>
           <text class="setting-arrow">›</text>
@@ -307,7 +306,7 @@ onBeforeUnmount(() => {
           <text class="profile-field-label">密码 <text class="profile-required">必填</text></text>
           <view class="profile-password-field">
             <input v-model="firstPassword" class="profile-password-text" :type="firstPasswordVisible ? 'text' : 'password'" :password="!firstPasswordVisible" autocomplete="new-password" placeholder="请输入密码（8-64 位）" maxlength="64" aria-label="密码" />
-            <button data-tap-feedback="true" class="auth-password-toggle" :aria-label="firstPasswordVisible ? '隐藏密码' : '显示密码'" :title="firstPasswordVisible ? '隐藏密码' : '显示密码'" @click="firstPasswordVisible = !firstPasswordVisible">
+            <button class="auth-password-toggle" :aria-label="firstPasswordVisible ? '隐藏密码' : '显示密码'" :title="firstPasswordVisible ? '隐藏密码' : '显示密码'" @click="firstPasswordVisible = !firstPasswordVisible">
               <view class="auth-password-eye" :class="{ visible: firstPasswordVisible }" aria-hidden="true"><view class="auth-password-eye-pupil" /></view>
             </button>
           </view>
@@ -317,8 +316,8 @@ onBeforeUnmount(() => {
     </view>
 
     <view v-if="!loading && !loadError" class="profile-actions">
-      <button data-tap-feedback="true" v-if="passwordConfigured" class="profile-password-action" :disabled="saving || uploading" @click="openPassword">修改密码</button>
-      <button data-tap-feedback="true" class="profile-save-action" :disabled="saving || uploading" @click="saveProfile">{{ saving ? '保存中…' : '保存' }}</button>
+      <button v-if="passwordConfigured" class="profile-password-action" :disabled="saving || uploading" @click="openPassword">修改密码</button>
+      <button class="profile-save-action" :disabled="saving || uploading" @click="saveProfile">{{ saving ? '保存中…' : '保存' }}</button>
     </view>
 
     <view v-if="passwordOpen" class="asset-create-backdrop" @click.self="closePassword" @touchmove.stop.prevent>
@@ -328,11 +327,11 @@ onBeforeUnmount(() => {
         <text class="account-delete-copy">新密码需为 8-64 位字符。{{ accountLocked ? '修改后立即生效。' : '首次设置会同时绑定当前填写的账号。' }}</text>
         <view class="profile-password-input">
           <input v-model="newPassword" class="profile-password-text" :type="modalPasswordVisible ? 'text' : 'password'" :password="!modalPasswordVisible" autocomplete="new-password" placeholder="请输入新密码" maxlength="64" aria-label="新密码" />
-          <button data-tap-feedback="true" class="auth-password-toggle" :aria-label="modalPasswordVisible ? '隐藏密码' : '显示密码'" :title="modalPasswordVisible ? '隐藏密码' : '显示密码'" @click="modalPasswordVisible = !modalPasswordVisible">
+          <button class="auth-password-toggle" :aria-label="modalPasswordVisible ? '隐藏密码' : '显示密码'" :title="modalPasswordVisible ? '隐藏密码' : '显示密码'" @click="modalPasswordVisible = !modalPasswordVisible">
             <view class="auth-password-eye" :class="{ visible: modalPasswordVisible }" aria-hidden="true"><view class="auth-password-eye-pupil" /></view>
           </button>
         </view>
-        <view class="account-delete-actions"><button data-tap-feedback="true" class="account-delete-cancel" :disabled="changingPassword" @click="closePassword">取消</button><button data-tap-feedback="true" class="account-delete-confirm profile-password-confirm" :disabled="changingPassword" @click="confirmPassword">{{ changingPassword ? '修改中…' : '确定修改' }}</button></view>
+        <view class="account-delete-actions"><button class="account-delete-cancel" :disabled="changingPassword" @click="closePassword">取消</button><button class="account-delete-confirm profile-password-confirm" :disabled="changingPassword" @click="confirmPassword">{{ changingPassword ? '修改中…' : '确定修改' }}</button></view>
       </view>
     </view>
 

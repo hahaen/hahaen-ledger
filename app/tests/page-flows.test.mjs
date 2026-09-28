@@ -29,6 +29,7 @@ async function entryPage(ledger, request = async () => ({})) {
     '@dcloudio/uni-app': { onLoad: fn => { hooks.load = fn }, onBackPress() {} },
     '../../components/CenterModal.vue': {}, '../../components/EntryDateTimePicker.vue': {}, '../../components/MoneyDisplay.vue': {}, '../../stores/ledger': { useLedger: () => ledger },
     '../../utils/api': { request }, '../../utils/money': money, '../../utils/entry': entryUtils,
+    '../../utils/calculatorFeedback': { triggerCalculatorFeedback() {} },
     '../../utils/id': { stringId: value => value == null ? '' : String(value) },
   }, uni)
   return { ...page, hooks, events }

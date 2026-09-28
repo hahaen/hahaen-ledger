@@ -12,6 +12,10 @@
 
 本轮新增的 H5 我的页及会话持久化修复审计结论已同步到 `docs/09-audit/verification-matrix.md` 和 `docs/09-audit/third-round-audit.md`；未执行的真实基础设施联调仍按 BLOCKED/NOT_RUN 记录。
 
+## 2026-09-28 追加：移除全局点击振动
+
+普通点击的系统振动已移除，金额键盘轻振动保留；Node 回归 76/76、TypeScript、H5/微信构建和产物静态核对 PASS。真实设备振动验收为 NOT_RUN。详细档案：`../global-click-vibration-remove/`。
+
 ## 2026-09-19 追加：新增记账页 H5 触摸滚动
 
 H5 条件编译样式已为 `.entry-content` 增加 iOS Safari 惯性触摸滚动，微信小程序样式与固定数字键盘未改。自动化测试、构建和 iOS Safari 真机触摸验收均为 NOT_RUN；详细记录见 `../h5-entry-touch-scroll/README.md`。

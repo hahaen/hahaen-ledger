@@ -20,7 +20,10 @@ hahaen:
     app-secret: "<本机小程序 AppSecret；可留空>"
     login-enabled: false
   minio:
-    endpoint: http://127.0.0.1:9000
+    # MinIO API 根地址；不要在 endpoint 中带反向代理路径。
+    endpoint: http://122.51.134.134:9000
+    # 通过公网反向代理访问对象时使用的 URL 前缀。
+    public-url-prefix: https://hahaen.xyz/minio-api
     access-key: "<本机 MinIO Access Key>"
     secret-key: "<本机 MinIO Secret Key>"
     bucket: haji-dev

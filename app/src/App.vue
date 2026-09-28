@@ -1,19 +1,13 @@
 <script setup lang="ts">
 import { onLaunch } from '@dcloudio/uni-app'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useLedger } from './stores/ledger'
 import { setAuthExpiredHandler } from './utils/api'
 import { currentH5Path, H5_LOGIN_PATH, installH5AuthGuard, isH5AuthPath, shouldRedirectAuthenticatedH5UserToHome } from './utils/h5AuthGuard'
-import { installH5TapFeedback } from './utils/tapFeedback'
 const ledger = useLedger()
 const initialized = ref(false)
 const mpLoginError = ref('')
 let mpRecoveryPromise: Promise<void> | undefined
-let removeH5TapFeedback = () => {}
-
-onMounted(() => { removeH5TapFeedback = installH5TapFeedback() })
-onBeforeUnmount(() => removeH5TapFeedback())
-
 // #ifdef MP-WEIXIN
 function redirectMpAuthPageToHome() {
   if (!ledger.state.token) return
@@ -100,7 +94,7 @@ onLaunch(async () => {
   <view v-if="!initialized" class="app-boot" aria-label="正在加载哈记账" />
   <view v-else-if="mpLoginError" class="page app-boot-error">
     <text class="profile-error">{{ mpLoginError }}</text>
-    <button data-tap-feedback="true" class="primary-btn" @click="retryMpLogin">重试微信登录</button>
+    <button class="primary-btn" @click="retryMpLogin">重试微信登录</button>
   </view>
   <slot v-else />
 </template>

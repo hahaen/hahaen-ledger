@@ -24,7 +24,7 @@
 
 ## 交互约束
 
-所有按钮及明确可点击控件共享轻触反馈：prototype.scss 提供两端一致的微小按压缩放，H5 在支持时调用 navigator.vibrate(8)，微信小程序调用 uni.vibrateShort({ type: 'light' })。禁用控件不触发；真实设备振动仍需在 H5 移动浏览器和微信开发者工具/真机分别验收。
+按钮及明确可点击控件通过 prototype.scss 提供两端一致的微小按压缩放，不触发系统振动。金额键盘按键单独保留轻振动：H5 在支持且未启用减少动态效果时调用 navigator.vibrate(8)，微信小程序调用 uni.vibrateShort({ type: 'light' })；禁用按键不触发。真实设备振动仍需在 H5 移动浏览器和微信开发者工具/真机分别验收。
 
 金额格式统一使用 app/src/utils/money.ts：formatYuan() 接收整数分并返回不带货币符号的文本。运行时页面的可视金额统一使用 app/src/components/MoneyDisplay.vue，组件只展示金额数值和必要的正负/文字前缀，不渲染钱币图标；金额输入框同样不附加 ¥。整数金额不展示 .00，有效小数保留两位，数字/字符串/null/undefined 输入必须得到一致且安全的结果。页面禁止自行调用 toFixed、判断 .00 或通过 /100 拼接展示金额。
 

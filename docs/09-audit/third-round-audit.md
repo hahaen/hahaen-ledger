@@ -525,6 +525,10 @@ PASS：恢复首页最近记账日期行的设计稿边距、字号和单行收�
 
 共享样式为按钮、role=button、开关、选择器、链接和资产排序操作增加轻微按压反馈；H5 在浏览器支持时调用轻振动，微信小程序改为各实际页面根节点捕获触摸调用 uni.vibrateShort，不依赖 App slot 冒泡。日历格、资产账户行、未登录昵称和开关补充可识别标记，未改变业务点击回调。前端 Node 回归 60/60、类型检查、H5/微信小程序生产构建为 PASS；H5 移动浏览器和微信开发者工具/真机的真实物理振动仍为 NOT_RUN，详见 docs/10-iterations/2026/09/tap-feedback/README.md。
 
+## 2026-09-28 追加：移除全局点击振动
+
+普通按钮和明确可点击控件不再触发系统振动，`prototype.scss` 的轻微按压缩放保留。H5/微信振动调用已收窄到记账金额键盘的有效按键，禁用按键跳过。前端回归 76/76、TypeScript 检查、H5/微信小程序生产构建及构建产物振动 API 范围核对 PASS；真实移动浏览器和微信工具/真机触摸仍为 NOT_RUN。详见 `docs/10-iterations/2026/09/global-click-vibration-remove/`。
+
 ## 2026-09-20 追加：微信小程序转发
 
 - `app/src/utils/wechatShare.ts` 在 `MP-WEIXIN` 条件下注册 `onShareAppMessage`；`pages.json` 全部 14 个页面统一分享固定标题并回到首页，不携带当前路由、账单或用户隐私参数。H5 不注册该生命周期，未新增后端、数据库或 API。
