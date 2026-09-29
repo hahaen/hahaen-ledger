@@ -222,3 +222,7 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 ## 2026-09-29 追加：物品清单退役行灰底
 
 物品行根据 `RETIRED` 状态显示灰色底色，在役行继续使用白色；不改动列表数据与交互。静态检查、类型检查及 H5/微信小程序构建 PASS；真实页面视觉为 NOT_RUN。详见 [迭代档案](../item-retired-row-background/README.md)。
+
+## 2026-09-29 追加：页面跨端适配复查
+
+H5 Chrome 与微信开发者工具模拟器逐页核对主导航及常用二级页面；修复公共页头、矮屏日历和横屏记账三处布局问题。前端 87/87、类型检查及双端构建 PASS；真机触摸、iOS Safari、全部有数据详情与业务写入 NOT_RUN。完整证据、尺寸和回退范围见 [responsive-pages-followup](../responsive-pages-followup/README.md)。

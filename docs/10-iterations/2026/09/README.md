@@ -50,6 +50,7 @@
 - [tap-feedback](tap-feedback/README.md)：为微信小程序与 H5 的按钮和可点击控件增加轻触反馈（2026-09-20）。
 - [global-click-vibration-remove](global-click-vibration-remove/README.md)：移除全局点击振动，仅保留记账金额键盘振动（2026-09-28）。
 - [global-ui-cross-platform-optimization](global-ui-cross-platform-optimization/README.md)：全局 UI、布局、交互及 H5/微信小程序跨端适配复查（2026-09-16）。
+- [responsive-pages-followup](responsive-pages-followup/README.md)：H5 与微信模拟器逐页复查，修正胶囊页头、矮屏日历和横屏记账布局（2026-09-29）。
 - [calendar-mini-selected-state](calendar-mini-selected-state/README.md)：修复微信小程序日历选中日期不可见的跨端节点渲染问题（2026-09-17）。
 - [mini-color-theme-compatibility](mini-color-theme-compatibility/README.md)：修复微信小程序主题色变量回退导致的多页面颜色与 H5 不一致（2026-09-17）。
 - [profile-cumulative-days-from-first-transaction](profile-cumulative-days-from-first-transaction/README.md)：我的页累计记账天数改按最早有效账单的业务日期统计（2026-09-11）。

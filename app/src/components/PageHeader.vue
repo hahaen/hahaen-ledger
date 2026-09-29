@@ -5,5 +5,5 @@ withDefaults(defineProps<{ subtitle?: string }>(), { subtitle: '记录每一笔�
 </script>
 
 <template>
-  <NativeNavigation variant="brand" :subtitle="subtitle" :page-top-extra="20" />
+  <NativeNavigation variant="brand" :subtitle="subtitle" />
 </template>

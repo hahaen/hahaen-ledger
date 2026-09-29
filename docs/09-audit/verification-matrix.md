@@ -946,3 +946,16 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 | H5/微信真实页面视觉 | NOT_RUN | 尚未打开带退役物品的页面验证实际渲染。 |
 
 详见 [item-retired-row-background](../10-iterations/2026/09/item-retired-row-background/README.md)。
+
+## 2026-09-29：H5 与微信小程序页面高度适配复查
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| H5 五个主页面 | PASS（Chrome 运行画面） | 已登录本地开发页，320×568、375×667、390×844、430×932 与 667×375 逐页读取视口/文档宽度；首页、日历、资产、物品、我的均无横向溢出。日历矮屏记录区可滚动到达。 |
+| 微信五个主页面 | PASS（开发者工具模拟器画面） | 2.02.2608070 中 iPhone 5 与 iPhone 15 Pro Max 浏览首页、日历、资产、物品、我的；公共品牌页头避开胶囊。资产当前为空数据；日历长列表触摸未验。 |
+| 次级页面与弹窗 | PARTIAL | H5 记账、个人中心、帮助、物品详情及小程序 iPhone 5 对应页面已看画面；小程序新增物品弹窗打开并取消。横屏 H5 记账金额和四行键盘可见。未覆盖全部有数据账户/账单详情、系统键盘弹起和所有弹窗。 |
+| 前端回归与类型 | PASS | `pnpm exec node --test tests/*.test.mjs` 87/87；`pnpm run typecheck` exit 0。 |
+| H5/微信生产构建 | PASS（仅构建） | 最终 CSS 修改后复跑 `pnpm run build:h5` 与 `pnpm run build:mp-weixin`，均输出 `DONE Build complete.`；`git diff --check` exit 0。 |
+| 真机及业务写入 | NOT_RUN | 微信真机、iOS Safari 触摸滑动及实际保存/修改/删除未执行；本轮只改样式与公共页头属性。 |
+
+详见 [responsive-pages-followup](../10-iterations/2026/09/responsive-pages-followup/README.md)。

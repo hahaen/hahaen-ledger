@@ -122,6 +122,11 @@ input, textarea { font:inherit; }
 .calendar-page .calendar-card,
 .calendar-page .calendar-date { flex-shrink:0; }
 .calendar-transaction-list { flex:1; width:100%; height:0; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+/* 矮屏无法同时容纳月历、当日记录和底栏时，让整页滚动并给记录区保留可用高度。 */
+@media (max-height:740px) {
+  .calendar-page { height:auto; min-height:100vh; overflow:visible; }
+  .calendar-transaction-list { flex:none; height:200px; min-height:200px; }
+}
 .calendar-transaction-list ::-webkit-scrollbar { display:none; width:0; height:0; }
 .calendar-card { padding:16px 12px 14px; border:1px solid rgba(73,173,156,.16); border-radius:20px; background:linear-gradient(180deg,#edf8f5 0%,#fff 82%); box-shadow:0 8px 22px rgba(73,173,156,.09); }
 .calendar-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; padding:0 3px; }
@@ -220,6 +225,17 @@ input, textarea { font:inherit; }
 .field-row { display:flex; width:100%; align-items:center; gap:11px; min-height:64px; padding:0 14px; border-bottom:1px solid #edf2f0; text-align:left; }.field-row:last-child { border-bottom:0; }
 .field-icon { display:flex; align-items:center; justify-content:center; flex-shrink:0; width:29px; height:29px; border-radius:10px; background:#edf8f5; color:#5a9b90; font-size:16px; }.field-label { flex:1; flex-shrink:0; color:#3c514c; font-size:13px; font-weight:600; }.field-value { max-width:55%; overflow:hidden; color:#73847f; font-size:13px; text-overflow:ellipsis; white-space:nowrap; }.field-value.placeholder { color:#b7c5c1; }
 .keypad { position:fixed; z-index:4; bottom:0; left:0; right:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); grid-template-rows:repeat(4,minmax(0,1fr)); height:calc(272px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); border-top:1px solid rgba(73,173,156,.16); background:rgba(255,255,255,.98); box-shadow:0 -10px 24px rgba(39,77,70,.08); }
+/* 横屏矮视口缩短键盘，给上方可滚动表单留出可见区域。 */
+@media (max-height:500px) {
+  .keypad { height:calc(max(176px, 46vh) + env(safe-area-inset-bottom)); }
+  .entry-content { padding-bottom:calc(max(176px, 46vh) + 20px + env(safe-area-inset-bottom)); }
+  .entry-type { margin-bottom:8px; }
+  .amount-panel { padding:10px 16px; margin-bottom:12px; }
+  .amount-display { min-height:38px; margin-top:2px; }
+  .amount-value { font-size:34px; }
+  .amount-value.long-amount { font-size:28px; }
+  .calculation-line { min-height:18px; margin-top:0; }
+}
 .keypad-cell { min-width:0; min-height:0; border-right:1px solid #edf2f0; border-bottom:1px solid #edf2f0; }.keypad-cell:nth-child(4n) { border-right:0; }.keypad-cell:nth-last-child(-n+4) { border-bottom:0; }
 .key { width:100%; height:100%; color:#5f7771; font-size:29px; font-weight:600; }.key:active { background:#eaf7f3; }.key-backspace { color:#7e9c96; font-size:30px; }.key-text { color:#278879; background:#f0faf7; font-size:21px; font-weight:700; }
 .keypad-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); background:#f7fcfb; }.keypad-pair .key { color:#278879; font-size:26px; }.keypad-pair .key + .key { border-left:1px solid #edf2f0; }.key-cancel { background:#f1f5f3; color:#70837e; font-size:21px; font-weight:700; }.key-confirm { background:#f0faf7; color:#278879; font-size:21px; font-weight:700; }
