@@ -15,6 +15,8 @@ export type ItemPayload = {
   retiredOn: string | null; resaleCents: number | null; idempotencyKey: string
 }
 export type RetirePayload = { retiredOn: string; resaleCents: number; idempotencyKey: string }
+export type EditItemPayload = { name: string; priceCents: number; purchasedOn: string; idempotencyKey: string }
+export const ITEM_MIN_DATE = '2000-01-01'
 export function itemToday(): string {
   const date = new Date(Date.now() + 8 * 60 * 60 * 1000)
   return date.toISOString().slice(0, 10)
@@ -28,7 +30,7 @@ export function itemAmount(value: string): number {
   return cents
 }
 export function validItemDate(value: string, today = itemToday()) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value < '1000-01-01' || value > today) throw new Error('日期不能晚于今天')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value < ITEM_MIN_DATE || value > today) throw new Error('日期须在2000-01-01至今天之间')
   const date = new Date(`${value}T00:00:00Z`)
   if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== value) throw new Error('日期格式不正确')
 }

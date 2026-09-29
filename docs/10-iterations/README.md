@@ -3,6 +3,13 @@
 
 - [2026-09 Jenkins 与 Docker Compose 部署脚本](2026/09/jenkins-compose-deployment/README.md)：为前后端任务提供 SSH/Compose 部署基础。
 - [2026-09 正式 MinIO 预签名 PUT 代理修复](2026/09/minio-presigned-put-proxy/README.md)：补齐 Nginx 到 MinIO 的签名 PUT 反向代理配置，线上探针已通过，真实页面回归待用户重试确认。
+- [2026-09 物品清单排序](2026/09/item-list-order/README.md)：物品清单在役优先，同状态按购买日期由新到旧排列。
+- [2026-09 物品资料编辑](2026/09/item-profile-edit/README.md)：物品详情编辑名称、购买价格和购买日期。
+- [2026-09 已退役物品重新服役](2026/09/item-reactivation/README.md)：清除退役日期和二手价格，恢复在役成本。
+- [2026-09 物品价格输入格式](2026/09/item-price-input-format/README.md)：新增占位显示 0，编辑整元回显不显示 `.00`。
+- [2026-09 物品清单净成本](2026/09/item-list-net-cost/README.md)：清单行价格读取实际净成本，退役时扣除二手售价。
+- [2026-09 物品日期弹窗年份选择](2026/09/item-date-picker-year/README.md)：物品日期统一从 2000 年开始，年份栏保持普通列表样式。
+- [2026-09 日期弹窗滚动修复](2026/09/date-picker-scroll-stability/README.md)：年份完整显示 2000–2099，修复月/日跳回，物品仍不能保存未来日期。
 
 本目录按 `YYYY/MM/feature-key/` 保存历史变更。每个重大功能、Bug、数据库、权限、基础设施或设计整改，都应有一个独立 feature-key，避免把多次变更混成无法审计的长文档。
 
@@ -41,3 +48,4 @@
 - [微信小程序转发](2026/09/wechat-mini-share/README.md)：为全部小程序页面接入微信右上角转发，统一安全地回到首页。
 
 - [2026-09-28 独立物品管理](2026/09/item-lifecycle/README.md)：五导航、成本口径、V6迁移、真实DEV接口和视觉证据。
+- [2026-09-29 物品清单退役行灰底](2026/09/item-retired-row-background/README.md)：按退役状态区分列表行底色。

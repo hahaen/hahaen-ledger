@@ -43,5 +43,5 @@ onMounted(() => { void draw(); uni.onWindowResize(resized) })
 onBeforeUnmount(() => uni.offWindowResize(resized))
 watch(() => props.points, () => { void draw() }, { deep: true })
 </script>
-<template><canvas id="item-cost-history" canvas-id="item-cost-history" class="item-cost-canvas" role="img" aria-label="日均成本随服役日期变化的折线图" /><view class="chart-accessible">{{ points.length ? `从${points[0].date}的${formatYuan(points[0].dailyCostCents)}元/天，到${points[points.length - 1].date}的${formatYuan(points[points.length - 1].dailyCostCents)}元/天` : '暂无成本数据' }}</view></template>
-<style scoped>.item-cost-canvas { width:100%; height:192px; }.chart-accessible { color:#858b8b; font-size:11px; line-height:1.7; margin-top:8px; overflow-wrap:anywhere; }</style>
+<template><canvas id="item-cost-history" canvas-id="item-cost-history" class="item-cost-canvas" role="img" aria-label="日均成本随服役日期变化的折线图" /></template>
+<style scoped>.item-cost-canvas { width:100%; height:192px; }</style>

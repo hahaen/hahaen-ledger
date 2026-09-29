@@ -1,6 +1,42 @@
 # 当前验证矩阵
 
-更新日期：2026-09-28。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
+更新日期：2026-09-29。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
+
+## 2026-09-29：物品清单价格显示实际净成本
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 列表金额来源 | PASS（代码） | 清单行改读 `netCostCents`；服务端在役取购入价、退役扣除二手售价，详情仍保留原购入价。 |
+| 前后端定向检查与双端构建 | PASS | 物品前端测试 5/5、Java 25 `ItemServiceTest`、类型检查、H5 和微信小程序构建均成功。 |
+| H5 只读示例画面 | PASS（示例） | 原价 3,000 元、售价 3,200 元的退役相机，清单显示 -200 元；[截图](../../app/tests/evidence/item-list-net-cost-20260929.png)。 |
+| 真实登录态与微信页面 | PARTIAL / NOT_RUN | 示例页未连接真实后端；真实 H5 登录态、微信开发者工具及真机未验收。 |
+
+详见 [迭代档案](../10-iterations/2026/09/item-list-net-cost/README.md)。
+
+## 2026-09-29：已退役物品重新服役
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 状态切换、清空售价与成本重算 | PASS | `ItemServiceTest` 14 项定向通过；真实 DEV HTTP 重新服役后主表两列读回 NULL，响应按购入价恢复净成本。 |
+| 归属、重复提交、状态变化冲突 | PASS | 隔离合成用户集成测试通过跨用户拒绝、同键重试、旧请求与再次退役冲突；测试数据清理。 |
+| V8 与前端构建 | PASS | DEV Flyway V8 执行；前端 9 项定向测试、类型检查、H5/微信构建通过。 |
+| H5/微信实际点击与视觉 | NOT_RUN | Chrome 已找到一件退役物品，但浏览器点击控制超时；微信开发者工具及真机未运行。 |
+| V8 关系表结构 | PASS | DEV `information_schema` 已核对 5 列、中文注释和公共字段可空/默认值。 |
+| 前端全量测试 | PASS | 87 项通过。 |
+| 后端全量测试 | FAIL | 68 项中 `LoggingProfileConfigTest` 在 macOS 下断言 Windows 固定日志路径失败；物品定向及真实 DEV 集成测试通过。 |
+
+详见 [迭代档案](../10-iterations/2026/09/item-reactivation/README.md)。
+
+## 2026-09-29：物品价格输入去掉整元 .00
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 新增占位、编辑回显代码与金额回归 | PASS | 两个购买价格输入框占位均为 `0`；编辑调用 `inputYuan`；定向测试 9/9 通过，明确覆盖 0、整元和有角分。 |
+| 类型检查与双端构建 | PASS | `pnpm run typecheck`、`pnpm run build:h5`、`pnpm run build:mp-weixin` 均完成。 |
+| 真实 H5 登录态新增/编辑视觉 | NOT_RUN | 本次未在真实登录页面打开表单。 |
+| 微信开发者工具及真机视觉 | NOT_RUN | 仅完成小程序构建。 |
+
+详见 [迭代档案](../10-iterations/2026/09/item-price-input-format/README.md)。
 
 ## 2026-09-20：正式 MinIO 预签名 PUT 代理修复
 
@@ -821,3 +857,92 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 | 整体客户端闭环 | PARTIAL | 剩余微信工具/真机、真实H5删除按钮提交与旧日志测试问题。无本轮外部BLOCKED。 |
 
 详见 [item-lifecycle](../10-iterations/2026/09/item-lifecycle/README.md)。
+
+## 2026-09-28：微信小程序启动白屏
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 启动白屏 | PASS（开发者工具） | 原 `app.js` 的 `crypto` 读取异常及页面未注册已复现；修复并重启开发构建后，在微信开发者工具 2.02.2608070 模拟器中重新加载两次，首页内容可见。 |
+| 密码加密协议 | PASS（测试） | RSA-OAEP/SHA-256 互操作与安全随机数失败拒绝测试 2/2。 |
+| 前端回归、类型与构建 | PASS | 82/82、`pnpm run typecheck`、H5/微信生产构建和 `git diff --check`。 |
+| 真实密码提交、真机 | NOT_RUN | 未使用真实凭证设置/修改密码，也未在手机预览。 |
+
+详见 [wechat-mini-startup-crypto](../10-iterations/2026/09/wechat-mini-startup-crypto/README.md)。
+
+## 2026-09-28：物品清单排序
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 列表排序规则 | PASS（静态） | Mapper 查询先按 ACTIVE/RETIRED 状态优先级排序，再按购买日期、ID倒序；筛选和分页复用同一排序结果。 |
+| API 契约与迭代记录 | PASS（静态） | 已同步物品 API 文档及本迭代档案。 |
+| 自动化测试、类型检查与构建 | NOT_RUN | 本次未执行。 |
+| DEV API/页面运行验收 | NOT_RUN | 本次未执行。 |
+
+详见 [item-list-order](../10-iterations/2026/09/item-list-order/README.md)。
+
+## 2026-09-28：物品详情资料编辑
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 名称、购买价格、购买日期编辑与详情成本重算 | PASS（静态） | 详情弹窗及 `PUT /api/app/items/{id}` 实现；保留服役/退役字段。 |
+| 当前用户归属、幂等与日期校验 | PASS（静态） | Service 锁用户和物品，V7 关系表保留请求键/摘要；实际并发和数据库执行未验证。 |
+| 类型检查与双端构建 | PASS | `pnpm run typecheck`、`pnpm run build:h5`、`pnpm run build:mp-weixin` 均成功。 |
+| Java 25 后端打包 | PASS（跳过测试） | `mvn -q -f server/pom.xml -DskipTests package` 成功；未运行测试。 |
+| Flyway、DEV API、H5/微信运行验收 | NOT_RUN | V7 未在本轮真实数据库执行；未运行客户端页面。 |
+
+详见 [item-profile-edit](../10-iterations/2026/09/item-profile-edit/README.md)。
+
+## 2026-09-29：物品日期弹窗年份选择（历史；显示范围见下节）
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 物品日期范围与年份选择 | PASS（静态/测试） | 前端、后端和 API 文档统一为 2000-01-01 至当天；年份栏是 2000 年起的普通列表，通过透明首尾留白保证当前年份可居中，没有悬浮快捷项或虚拟窗口。物品回归测试 5/5。 |
+| 前端回归 | PASS | `node --test tests/*.test.mjs`：83/83。 |
+| 类型检查及双端构建 | PASS | `pnpm run typecheck`、`pnpm run build:h5`、`pnpm run build:mp-weixin` 均成功。 |
+| 后端日期边界测试 | PASS | Java 25 下 `ItemServiceTest` 定向测试退出码 0，含 1999-12-31 拒绝断言。 |
+| 浏览器视觉检查 | PARTIAL | 普通年份列表、无悬浮按钮已观察；曾发现末尾高亮到 2024，代码已修正居中空间，修改后浏览器交互超时，未能重新复核。 |
+| 浏览器实际点选 2026 | NOT_RUN | 自动化点击调用超时；列表可见性有证据，但选择结果未确认。 |
+| 真机/开发者工具手动交互 | NOT_RUN | 微信开发者工具/真机尚未手动点选验收。 |
+
+详见 [item-date-picker-year](../10-iterations/2026/09/item-date-picker-year/README.md)。
+
+## 2026-09-29：共用日期弹窗滚动与年份范围
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 月/日边界选择不跳回 | PASS（自动化回归） | 修复前几何测试 0/2：9 月读成 7 月、1 日读成 3 日；统一首尾留白后 4/4，通过年份及时间列边界。 |
+| 年份 2000–2099、物品保存上限当天 | PASS（组件测试/静态） | 共用组件完整展示 100 个年份；2099 可滚动，物品传入当天上限时确认不提交未来日期；原有前后端保存校验保持不变。 |
+| H5 初始购买日期与实际点选 | PASS（当前浏览器） | Chrome 画面和 DOM 显示 2026 年、9 月、29 日居中；本机窗口点选 8 月、27 日后高亮保持，确定回写表单 2026-08-27，未提交物品，随后恢复默认值。 |
+| 前端回归、类型和构建 | PASS | `node --test tests/*.test.mjs` 87/87、`pnpm run typecheck`、H5/微信小程序构建成功。 |
+| H5 拖动与未来日期提示 | PASS（当前浏览器） | 实际拖动月份列至 12 月，`scrollTop=528` 且高亮未跳回；点击确定提示超出当天范围，未回写表单。 |
+| 2099 年实际滚动与确认 | PASS（当前浏览器） | 年份列拖至末端高亮 2099 年、`scrollTop=4752`；点击确定提示超过当天上限，未回写表单。 |
+| 微信开发者工具/真机 | NOT_RUN | 小程序仅构建，未做触摸验收。 |
+
+详见 [date-picker-scroll-stability](../10-iterations/2026/09/date-picker-scroll-stability/README.md)。
+
+## 2026-09-28：底部导航前三项图标放大
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 首页、日历、资产图标尺寸 | PASS（静态） | 三个图标使用与“我的”相同的 `scale(1.6)`；“物品”“我的”原样保留。 |
+| H5/微信页面视觉复核 | NOT_RUN | 本次未运行页面或截图复核。 |
+
+## 2026-09-28：底部导航五项图标尺寸统一
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 五项图标视觉尺寸和位置 | PASS（H5） | 浏览器反馈首版首页、日历偏小且物品偏大后，分别调整首页 24px、日历 27px、资产/我的 23px、物品描边框 14×15px；再按截图测量将首页、日历字形上移 2px，五项轮廓纵向中心均约在 30px。局部截图 `app/tests/evidence/bottom-nav-icons-20260928.jpg`。 |
+| 前端类型检查与双端构建 | PASS | `pnpm run typecheck`、`pnpm run build:h5`、`pnpm run build:mp-weixin` 均成功。 |
+| 微信开发者工具/真机视觉 | NOT_RUN | 本次未打开微信小程序页面核对图标。 |
+
+详见 [bottom-nav-icon-size-unification](../10-iterations/2026/09/bottom-nav-icon-size-unification/README.md)。
+
+## 2026-09-29：物品清单退役行底色
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 退役行灰底、在役行白底 | PASS（静态） | `items.vue` 仅在 `status === 'RETIRED'` 时添加行类，`prototype.scss` 灰底为 `#f1f3f2`。 |
+| 类型检查与双端构建 | PASS | `pnpm run typecheck`、`pnpm run build:h5`、`pnpm run build:mp-weixin` 均退出码 0；两端构建产物含状态类和样式。 |
+| H5/微信真实页面视觉 | NOT_RUN | 尚未打开带退役物品的页面验证实际渲染。 |
+
+详见 [item-retired-row-background](../10-iterations/2026/09/item-retired-row-background/README.md)。

@@ -1,6 +1,14 @@
 # 2026 年 09 月迭代索引
 
 - [wechat-mini-password-encryption](wechat-mini-password-encryption/README.md)：修复微信小程序个人中心设置或修改密码缺少 Web Crypto 时无法生成 RSA-OAEP 密文的问题（2026-09-20）。
+- [wechat-mini-startup-crypto](wechat-mini-startup-crypto/README.md)：修复微信开发者工具中 `node-forge` 初始化导致的启动白屏（2026-09-28）。
+- [item-list-order](item-list-order/README.md)：物品清单在役优先，同状态按购买日期由新到旧排列（2026-09-28）。
+- [item-profile-edit](item-profile-edit/README.md)：物品详情编辑名称、购买价格和购买日期（2026-09-28）。
+- [item-reactivation](item-reactivation/README.md)：已退役物品可从详情重新服役并清除旧售价（2026-09-29）。
+- [item-price-input-format](item-price-input-format/README.md)：物品新增和编辑购买价格输入去掉整元 `.00`（2026-09-29）。
+- [item-list-net-cost](item-list-net-cost/README.md)：物品清单价格显示实际净成本（2026-09-29）。
+- [item-date-picker-year](item-date-picker-year/README.md)：物品日期下界统一为 2000 年，年份栏保留普通列表样式（2026-09-29）。
+- [date-picker-scroll-stability](date-picker-scroll-stability/README.md)：共用日期弹窗年份可滚动至 2099，修复月/日选中项跳回并保持物品保存上限为当天（2026-09-29）。
 
 本月档案集中记录业务域重置、数据库基线、用户、文件与资产账户表设计、资产账户排序、H5 认证/MinIO 接入，以及 H5 页面回归和运行环境整改。
 
@@ -57,3 +65,6 @@
 - [profile-save-auto-return](profile-save-auto-return/README.md)：个人中心保存成功后展示 0.5 秒提示并自动返回“我的”页（2026-09-12）。
 
 - [item-lifecycle](item-lifecycle/README.md)：独立物品五导航、生命周期、成本图及真实DEV验收（2026-09-28）。
+- [bottom-nav-first-three-icons](bottom-nav-first-three-icons/README.md)：放大首页、日历、资产导航图标，保留物品和我的样式（2026-09-28）。
+- [bottom-nav-icon-size-unification](bottom-nav-icon-size-unification/README.md)：以物品图标为基准，统一五项底部导航的可见图标尺寸（2026-09-28）。
+- [item-retired-row-background](item-retired-row-background/README.md)：物品清单中已退役行使用灰色底色（2026-09-29）。

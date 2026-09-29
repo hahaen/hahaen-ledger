@@ -70,6 +70,16 @@ class ItemDevIntegrationTest {
     @Test void realFlywaySchemaAuthLifecycleIsolationAndConcurrentRetry() throws Exception {
         try {
             assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM haji_flyway_history WHERE version='6' AND success=1", Integer.class));
+            assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM haji_flyway_history WHERE version='8' AND success=1", Integer.class));
+            var reactivateColumns = jdbc.queryForList("SELECT COLUMN_NAME, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_TYPE, COLUMN_COMMENT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='personal_item_reactivate_request'");
+            assertEquals(Set.of("user_id", "idempotency_key", "item_id", "created_at", "deleted"),
+                reactivateColumns.stream().map(column -> Objects.toString(column.get("COLUMN_NAME"))).collect(java.util.stream.Collectors.toSet()));
+            for (var column : reactivateColumns) assertFalse(Objects.toString(column.get("COLUMN_COMMENT"), "").isBlank());
+            var requestCreated = reactivateColumns.stream().filter(column -> "created_at".equals(column.get("COLUMN_NAME"))).findFirst().orElseThrow();
+            assertEquals("NO", requestCreated.get("IS_NULLABLE")); assertEquals("datetime(3)", requestCreated.get("COLUMN_TYPE"));
+            assertEquals("CURRENT_TIMESTAMP(3)", requestCreated.get("COLUMN_DEFAULT"));
+            var requestDeleted = reactivateColumns.stream().filter(column -> "deleted".equals(column.get("COLUMN_NAME"))).findFirst().orElseThrow();
+            assertEquals("YES", requestDeleted.get("IS_NULLABLE")); assertEquals("0", requestDeleted.get("COLUMN_DEFAULT"));
             var columns = jdbc.queryForList("SELECT COLUMN_NAME, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_TYPE, COLUMN_COMMENT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='personal_item'");
             assertEquals(22, columns.size());
             for (var column : columns) assertFalse(Objects.toString(column.get("COLUMN_COMMENT"), "").isBlank());
@@ -130,6 +140,20 @@ class ItemDevIntegrationTest {
             assertEquals(-200, detail.path("costHistory").get(9).path("dailyCostCents").asInt());
             assertEquals(0, data(call(HttpMethod.GET, "/api/app/items", null, owner)).path("totalAssetsCents").asLong());
             assertEquals(1, data(call(HttpMethod.GET, "/api/app/items?status=RETIRED", null, owner)).path("total").asInt());
+            var reactivate = Map.of("idempotencyKey", "reactivate_" + key);
+            assertNotEquals(0, call(HttpMethod.POST, "/api/app/items/" + id + "/reactivate", reactivate, stranger).path("code").asInt());
+            var activeAgain = data(call(HttpMethod.POST, "/api/app/items/" + id + "/reactivate", reactivate, owner));
+            assertEquals("ACTIVE", activeAgain.path("status").asText());
+            assertTrue(activeAgain.path("retiredOn").isNull()); assertTrue(activeAgain.path("resaleCents").isNull());
+            assertEquals(10000, activeAgain.path("netCostCents").asLong());
+            data(call(HttpMethod.POST, "/api/app/items/" + id + "/reactivate", reactivate, owner));
+            var stored = jdbc.queryForMap("SELECT status,retired_on,resale_cent FROM personal_item WHERE id=?", Long.valueOf(id));
+            assertEquals("ACTIVE", stored.get("status")); assertNull(stored.get("retired_on")); assertNull(stored.get("resale_cent"));
+            assertNotEquals(0, call(HttpMethod.POST, "/api/app/items/" + id + "/retire", retire, owner).path("code").asInt());
+            assertEquals(10000, data(call(HttpMethod.GET, "/api/app/items", null, owner)).path("totalAssetsCents").asLong());
+            var retireAgain = Map.of("retiredOn", today, "resaleCents", 0, "idempotencyKey", "retire_again_" + key);
+            data(call(HttpMethod.POST, "/api/app/items/" + id + "/retire", retireAgain, owner));
+            assertNotEquals(0, call(HttpMethod.POST, "/api/app/items/" + id + "/reactivate", reactivate, owner).path("code").asInt());
             data(call(HttpMethod.POST, "/api/app/items", create, owner)); // 退役后原始创建重试不重复插入
             data(call(HttpMethod.DELETE, "/api/app/items/" + id + "?idempotencyKey=" + key, null, owner));
             data(call(HttpMethod.DELETE, "/api/app/items/" + id + "?idempotencyKey=" + key, null, owner));
@@ -148,13 +172,14 @@ class ItemDevIntegrationTest {
                 assertEquals(assetsBefore, data(call(HttpMethod.GET, "/api/app/assets/overview", null, owner)));
                 assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM transaction_detail WHERE user_id=?", Integer.class, userIds.getFirst()));
             }
-            Path evidence = Path.of(System.getProperty("basedir"), "../docs/10-iterations/2026/09/item-lifecycle/evidence/dev-api.json");
+            Path evidence = Path.of(System.getProperty("basedir"), "../docs/10-iterations/2026/09/item-reactivation/evidence/dev-api.json");
             Files.createDirectories(evidence.getParent());
             json.writerWithDefaultPrettyPrinter().writeValue(evidence.toFile(), Map.of("status", "PASS", "date", today,
-                "checks", List.of("Flyway V6", "22列中文注释", "真实RSA登录", "未登录拒绝", "6路并发创建幂等", "跨用户读写隔离", "逻辑删除用户无物品访问权", "退役冻结与负成本", "幂等冲突", "软删除审计", "记账账户零影响", "Entity与实际列一致", "公共字段默认值与可空规则"), "columns", columns));
+                "checks", List.of("Flyway V6和V8", "22列中文注释", "V8关系表列名注释默认值", "真实RSA登录", "未登录拒绝", "6路并发创建幂等", "跨用户读写隔离", "逻辑删除用户无物品访问权", "退役冻结与负成本", "重新服役清除退役日期与二手价格", "重新服役重试与状态冲突", "软删除审计", "记账账户零影响", "Entity与实际列一致", "公共字段默认值与可空规则"), "columns", columns, "reactivateRequestColumns", reactivateColumns));
         } finally {
             for (String token : sessions) call(HttpMethod.POST, "/api/app/auth/logout", null, token);
             for (Long id : userIds) {
+                jdbc.update("DELETE FROM personal_item_reactivate_request WHERE user_id=?", id);
                 jdbc.update("DELETE FROM personal_item WHERE user_id=?", id);
                 jdbc.update("DELETE FROM app_login_log WHERE user_id=?", id);
                 jdbc.update("DELETE FROM app_user WHERE id=?", id);

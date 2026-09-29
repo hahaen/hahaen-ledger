@@ -1,6 +1,19 @@
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
 import uni from '@dcloudio/vite-plugin-uni'
+
+function forgeWechatGlobalScope(): Plugin {
+  return {
+    name: 'forge-wechat-global-scope',
+    enforce: 'pre',
+    transform(code, id) {
+      if (id.includes('?') || !id.replaceAll('\\', '/').endsWith('/node-forge/lib/util.js')) return
+      const original = "return typeof self === 'undefined' ? window : self;"
+      if (!code.includes(original)) throw new Error('node-forge 全局对象初始化代码已变化，请重新核对微信兼容补丁')
+      return code.replace(original, 'return globalThis;')
+    },
+  }
+}
 
 export default defineConfig(({ mode }) => {
   const envDir = fileURLToPath(new URL('./env', import.meta.url))
@@ -12,7 +25,7 @@ export default defineConfig(({ mode }) => {
   return {
     envDir,
     base: '/haji/',
-    plugins: [uni()],
+    plugins: [forgeWechatGlobalScope(), uni()],
     server: {
       port: 5180,
       strictPort: true,

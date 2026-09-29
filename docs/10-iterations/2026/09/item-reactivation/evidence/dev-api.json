@@ -1,0 +1,169 @@
+{
+  "columns" : [ {
+    "COLUMN_NAME" : "id",
+    "IS_NULLABLE" : "NO",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "bigint",
+    "COLUMN_COMMENT" : "物品ID"
+  }, {
+    "COLUMN_NAME" : "user_id",
+    "IS_NULLABLE" : "NO",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "bigint",
+    "COLUMN_COMMENT" : "所属用户ID，不关联账本或账户"
+  }, {
+    "COLUMN_NAME" : "name",
+    "IS_NULLABLE" : "NO",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "varchar(80)",
+    "COLUMN_COMMENT" : "物品名称，1至40个字符"
+  }, {
+    "COLUMN_NAME" : "price_cent",
+    "IS_NULLABLE" : "NO",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "bigint",
+    "COLUMN_COMMENT" : "购入价格，单位分，允许0元赠品"
+  }, {
+    "COLUMN_NAME" : "purchased_on",
+    "IS_NULLABLE" : "NO",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "date",
+    "COLUMN_COMMENT" : "购买日期，含当日计为服役第1天"
+  }, {
+    "COLUMN_NAME" : "status",
+    "IS_NULLABLE" : "NO",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "varchar(16)",
+    "COLUMN_COMMENT" : "服役状态，ACTIVE正在服役，RETIRED已退役"
+  }, {
+    "COLUMN_NAME" : "retired_on",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "date",
+    "COLUMN_COMMENT" : "退役日期，退役后服役天数停止增长"
+  }, {
+    "COLUMN_NAME" : "resale_cent",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "bigint",
+    "COLUMN_COMMENT" : "二手出售价格，单位分，0表示未出售，允许高于购入价"
+  }, {
+    "COLUMN_NAME" : "create_key",
+    "IS_NULLABLE" : "NO",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "varchar(64)",
+    "COLUMN_COMMENT" : "创建请求幂等键，用户内唯一且删除后保留"
+  }, {
+    "COLUMN_NAME" : "create_hash",
+    "IS_NULLABLE" : "NO",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "char(64)",
+    "COLUMN_COMMENT" : "原始创建请求SHA256摘要，用于生命周期变化后的重试校验"
+  }, {
+    "COLUMN_NAME" : "retire_key",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "varchar(64)",
+    "COLUMN_COMMENT" : "退役请求幂等键"
+  }, {
+    "COLUMN_NAME" : "delete_key",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "varchar(64)",
+    "COLUMN_COMMENT" : "删除请求幂等键"
+  }, {
+    "COLUMN_NAME" : "created_at",
+    "IS_NULLABLE" : "NO",
+    "COLUMN_DEFAULT" : "CURRENT_TIMESTAMP(3)",
+    "COLUMN_TYPE" : "datetime(3)",
+    "COLUMN_COMMENT" : "创建时间"
+  }, {
+    "COLUMN_NAME" : "created_by",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "bigint",
+    "COLUMN_COMMENT" : "创建人ID"
+  }, {
+    "COLUMN_NAME" : "created_name",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "varchar(100)",
+    "COLUMN_COMMENT" : "创建人"
+  }, {
+    "COLUMN_NAME" : "updated_at",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "datetime(3)",
+    "COLUMN_COMMENT" : "更新时间"
+  }, {
+    "COLUMN_NAME" : "updated_by",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "bigint",
+    "COLUMN_COMMENT" : "更新人ID"
+  }, {
+    "COLUMN_NAME" : "update_name",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "varchar(100)",
+    "COLUMN_COMMENT" : "更新人"
+  }, {
+    "COLUMN_NAME" : "deleted_at",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "datetime(3)",
+    "COLUMN_COMMENT" : "删除时间"
+  }, {
+    "COLUMN_NAME" : "deleted_by",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "bigint",
+    "COLUMN_COMMENT" : "删除人ID"
+  }, {
+    "COLUMN_NAME" : "deleted_name",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "varchar(100)",
+    "COLUMN_COMMENT" : "删除人"
+  }, {
+    "COLUMN_NAME" : "deleted",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : "0",
+    "COLUMN_TYPE" : "tinyint",
+    "COLUMN_COMMENT" : "删除标识，0存在1删除"
+  } ],
+  "date" : "2026-09-29",
+  "reactivateRequestColumns" : [ {
+    "COLUMN_NAME" : "user_id",
+    "IS_NULLABLE" : "NO",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "bigint",
+    "COLUMN_COMMENT" : "所属用户ID"
+  }, {
+    "COLUMN_NAME" : "idempotency_key",
+    "IS_NULLABLE" : "NO",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "varchar(64)",
+    "COLUMN_COMMENT" : "重新服役请求幂等键，用户内唯一"
+  }, {
+    "COLUMN_NAME" : "item_id",
+    "IS_NULLABLE" : "NO",
+    "COLUMN_DEFAULT" : null,
+    "COLUMN_TYPE" : "bigint",
+    "COLUMN_COMMENT" : "重新服役物品ID"
+  }, {
+    "COLUMN_NAME" : "created_at",
+    "IS_NULLABLE" : "NO",
+    "COLUMN_DEFAULT" : "CURRENT_TIMESTAMP(3)",
+    "COLUMN_TYPE" : "datetime(3)",
+    "COLUMN_COMMENT" : "创建时间"
+  }, {
+    "COLUMN_NAME" : "deleted",
+    "IS_NULLABLE" : "YES",
+    "COLUMN_DEFAULT" : "0",
+    "COLUMN_TYPE" : "tinyint",
+    "COLUMN_COMMENT" : "删除标识，0存在1删除"
+  } ],
+  "checks" : [ "Flyway V6和V8", "22列中文注释", "V8关系表列名注释默认值", "真实RSA登录", "未登录拒绝", "6路并发创建幂等", "跨用户读写隔离", "逻辑删除用户无物品访问权", "退役冻结与负成本", "重新服役清除退役日期与二手价格", "重新服役重试与状态冲突", "软删除审计", "记账账户零影响", "Entity与实际列一致", "公共字段默认值与可空规则" ],
+  "status" : "PASS"
+}

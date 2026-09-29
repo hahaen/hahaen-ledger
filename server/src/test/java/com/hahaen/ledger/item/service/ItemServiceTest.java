@@ -83,6 +83,7 @@ class ItemServiceTest {
     }
     @Test void rejectsFutureDateAndInvalidRetirementWithoutWriting() {
         try (var ignored = identity()) {
+            assertThrows(BusinessException.class, () -> service.create(new ItemRequest("耳机", 10000L, LocalDate.of(1999, 12, 31), true, null, null, KEY)));
             assertThrows(BusinessException.class, () -> service.create(new ItemRequest("耳机", 10000L, today.plusDays(1), true, null, null, KEY)));
             assertThrows(BusinessException.class, () -> service.create(new ItemRequest("耳机", 10000L, today, false, today.minusDays(1), 0L, KEY)));
             assertThrows(BusinessException.class, () -> service.create(new ItemRequest("耳机", -1L, today, true, null, null, KEY)));
@@ -97,6 +98,56 @@ class ItemServiceTest {
             service.retire(11L, request); service.retire(11L, request);
             assertThrows(BusinessException.class, () -> service.retire(11L, new RetireItemRequest(today, 3000L, KEY)));
             assertEquals(2000L, item.getResaleCent()); verify(mapper, times(1)).updateById(item);
+        }
+    }
+    @Test void reactivateClearsRetirementAndResaleAndRecalculatesCost() {
+        try (var ignored = identity()) {
+            var item = item(today.minusDays(9)); item.setStatus("RETIRED");
+            item.setRetiredOn(today.minusDays(5)); item.setResaleCent(2000L);
+            when(mapper.ownedForUpdate(7L, 11L)).thenReturn(item);
+            when(mapper.reactivateRequestItemId(7L, KEY)).thenReturn(null);
+            when(mapper.reactivateOwned(7L, 11L, "测试用户")).thenReturn(1);
+            when(mapper.insertReactivateRequest(7L, KEY, 11L)).thenReturn(1);
+            var result = service.reactivate(11L, new ReactivateItemRequest(KEY));
+            assertEquals("ACTIVE", result.status()); assertNull(result.retiredOn()); assertNull(result.resaleCents());
+            assertEquals(10000L, result.netCostCents()); assertEquals(10, result.serviceDays());
+            assertEquals(new BigDecimal("1000.00000000"), result.dailyCostCents());
+            assertEquals(today, ItemCosts.history(item, today).getLast().date());
+            verify(mapper).reactivateOwned(7L, 11L, "测试用户");
+            verify(mapper).insertReactivateRequest(7L, KEY, 11L);
+        }
+    }
+    @Test void reactivateRetryAndStateChangesDoNotWriteTwice() {
+        try (var ignored = identity()) {
+            var item = item(today.minusDays(3)); item.setStatus("RETIRED");
+            item.setRetiredOn(today.minusDays(1)); item.setResaleCent(2500L);
+            item.setRetireKey("retire_test_1234567890");
+            when(mapper.ownedForUpdate(7L, 11L)).thenReturn(item);
+            when(mapper.reactivateOwned(7L, 11L, "测试用户")).thenReturn(1);
+            when(mapper.insertReactivateRequest(7L, KEY, 11L)).thenReturn(1);
+            when(mapper.reactivateRequestItemId(7L, KEY)).thenReturn(null, 11L, 11L);
+            var request = new ReactivateItemRequest(KEY);
+            service.reactivate(11L, request);
+            assertEquals("ACTIVE", service.reactivate(11L, request).status());
+            assertThrows(BusinessException.class, () -> service.retire(11L,
+                new RetireItemRequest(today, 2500L, "retire_test_1234567890")));
+            item.setStatus("RETIRED"); item.setRetiredOn(today); item.setResaleCent(0L);
+            assertThrows(BusinessException.class, () -> service.reactivate(11L, request));
+            verify(mapper, times(1)).reactivateOwned(7L, 11L, "测试用户");
+            verify(mapper, times(1)).insertReactivateRequest(7L, KEY, 11L);
+        }
+    }
+    @Test void reactivateRejectsForeignDeletedActiveAndReusedKey() {
+        try (var ignored = identity()) {
+            assertThrows(BusinessException.class, () -> service.reactivate(99L, new ReactivateItemRequest(KEY)));
+            var item = item(today); when(mapper.ownedForUpdate(7L, 11L)).thenReturn(item);
+            assertThrows(BusinessException.class, () -> service.reactivate(11L, new ReactivateItemRequest(KEY)));
+            item.setStatus("RETIRED"); item.setRetiredOn(today); item.setResaleCent(0L);
+            when(mapper.reactivateRequestItemId(7L, KEY)).thenReturn(99L);
+            assertThrows(BusinessException.class, () -> service.reactivate(11L, new ReactivateItemRequest(KEY)));
+            item.setDeleted(1);
+            assertThrows(BusinessException.class, () -> service.reactivate(11L, new ReactivateItemRequest(KEY)));
+            verify(mapper, never()).reactivateOwned(anyLong(), anyLong(), any());
         }
     }
     @Test void foreignOrDeletedItemsCannotBeReadRetiredOrDeleted() {

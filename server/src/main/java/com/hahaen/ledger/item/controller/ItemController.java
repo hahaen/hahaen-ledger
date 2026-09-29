@@ -23,6 +23,10 @@ public class ItemController {
     public ApiResponse<ItemVO> create(@Valid @RequestBody ItemRequest request) { return ApiResponse.ok(service.create(request)); }
     @PostMapping("/{id}/retire")
     public ApiResponse<ItemVO> retire(@PathVariable long id, @Valid @RequestBody RetireItemRequest request) { return ApiResponse.ok(service.retire(id, request)); }
+    @PostMapping("/{id}/reactivate")
+    public ApiResponse<ItemVO> reactivate(@PathVariable long id, @Valid @RequestBody ReactivateItemRequest request) { return ApiResponse.ok(service.reactivate(id, request)); }
+    @PutMapping("/{id}")
+    public ApiResponse<ItemVO> edit(@PathVariable long id, @Valid @RequestBody EditItemRequest request) { return ApiResponse.ok(service.edit(id, request)); }
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable long id, @RequestParam String idempotencyKey) {
         service.delete(id, idempotencyKey); return ApiResponse.ok();

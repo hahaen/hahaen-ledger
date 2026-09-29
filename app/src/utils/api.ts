@@ -43,11 +43,13 @@ function requestWithAuthRetry<T>(url: string, options: Omit<UniApp.RequestOption
 }
 
 // 独立物品域，所有页面请求统一经此入口。
-import type { Item, ItemDetail, ItemOverview, ItemPayload, RetirePayload } from './items'
+import type { EditItemPayload, Item, ItemDetail, ItemOverview, ItemPayload, RetirePayload } from './items'
 export const itemApi = {
   list: (status: string, page = 1) => request<ItemOverview>(`/api/app/items?status=${encodeURIComponent(status)}&page=${page}&pageSize=20`),
   detail: (id: string) => request<ItemDetail>(`/api/app/items/${encodeURIComponent(id)}`),
   create: (data: ItemPayload) => request<Item>('/api/app/items', { method: 'POST', data }),
   retire: (id: string, data: RetirePayload) => request<Item>(`/api/app/items/${encodeURIComponent(id)}/retire`, { method: 'POST', data }),
+  reactivate: (id: string, idempotencyKey: string) => request<Item>(`/api/app/items/${encodeURIComponent(id)}/reactivate`, { method: 'POST', data: { idempotencyKey } }),
+  edit: (id: string, data: EditItemPayload) => request<Item>(`/api/app/items/${encodeURIComponent(id)}`, { method: 'PUT', data }),
   remove: (id: string, key: string) => request<void>(`/api/app/items/${encodeURIComponent(id)}?idempotencyKey=${encodeURIComponent(key)}`, { method: 'DELETE' }),
 }

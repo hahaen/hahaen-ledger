@@ -33,3 +33,7 @@
 ## personal_item（2026-09-28）
 
 V6新增独立物品主表，22列（12个身份/业务/幂等字段+10个正式审计字段），Entity继承BaseAuditEntity。用户外键，无账本/账户/账单外键；金额使用BIGINT分，日期DATE，状态ACTIVE/RETIRED。创建键(user_id,create_key)唯一、ascii_bin大小写精确比较，创建摘要create_hash用于退役后原请求重试。退役和删除键只绑定目标物品操作，不能用于重新退役或复活已删除记录。详情/统计排除deleted非0；删除显式写删除和更新审计。V6已在本机DEV配置指向的haji_dev执行，Flyway、information_schema与Entity逐列集合/审计默认值已验证。证据见 [dev-api.json](../10-iterations/2026/09/item-lifecycle/evidence/dev-api.json)。不得修改已执行V6。
+
+V7新增 `personal_item_edit_request` 关系表，使用用户+幂等键作为主键，保存目标物品和编辑摘要，用于跨后续编辑的请求重试；仅含 `created_at` 与 `deleted` 公共关系字段。2026-09-29 DEV Flyway 启动日志显示当前版本为 V7；该表逐列 `information_schema` 核对尚未运行。
+
+V8新增 `personal_item_reactivate_request` 关系表，保存用户内唯一的重新服役请求键和目标物品；仅含 `created_at` 与 `deleted` 公共关系字段。重新服役通过限定当前用户、未删除、已退役状态的显式 UPDATE 将 `retired_on`、`resale_cent` 置 NULL，同事务写入请求记录。2026-09-29 DEV 集成测试已确认 Flyway V8 执行、HTTP 切换成功及主表两列实际为 NULL；`information_schema` 已核对关系表 5 列、中文注释和公共字段可空/默认值。

@@ -11,6 +11,9 @@ const entry = await import(moduleUrl((await compile('../src/utils/entry.ts')).re
 
 test('千元以上编辑与退款金额可以无损往返，展示仍保留分组', () => {
   for (const value of [1, 29, 100, 100001, 850000, 99999999999]) assert.equal(money.cents(money.inputYuan(value)), value)
+  for (const [value, expected] of [[0, '0'], [100, '1'], [120, '1.20'], [100000, '1000']]) {
+    assert.equal(money.inputYuan(value), expected)
+  }
   for (const [value, expected] of [[-1, '-0.01'], [-29, '-0.29'], [-50, '-0.50'], [-100, '-1'], [-100001, '-1000.01']]) {
     assert.equal(money.inputYuan(value), expected)
   }

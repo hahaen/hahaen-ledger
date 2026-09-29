@@ -24,6 +24,7 @@ import java.util.HexFormat;
 @Service
 @RequiredArgsConstructor
 public class ItemService {
+    private static final LocalDate ITEM_MIN_DATE = LocalDate.of(2000, 1, 1);
     private final PersonalItemMapper mapper;
     @Value("${hahaen.timezone:Asia/Shanghai}")
     private String timezone = "Asia/Shanghai";
@@ -92,9 +93,56 @@ public class ItemService {
                 || !Objects.equals(item.getRetiredOn(), request.retiredOn()) || !Objects.equals(item.getResaleCent(), request.resaleCents())) throw conflict();
             return ItemCosts.view(item, today());
         }
+        // 重新服役后延迟到达的上一次退役请求不能再次改变状态。
+        if (Objects.equals(item.getRetireKey(), request.idempotencyKey())) throw conflict();
         item.setStatus("RETIRED"); item.setRetiredOn(request.retiredOn()); item.setResaleCent(request.resaleCents());
         item.setRetireKey(request.idempotencyKey());
         mapper.updateById(item);
+        return ItemCosts.view(item, today());
+    }
+
+    @Transactional
+    public ItemVO reactivate(long id, ReactivateItemRequest request) {
+        long user = lockedUser();
+        key(request.idempotencyKey());
+        PersonalItem item = mapper.ownedForUpdate(user, id);
+        if (item == null || !Integer.valueOf(0).equals(item.getDeleted())) throw missing();
+        Long previousItemId = mapper.reactivateRequestItemId(user, request.idempotencyKey());
+        if (previousItemId != null) {
+            if (previousItemId != id || !"ACTIVE".equals(item.getStatus())) throw conflict();
+            return ItemCosts.view(item, today());
+        }
+        if (!"RETIRED".equals(item.getStatus())) throw conflict();
+        if (mapper.reactivateOwned(user, id, CurrentUser.optionalName()) != 1) throw conflict();
+        if (mapper.insertReactivateRequest(user, request.idempotencyKey(), id) != 1) throw conflict();
+        item.setStatus("ACTIVE"); item.setRetiredOn(null); item.setResaleCent(null);
+        return ItemCosts.view(item, today());
+    }
+
+    @Transactional
+    public ItemVO edit(long id, EditItemRequest request) {
+        long user = lockedUser();
+        key(request.idempotencyKey());
+        String name = request.name() == null ? "" : request.name().trim();
+        if (name.isEmpty() || name.codePointCount(0, name.length()) > 40)
+            throw new BusinessException("ITEM_NAME_INVALID", "物品名称需为1至40个字符");
+        amount(request.priceCents());
+        date(request.purchasedOn());
+        PersonalItem item = mapper.ownedForUpdate(user, id);
+        if (item == null || !Integer.valueOf(0).equals(item.getDeleted())) throw missing();
+        if ("RETIRED".equals(item.getStatus()) && request.purchasedOn().isAfter(item.getRetiredOn()))
+            throw new BusinessException("ITEM_DATE_INVALID", "购买日期不能晚于退役日期");
+        String hash = editHash(id, name, request.priceCents(), request.purchasedOn());
+        String previousHash = mapper.editRequestHash(user, request.idempotencyKey());
+        if (previousHash != null) {
+            if (!Objects.equals(previousHash, hash)) throw conflict();
+            return ItemCosts.view(item, today());
+        }
+        item.setName(name);
+        item.setPriceCent(request.priceCents());
+        item.setPurchasedOn(request.purchasedOn());
+        if (mapper.updateById(item) != 1) throw conflict();
+        mapper.insertEditRequest(user, request.idempotencyKey(), id, hash);
         return ItemCosts.view(item, today());
     }
 
@@ -119,6 +167,13 @@ public class ItemService {
         } catch (NoSuchAlgorithmException exception) { throw new IllegalStateException("SHA-256 unavailable", exception); }
     }
 
+    private static String editHash(long id, String name, long priceCents, LocalDate purchasedOn) {
+        String payload = id + ":" + name.length() + ":" + name + ":" + priceCents + ":" + purchasedOn;
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(payload.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException exception) { throw new IllegalStateException("SHA-256 unavailable", exception); }
+    }
+
     private long lockedUser() {
         long user = CurrentUser.id();
         if (mapper.lockUser(user) == null) throw new BusinessException("AUTH_REQUIRED", "用户不可用，请重新登录");
@@ -129,8 +184,8 @@ public class ItemService {
         if (retired.isBefore(bought)) throw new BusinessException("ITEM_DATE_INVALID", "退役日期不能早于购买日期");
     }
     private void date(LocalDate date) {
-        if (date == null || date.getYear() < 1000 || date.isAfter(today()))
-            throw new BusinessException("ITEM_DATE_INVALID", "日期须在1000年起至今天之间");
+        if (date == null || date.isBefore(ITEM_MIN_DATE) || date.isAfter(today()))
+            throw new BusinessException("ITEM_DATE_INVALID", "日期须在2000-01-01至今天之间");
     }
     private static void amount(Long value) {
         if (value == null || value < 0 || value > 99_999_999_999L)
