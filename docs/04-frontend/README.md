@@ -46,6 +46,8 @@ H5 浏览器入口统一在 `app/index.html` 声明 `/static/brand.png` 为 PNG 
 
 个人中心两处密码提交都保持 RSA-OAEP（SHA-256）密文协议。H5 使用浏览器 Web Crypto；微信小程序缺少 Web Crypto 时，由平台工具层使用微信密码学安全随机数和兼容 RSA 实现生成同规格 `encryptedPassword`，不得降级为明文或弱随机数。
 
+“我的”页在“个人中心”下方增加“通知中心”设置行，进入独立页面 `pages/notification-center/notification-center`。Bark 与 pushplus 两个通知 Key 均为选填，不使用密码显隐小眼睛；页面每次进入加载当前用户配置并回显已有 Key，不在本地存储缓存。清空字段并保存即移除对应配置，未修改字段不提交；保存期间输入与按钮禁用，失败保留输入和原幂等请求以重试，成功保留回显值并更新已保存基线。页面顶部复用个人中心的 `profile-hero` 薄荷渐变引导卡，显示“通知中心”标题与配置说明，表单保留公共 20px 卡片间距；其余使用现有二级页头、白卡片、薄荷绿输入与保存按钮，经 `api.ts` 调用接口，注册统一微信转发。
+
 头像资料中的 `avatarFileUrl` 是稳定对象 Key，仅用来判断是否有已配置头像；实际 `<image>` 永远使用后端返回的短时 `viewUrl`，因此 MinIO 域名前缀变更不影响已保存头像。
 
 uni-app H5 会把模板 `input[type=file]` 编译为普通文本输入，头像入口必须在用户点击手势中动态创建浏览器原生 `input[type=file]`，绑定既有选择回调后再点击；不得使用全局 DOM 选择器或模板文件 input。

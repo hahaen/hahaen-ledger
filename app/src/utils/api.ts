@@ -53,3 +53,11 @@ export const itemApi = {
   edit: (id: string, data: EditItemPayload) => request<Item>(`/api/app/items/${encodeURIComponent(id)}`, { method: 'PUT', data }),
   remove: (id: string, key: string) => request<void>(`/api/app/items/${encodeURIComponent(id)}?idempotencyKey=${encodeURIComponent(key)}`, { method: 'DELETE' }),
 }
+
+export type NotificationType = 'BARK' | 'PUSHPLUS'
+export type NotificationConfig = { notificationType: string; configured: boolean; notificationKey: string | null }
+export const notificationConfigApi = {
+  list: () => request<NotificationConfig[]>('/api/app/user/notification-configs'),
+  save: (type: NotificationType, data: { encryptedKey?: string; remove: boolean; idempotencyKey: string }) =>
+    request<NotificationConfig>(`/api/app/user/notification-configs/${type}`, { method: 'PUT', data }),
+}

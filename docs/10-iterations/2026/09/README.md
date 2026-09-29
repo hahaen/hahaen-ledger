@@ -9,6 +9,7 @@
 - [item-list-net-cost](item-list-net-cost/README.md)：物品清单价格显示实际净成本（2026-09-29）。
 - [item-date-picker-year](item-date-picker-year/README.md)：物品日期下界统一为 2000 年，年份栏保留普通列表样式（2026-09-29）。
 - [date-picker-scroll-stability](date-picker-scroll-stability/README.md)：共用日期弹窗年份可滚动至 2099，修复月/日选中项跳回并保持物品保存上限为当天（2026-09-29）。
+- [notification-config](notification-config/README.md)：通用用户通知配置表与首轮 Bark、pushplus 可选 Key（2026-09-29）。
 
 本月档案集中记录业务域重置、数据库基线、用户、文件与资产账户表设计、资产账户排序、H5 认证/MinIO 接入，以及 H5 页面回归和运行环境整改。
 
@@ -69,3 +70,5 @@
 - [bottom-nav-first-three-icons](bottom-nav-first-three-icons/README.md)：放大首页、日历、资产导航图标，保留物品和我的样式（2026-09-28）。
 - [bottom-nav-icon-size-unification](bottom-nav-icon-size-unification/README.md)：以物品图标为基准，统一五项底部导航的可见图标尺寸（2026-09-28）。
 - [item-retired-row-background](item-retired-row-background/README.md)：物品清单中已退役行使用灰色底色（2026-09-29）。
+
+- [notification-center](notification-center/README.md)：通知配置移至“我的”下的独立通知中心，回显已保存 Key，并增加个人中心同款顶部引导卡（2026-09-30）。

@@ -17,6 +17,8 @@ spring:
     enabled: true
     baseline-on-migrate: false
 hahaen:
+  notification:
+    key-aes-base64: ${NOTIFICATION_KEY_AES_KEY:}
   auth:
     password-rsa-private-key: ${H5_PASSWORD_RSA_PRIVATE_KEY:GENERATE}
   cors:

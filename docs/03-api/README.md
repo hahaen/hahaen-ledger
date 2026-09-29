@@ -26,6 +26,10 @@
 | GET | `/api/app/user/profile` | 返回当前用户资料、创建时间、从最早有效账单业务日期起算的累计记账天数、头像状态和 `passwordConfigured`；没有有效账单时天数为 0 |
 | PUT | `/api/app/user/profile` | 更新当前用户昵称和首次登录账号；首次无密码时请求还须含 RSA-OAEP 密文 `encryptedPassword`；选择新头像时额外传已完成上传的 `avatarFileId` |
 | PUT | `/api/app/user/profile/password` | 更新当前用户密码；请求含 RSA-OAEP 加密后的 `encryptedPassword`，首次设置账号时同时传 `loginAccount` |
+| GET | `/api/app/user/notification-configs` | 返回当前用户已配置的通知类型、`configured=true` 及解密后的 `notificationKey`；响应 `Cache-Control: no-store` |
+| PUT | `/api/app/user/notification-configs/{type}` | 设置、替换或移除某类通知 Key；`type` 为可扩展大写类型，当前页面使用 `BARK`、`PUSHPLUS` |
+
+通知配置写请求带 `idempotencyKey`（8–64 位英文字母、数字、`_`、`-`），设置时传 `encryptedKey`（与密码相同的 RSA-OAEP/SHA-256 公钥协议）及 `remove=false`；移除时仅传 `remove=true`。两种操作必须二选一。服务端依据当前会话定位用户并验证用户有效状态，不接受前端 `userId`；服务端再以 AES-256-GCM 加密入库。相同幂等键及同一请求可重试，同键不同请求返回冲突。通知中心读取当前用户的 Key 并回显，不在本地存储缓存；清空已配置字段并保存会提交移除操作，未修改的字段不提交。RSA-2048 OAEP-SHA256 限制明文至 190 字节。
 
 小程序微信登录只接受一次性 `code`，服务端向微信换取 `open_id` 后按 `user_identity` 绑定或创建本地用户；前端不提交也不接收 `open_id`、`union_id` 或 `session_key`。
 

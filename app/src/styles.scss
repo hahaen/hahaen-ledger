@@ -92,6 +92,8 @@
 @media (max-width:340px) { .auth-agreement { gap:6px; }.auth-agreement-copy, .auth-agreement-link { font-size:9px; }.legal-content-card { padding:13px 12px; }.legal-paragraph, .legal-list-item { font-size:11px; } }
 
 /* 个人中心沿用关于与帮助的页头和系统圆角弹层。 */
+.setting-notification-bell { position:relative; width:16px; height:18px; border:2px solid currentColor; border-radius:9px 9px 4px 4px; }.setting-notification-bell::after { content:''; position:absolute; left:4px; bottom:-6px; width:5px; height:3px; border-radius:0 0 4px 4px; background:currentColor; }
+.notification-optional { margin-left:4px; color:#91a49f; font-size:10px; font-weight:500; }.notification-center-tip { display:block; margin-top:12px; color:#65938b; font-size:12px; line-height:1.65; }
 .profile-page { min-height:100vh; padding-bottom:calc(100px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,#f5faf8 0%,#f7f8f7 42%); }
 .profile-nav { margin-bottom:16px; }
 .profile-loading, .profile-error { min-height:180px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:#858b8b; font-size:12px; text-align:center; }

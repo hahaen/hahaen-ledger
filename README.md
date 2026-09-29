@@ -18,6 +18,8 @@
 
 当前仓库使用 `server/src/main/resources/application-dev.yml` 作为 `dev` Profile 的安全默认配置，并从运行目录可选加载被 Git 忽略的 `server/application-dev.local.yml`。首次使用时，在仓库根目录执行 `cp server/application-dev.local.example.yml server/application-dev.local.yml`，再只在本地文件填写数据库、Redis、MinIO 等连接和账号密码；也可通过环境变量覆盖。禁止将本地文件或真实凭证提交到 Git。H5 使用账号/密码/验证码认证；微信小程序使用后端 code2Session 自动登录。
 
+通知配置的可逆加密需要固定的 `NOTIFICATION_KEY_AES_KEY`（32 字节 Base64 编码），可放在被忽略的本地配置文件对应字段中。部署环境也必须单独安全配置并持续保管该密钥；若丢失，已保存的 Bark/pushplus Key 无法解密。
+
 ## 后端启动
 
 启动 MySQL、Redis 和 MinIO，确认数据库 `haji_dev` 可用，然后执行：

@@ -76,6 +76,14 @@ function openProfile() {
   uni.navigateTo({ url: '/pages/profile/profile' })
 }
 
+function openNotifications() {
+  if (!loggedIn.value) {
+    openLogin()
+    return
+  }
+  uni.navigateTo({ url: '/pages/notification-center/notification-center' })
+}
+
 function openLogout() {
   if (loggingOut.value || !loggedIn.value) return
   logoutOpen.value = true
@@ -140,6 +148,11 @@ onShow(() => {
             <button class="setting-item" aria-label="个人中心" @click="openProfile">
           <text class="setting-icon setting-icon-profile">个</text>
           <text class="setting-text">个人中心</text>
+          <text class="setting-arrow">›</text>
+        </button>
+        <button class="setting-item" aria-label="通知中心" @click="openNotifications">
+          <view class="setting-icon" aria-hidden="true"><view class="setting-notification-bell" /></view>
+          <text class="setting-text">通知中心</text>
           <text class="setting-arrow">›</text>
         </button>
             <button class="setting-item" @click="openHelp">

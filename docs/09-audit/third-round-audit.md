@@ -1,5 +1,18 @@
 # 第三轮工程审计报告
 
+## 2026-09-30 追加：通知中心顶部卡片
+
+通知中心复用个人中心的薄荷渐变引导卡，标题为“通知中心”，白色配置表单保持公共 20px 间距。类型检查、H5/微信生产构建以及实际登录态 H5 画面核对 PASS；[截图证据](../../app/tests/evidence/notification-center-card-20260930.png)。微信工具/真机视觉 NOT_RUN。详见 [本轮追加档案](../10-iterations/2026/09/notification-center/README.md)。
+
+## 2026-09-30：通知中心与 Key 回显
+
+通知配置已移出个人中心，独立入口紧跟“我的”页个人中心；GET 按当前有效用户解密回显 Key 并设置禁止缓存。6 项通知定向/DEV 集成测试、前端类型检查、微信转发18项与双端构建 PASS；H5 实际入口顺序及空配置画面 PASS，真实页面保存/再次进入及微信交互 PARTIAL/NOT_RUN。详情见 [本轮档案](../10-iterations/2026/09/notification-center/README.md)。
+
+
+## 2026-09-29：通用通知配置补充
+
+V9 通知配置主表及幂等关系表已在当前 DEV 执行；隔离 HTTP/数据库验证与 Java 25 定向测试通过。个人中心 Bark、pushplus 选填框和独立保存操作完成，前端类型检查及 H5/微信构建通过。普通后端全量测试因旧 `LoggingProfileConfigTest` 的 Windows 日志路径断言 FAIL；真实 H5/微信页面点击和通知发送 NOT_RUN。证据与边界见 [notification-config](../10-iterations/2026/09/notification-config/README.md)。
+
 ## 2026-09-29：物品清单实际净成本
 
 清单金额改读已有 `netCostCents`：在役等于购入价，退役扣除二手售价，可为负数；详情购买价格与顶部在役购入总价不变。物品前端回归 5/5、Java 25 定向测试、类型检查和双端构建 PASS。H5 只读示例实际显示退役相机 `-200 元`，原价 `3,000 元`、售价 `3,200 元`；真实登录态 H5 和微信页面 NOT_RUN。详见 [迭代档案](../10-iterations/2026/09/item-list-net-cost/README.md)。

@@ -52,6 +52,8 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 hahaen:
+  notification:
+    key-aes-base64: ${NOTIFICATION_KEY_AES_KEY:}
   timezone: Asia/Shanghai
   auth:
     password-rsa-private-key: ${H5_PASSWORD_RSA_PRIVATE_KEY:GENERATE}

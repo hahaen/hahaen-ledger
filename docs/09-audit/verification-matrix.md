@@ -1,6 +1,38 @@
 # 当前验证矩阵
 
-更新日期：2026-09-29。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
+更新日期：2026-09-30。状态只表示当前工作区实际证据：`PASS`=已执行且符合预期；`PARTIAL`=部分完成；`FAIL`=已执行但不符合预期；`BLOCKED`=外部条件不可得；`NOT_RUN`=尚未执行。
+
+## 2026-09-30：通知中心顶部卡片
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 个人中心同款顶部卡片 | PASS | 复用 `profile-hero` 渐变、圆角、标题和装饰圆环，表单沿用 20px 间距；[H5 实际截图](../../app/tests/evidence/notification-center-card-20260930.png)。 |
+| 类型检查与双端构建 | PASS | 本轮 `pnpm run typecheck`、`pnpm run build:h5`、`pnpm run build:mp-weixin` 均退出码 0。 |
+| 微信实际视觉 | NOT_RUN | 未运行微信开发者工具/真机，仅完成生产构建。 |
+
+## 2026-09-30：通知中心与 Key 回显
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| 独立通知中心与入口顺序 | PASS | 个人中心恢复仅资料功能；H5 实际“我的”页顺序为个人中心、通知中心、关于与帮助。 |
+| Key 回显、加密与隔离 | PASS | 6 项后端定向/DEV集成通过；真实HTTP读取两类Key与原合成值一致，数据库仍为AES密文，跨用户返回空、删除后不回显，响应禁止缓存。 |
+| 类型检查、转发与双端构建 | PASS | TypeScript、微信转发18/18、H5与微信小程序生产构建。 |
+| H5画面与实际保存/再次进入 | PARTIAL | 实际登录态空配置画面已核对两个选填框和固定保存按钮；点击控制超时，未在真实账号写入合成Key，重入回显由DEV HTTP验证。 |
+| 微信交互 | NOT_RUN | 微信开发者工具及真机尚未验收。 |
+
+详见 [通知中心迭代](../10-iterations/2026/09/notification-center/README.md)。
+
+## 2026-09-29：通用通知配置
+
+| 范围 | 状态 | 证据/限制 |
+| --- | --- | --- |
+| V9 与表结构 | PASS | 当前 DEV Flyway 由 V8 升至 V9；`information_schema` 核对主表 14 列、关系表 5 列、`utf8mb4_general_ci` 和 Entity 列集合。 |
+| 加密、归属、幂等与生命周期 | PASS | Java 25 定向及隔离集成共 6 项通过；真实 HTTP/DB 验证 RSA 输入、AES 密文、未登录拒绝、重复请求、软删除与重新配置，合成数据已清理。 |
+| 前端静态与构建 | PASS | `pnpm run typecheck`、H5 和微信小程序生产构建成功；输入框未提供密码小眼睛。 |
+| 后端普通全量测试 | FAIL | Java 25 `mvn -q test` 运行 74 项，旧 `LoggingProfileConfigTest` 仍按 Windows 路径断言，当前 macOS DEV 路径不同；2 项 DEV 显式测试跳过。 |
+| 真实页面与通知发送 | PARTIAL / NOT_RUN | H5 旧 8080 进程访问资料页返回 500，通知区视觉/点击无法验收；微信工具和真机未运行。本轮无 Bark/pushplus 发信能力，真实投递未执行。 |
+
+详见 [迭代档案](../10-iterations/2026/09/notification-config/README.md)。
 
 ## 2026-09-29：物品清单价格显示实际净成本
 

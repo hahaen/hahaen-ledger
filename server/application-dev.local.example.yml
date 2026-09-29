@@ -11,6 +11,9 @@ spring:
       port: 6379
       password: "<本机 Redis 密码；无密码时留空>"
 hahaen:
+  notification:
+    # 仅在本地忽略文件填写固定的 32 字节 Base64 AES 密钥；重启后必须保持一致。
+    key-aes-base64: "<本机通知Key加密密钥>"
   auth:
     password-rsa-private-key: "<本机 H5 RSA 私钥；可留空使用开发生成值>"
   cors:
