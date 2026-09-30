@@ -49,4 +49,4 @@
 
 本轮核心页面交付与验证见 [core-pages-prototype](10-iterations/2026/09/core-pages-prototype/README.md)，包含前后端回归和独立只读页面截图。
 
-开发完成后的验证、远端同步、冲突处理及自动本地提交以 [AGENTS.md](../AGENTS.md) 的“验证、同步与自动提交”为准，验证门槛见 [测试规范](07-testing/README.md)。
+开发完成后的验证、远端同步、冲突处理、自动提交与推送，以 [AGENTS.md](../AGENTS.md) 的“验证、同步与自动提交”为准，验证门槛见 [测试规范](07-testing/README.md)。

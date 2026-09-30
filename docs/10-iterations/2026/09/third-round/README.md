@@ -259,3 +259,9 @@ H5 Chrome 与微信开发者工具模拟器逐页核对主导航及常用二级�
 - commands：`git status --short` 初始无输出；upstream 查询为 origin/main；修改前与验证后 `git pull --ff-only` 均 Already up to date；Python 链接与规则入口核对 PASS；`git diff --check` 退出 0。
 - verification：上述实际检查 PASS；真实冲突处理 NOT_RUN（没有冲突），后续提交结果以 Git 历史及交付报告为准。
 - rollback：需要撤回时可 revert 本次规范提交，恢复此前项目规则。
+
+## 2026-09-30 追加：自动提交包含推送
+
+用户补充长期授权：验证、远端同步、冲突处理与复验通过后，自动提交并推送到当前分支 upstream，无需再次确认。AGENTS.md、项目 README、文档中心和测试规范同步更新；禁止强制推送，推送拒绝时重新同步复验，失败必须如实报告并保留本地提交。
+
+本次为纯文档更新（database / api / backend / frontend 无变更），检查内容、链接与 Git 空白；实际同步及提交、推送结果以 Git 命令与交付报告为准，不据规则文字推断已推送。回滚可 revert 本次规范提交并正常推送。
