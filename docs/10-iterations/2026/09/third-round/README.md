@@ -302,3 +302,7 @@ PASS：47项前端定向回归、类型检查、H5/微信生产构建；Java25�
 修改规则会替换未完成发生项，原编辑页保存后回旧详情触发“待办不存在，请刷新”。现改为成功回清单并刷新，取消仍回原详情。PASS：先复现失败再修复的实际页面脚本回归、49项前端定向测试、类型检查、H5/微信构建。PARTIAL：页面脚本+API/导航夹具覆盖，未替代真实客户端。NOT_RUN（补充）：真实用户保存、微信工具/真机写入和部署。无后端、Schema、权限或金额实现改动；Java/数据库结构与视觉布局验收不适用。本次必需验证无FAIL/BLOCKED。
 
 详见 [本次迭代](../../10/todo-edit-return/README.md)。
+
+## 2026-10-01｜新增页面跨端适配
+
+通知中心和待办清单/详情/新增按既有风格补齐窄屏换行、按钮居中、开关防压缩与详情固定底栏，两页漏接的统一微信转发已修复。PASS：108项回归、类型与两端构建，实际H5四种尺寸及微信430/320模拟器已测范围。PARTIAL：极限长文本/微信通知页/触摸键盘；NOT_RUN（补充）：真机、Safari和实际保存发送。无数据库/API/后端变化。完整requirement/design/database/api/backend/frontend/testing/commands/verification/rollback见[本次迭代](../../10/new-pages-responsive/README.md)。

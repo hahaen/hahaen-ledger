@@ -65,19 +65,21 @@ function moveMonth(delta: number) {
 .repeat-modes, .repeat-interval, .repeat-calendar-nav, .repeat-last { display:flex; align-items:center; gap:8px; }
 .repeat-fields button { display:flex; align-items:center; justify-content:center; min-height:44px; margin:0; padding:0 4px; border:1px solid #deebe7; border-radius:10px; background:#f9fcfb; color:#52655f; font-size:13px; line-height:1.2; }
 .repeat-fields button::after { border:0; }
-.repeat-modes button { flex:1; }
+.repeat-modes button { flex:1; min-width:0; }
 .repeat-fields .selected { background:#e2f4ef; border-color:#49ad9c; color:#26776a; font-weight:700; }
 .repeat-tip { display:block; margin:9px 0; color:#6e817a; font-size:12px; line-height:1.6; }
 .repeat-interval { min-height:44px; margin:10px 0; color:#52655f; font-size:13px; }
 .repeat-interval input { flex:0 0 68px; width:68px; min-width:0; height:36px; padding:0 8px; text-align:center; color:#253b34; font-size:14px; box-sizing:border-box; border:1px solid #deebe7; border-radius:10px; background:#f9fcfb; }
 .repeat-units { margin-bottom:12px; }
 .repeat-grid, .repeat-week { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; }
-.repeat-grid button { width:100%; }
+.repeat-grid > view { min-width:0; }
+.repeat-grid button { width:100%; min-width:0; }
 .repeat-week { margin:12px 0 6px; text-align:center; color:#6e817a; font-size:12px; }
+.repeat-last > switch { flex:0 0 auto; }
 .repeat-last { justify-content:space-between; margin-top:12px; color:#52655f; font-size:13px; }
 .repeat-calendar-nav { justify-content:space-between; margin-top:12px; color:#52655f; }
 .repeat-calendar-nav button { width:44px; font-size:24px; }
 .repeat-dates { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
-.repeat-dates button { padding:0 8px; }
+.repeat-dates button { max-width:100%; padding:0 8px; word-break:break-all; }
 .repeat-fields button[disabled] { opacity:.45; }
 </style>

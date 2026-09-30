@@ -7,8 +7,10 @@ import TodoRepeatFieldsInput from '../../components/TodoRepeatFields.vue'
 import { cleanRepeat, repeatError } from '../../utils/todoRepeat'
 import { todoApi, type TodoPayload, type TodoRepeatFields } from '../../utils/api'
 import { useLedger } from '../../stores/ledger'
+import { registerWechatShare } from '../../utils/wechatShare'
 
 const ledger = useLedger()
+registerWechatShare()
 const editId = ref('')
 const loading = ref(true)
 const loadError = ref('')
@@ -198,11 +200,12 @@ async function save() {
 .todo-editor-field > input, .todo-editor-field > textarea { width:100%; min-height:44px; padding:10px 12px; border:1px solid #deebe7; border-radius:11px; color:#253b34; background:#f9fcfb; font-size:13px; box-sizing:border-box; }
 .todo-editor-field textarea { height:78px; }
 .todo-editor-date-row { display:flex; gap:9px; }
-.todo-editor-date-row button { flex:1; display:flex; align-items:center; justify-content:center; min-height:44px; margin:0; border:1px solid #deebe7; border-radius:11px; color:#26776a; background:#f9fcfb; font-size:13px; line-height:1.2; }
+.todo-editor-date-row button { flex:1; min-width:0; padding:0 8px; display:flex; align-items:center; justify-content:center; min-height:44px; margin:0; border:1px solid #deebe7; border-radius:11px; color:#26776a; background:#f9fcfb; font-size:13px; line-height:1.2; }
 .todo-required { color:#d9796b; }
 .todo-optional { margin-left:5px; color:#8a9f96; font-weight:400; }
 .todo-editor-remind { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:17px 0; }
-.todo-editor-remind > view { display:flex; flex-direction:column; gap:5px; }
+.todo-editor-remind > view { flex:1; min-width:0; display:flex; flex-direction:column; gap:5px; }
+.todo-editor-remind > switch { flex:0 0 auto; }
 .todo-editor-remind text:first-child { color:#52655f; font-size:12px; font-weight:700; }
 .todo-editor-remind text:last-child { color:#8a9f96; font-size:10px; line-height:1.5; }
 .todo-editor-footnote { display:block; margin:13px 4px 0; color:#91a49f; font-size:10px; line-height:1.6; }

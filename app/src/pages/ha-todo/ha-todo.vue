@@ -93,8 +93,8 @@ onShow(() => { now.value = Date.now(); void load() })
       <view class="profile-orbit profile-orbit-one" aria-hidden="true" /><view class="profile-orbit profile-orbit-two" aria-hidden="true" />
     </view>
     <view class="todo-summary">
-      <button :class="['todo-summary-tab', { active: status === 'PENDING' }]" :aria-pressed="status === 'PENDING'" @click="switchStatus('PENDING')"><text>待完成</text><strong>{{ pendingCount }}</strong></button>
-      <button :class="['todo-summary-tab', { active: status === 'COMPLETED' }]" :aria-pressed="status === 'COMPLETED'" @click="switchStatus('COMPLETED')"><text>已完成</text><strong>{{ completedCount }}</strong></button>
+      <button :class="['todo-summary-tab', { active: status === 'PENDING' }]" :aria-pressed="status === 'PENDING'" @click="switchStatus('PENDING')"><text>待完成</text><text class="todo-summary-count">{{ pendingCount }}</text></button>
+      <button :class="['todo-summary-tab', { active: status === 'COMPLETED' }]" :aria-pressed="status === 'COMPLETED'" @click="switchStatus('COMPLETED')"><text>已完成</text><text class="todo-summary-count">{{ completedCount }}</text></button>
     </view>
     <view class="todo-section-head"><text>{{ status === 'PENDING' ? '待完成清单' : '完成记录' }}</text><button v-if="status === 'PENDING'" class="todo-add" @click="openCreate">新增待办</button></view>
     <view v-if="loading" class="profile-loading">正在加载待办…</view>
@@ -126,9 +126,9 @@ onShow(() => { now.value = Date.now(); void load() })
 .todo-page { padding-bottom:calc(36px + env(safe-area-inset-bottom)); }
 .todo-hero { min-height:128px; }
 .todo-summary { display:flex; gap:10px; margin-top:16px; }
-.todo-summary-tab { flex:1; display:flex; align-items:center; justify-content:space-between; min-height:65px; padding:13px 16px; border:1px solid #edf1ef; border-radius:17px; color:#637b73; background:#fff; text-align:left; box-shadow:0 5px 16px rgba(49,76,71,.04); }
+.todo-summary-tab { flex:1; min-width:0; margin:0; gap:8px; display:flex; align-items:center; justify-content:space-between; min-height:65px; padding:13px 16px; border:1px solid #edf1ef; border-radius:17px; color:#637b73; background:#fff; text-align:left; box-shadow:0 5px 16px rgba(49,76,71,.04); }
 .todo-summary-tab.active { border-color:#b9e6da; color:#236f61; background:#edf9f5; }
-.todo-summary-tab text { font-size:13px; font-weight:650; }.todo-summary-tab strong { font-size:24px; line-height:1; }
+.todo-summary-tab text { font-size:13px; font-weight:650; }.todo-summary-tab .todo-summary-count { font-size:24px; line-height:1; }
 .todo-section-head { display:flex; align-items:center; justify-content:space-between; margin:22px 0 12px; color:#254b43; font-size:15px; font-weight:700; }
 .todo-add { display:flex; align-items:center; justify-content:center; min-height:44px; margin:0; padding:0 13px; border-radius:12px; color:#fff; background:#49ad9c; font-size:12px; font-weight:700; line-height:1.2; text-align:center; box-sizing:border-box; }
 .todo-list { display:flex; flex-direction:column; gap:12px; }
@@ -137,8 +137,8 @@ onShow(() => { now.value = Date.now(); void load() })
 .todo-complete-control::after { border:0; }
 .todo-status-dot { position:relative; width:20px; height:20px; border:2px solid #49ad9c; border-radius:50%; box-sizing:border-box; }
 .todo-status-dot.done::after { content:''; position:absolute; left:50%; top:50%; width:10px; height:10px; border-radius:50%; background:#49ad9c; transform:translate(-50%,-50%); }
-.todo-card-copy { min-width:0; flex:1; }.todo-card-title { display:block; color:#203b34; font-size:15px; font-weight:700; line-height:1.45; word-break:break-word; }.todo-card-note { display:block; margin-top:5px; color:#71857d; font-size:12px; line-height:1.55; word-break:break-word; }
-.todo-meta { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }.todo-meta text { padding:4px 7px; border-radius:7px; color:#648378; background:#f2f7f5; font-size:10px; }.todo-remind-badge { position:absolute; top:0; right:0; padding:3px 9px; border-radius:0 17px 0 8px; color:#237d6e; background:#e6f7f1; font-size:9px; line-height:1.5; }
+.todo-card-copy { min-width:0; flex:1; }.todo-card-title { display:block; color:#203b34; font-size:15px; font-weight:700; line-height:1.45; word-break:break-all; overflow-wrap:anywhere; }.todo-card-note { display:block; margin-top:5px; color:#71857d; font-size:12px; line-height:1.55; word-break:break-all; overflow-wrap:anywhere; }
+.todo-meta { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }.todo-meta text { min-width:0; max-width:100%; word-break:break-all; overflow-wrap:anywhere; padding:4px 7px; border-radius:7px; color:#648378; background:#f2f7f5; font-size:10px; }.todo-remind-badge { position:absolute; top:0; right:0; padding:3px 9px; border-radius:0 17px 0 8px; color:#237d6e; background:#e6f7f1; font-size:9px; line-height:1.5; }
 .todo-completed-at { display:block; margin-top:9px; color:#71857d; font-size:10px; }
 .todo-time-state { flex:0 0 auto; color:#a07820; background:#fff7dc; padding:5px 7px; border-radius:8px; font-size:11px; font-weight:650; white-space:nowrap; }.todo-time-state.completed { color:#237d6e; background:#e6f7f1; }
 .todo-empty { display:flex; flex-direction:column; align-items:center; gap:7px; padding:45px 15px; border:1px dashed #d8e8e1; border-radius:16px; color:#6e8d81; text-align:center; }.todo-empty text:first-child { font-size:14px; font-weight:700; }.todo-empty text:last-child { font-size:11px; }

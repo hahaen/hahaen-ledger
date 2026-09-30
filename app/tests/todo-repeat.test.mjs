@@ -11,7 +11,7 @@ async function editor(api, previousPages = [], onBack = () => {}) {
   const file = await readFile(new URL('../src/pages/ha-todo-editor/ha-todo-editor.vue', import.meta.url), 'utf8')
   const script = file.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
   const exposed = {}; const hooks = {}; const toasts = []; const navigation = []
-  const dependencies = { vue: require('vue'), '@dcloudio/uni-app': { onLoad: cb => { hooks.load = cb }, onBackPress() {} }, '../../utils/api': { todoApi: api }, '../../utils/todoRepeat': helpers, '../../stores/ledger': { useLedger: () => ({ state: { token: 'fixture' } }) } }
+  const dependencies = { vue: require('vue'), '@dcloudio/uni-app': { onLoad: cb => { hooks.load = cb }, onBackPress() {} }, '../../utils/api': { todoApi: api }, '../../utils/todoRepeat': helpers, '../../utils/wechatShare': { registerWechatShare() {} }, '../../stores/ledger': { useLedger: () => ({ state: { token: 'fixture' } }) } }
   new Function('require', 'exports', 'uni', 'getCurrentPages', transpile(script + '\nexport { title, remind, customRepeat, save, snapshot, initialValue, loadDetail, editId, back, discardOpen, pickerMode }'))(name => dependencies[name] || {}, exposed, { showToast: v => toasts.push(v.title), redirectTo: v => navigation.push(v.url), navigateBack: options => { navigation.push('back'); onBack(options) } }, () => previousPages)
   hooks.load({})
   return { ...exposed, hooks, toasts, navigation }
