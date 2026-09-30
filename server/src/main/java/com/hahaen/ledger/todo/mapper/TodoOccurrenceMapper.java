@@ -22,7 +22,7 @@ public interface TodoOccurrenceMapper extends BaseMapper<TodoOccurrence> {
     @MapKey("status") java.util.Map<String,java.util.Map<String,Object>> counts(@Param("userId") long userId);
     @Select("SELECT COUNT(*) FROM ha_todo_occurrence WHERE user_id=#{userId} AND deleted=0 AND status=#{status}")
     long count(@Param("userId") long userId,@Param("status") String status);
-    @Select("SELECT MAX(due_at) FROM ha_todo_occurrence WHERE rule_id=#{ruleId} AND user_id=#{userId} AND status='COMPLETED'")
+    @Select("SELECT MAX(due_at) FROM ha_todo_occurrence WHERE rule_id=#{ruleId} AND user_id=#{userId} AND status='COMPLETED' AND deleted=0")
     LocalDateTime lastCompletedDue(@Param("ruleId") long ruleId,@Param("userId") long userId);
     @Select("SELECT * FROM ha_todo_occurrence WHERE id=#{id} AND deleted=0 AND status='PENDING'")
     TodoOccurrence pending(@Param("id") long id);
@@ -34,8 +34,8 @@ public interface TodoOccurrenceMapper extends BaseMapper<TodoOccurrence> {
       ORDER BY o.id LIMIT 200
       """)
     List<TodoOccurrence> dueForReminder(@Param("now") LocalDateTime now,@Param("oldest") LocalDateTime oldest,@Param("afterId") long afterId);
-    @Update("UPDATE ha_todo_occurrence SET status='COMPLETED',completed_at=CURRENT_TIMESTAMP(3),updated_at=CURRENT_TIMESTAMP(3),updated_by=#{userId},update_name=#{userName} WHERE id=#{id} AND user_id=#{userId} AND status='PENDING' AND deleted=0")
-    int complete(@Param("id") long id,@Param("userId") long userId,@Param("userName") String userName);
+    @Update("UPDATE ha_todo_occurrence SET status='COMPLETED',completed_at=#{completedAt},updated_at=CURRENT_TIMESTAMP(3),updated_by=#{userId},update_name=#{userName} WHERE id=#{id} AND user_id=#{userId} AND status='PENDING' AND deleted=0")
+    int complete(@Param("id") long id,@Param("userId") long userId,@Param("userName") String userName,@Param("completedAt") LocalDateTime completedAt);
     @Update("""
       UPDATE ha_todo_occurrence SET deleted=1,deleted_at=CURRENT_TIMESTAMP(3),deleted_by=#{userId},deleted_name=#{userName},
       updated_at=CURRENT_TIMESTAMP(3),updated_by=#{userId},update_name=#{userName}

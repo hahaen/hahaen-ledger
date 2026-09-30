@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { onBackPress, onLoad } from '@dcloudio/uni-app'
 import NativeNavigation from '../../components/NativeNavigation.vue'
 import EntryDateTimePicker from '../../components/EntryDateTimePicker.vue'
+import TodoRepeatFieldsInput from '../../components/TodoRepeatFields.vue'
+import { cleanRepeat, repeatError } from '../../utils/todoRepeat'
 import CenterModal from '../../components/CenterModal.vue'
-import { todoApi, type TodoPayload, type TodoRecurrence } from '../../utils/api'
+import { todoApi, type TodoPayload, type TodoRecurrence, type TodoRepeatFields } from '../../utils/api'
 import { useLedger } from '../../stores/ledger'
 
 const ledger = useLedger()
@@ -19,20 +21,14 @@ const note = ref('')
 const date = ref('')
 const time = ref('')
 const recurrence = ref<TodoRecurrence>('ONCE')
-const monthInterval = ref('2')
 const remind = ref(false)
+const customRepeat = ref<TodoRepeatFields>({ repeatMode: 'TIME', repeatUnit: 'DAY', repeatInterval: 1, weekDays: '', monthDays: '', yearDays: '', fixedDates: '', lastDay: false })
 const initialValue = ref('')
 const requestKeys = new Map<string, string>()
 let allowBack = false
 
-const recurrenceOptions: { value: TodoRecurrence; label: string }[] = [
-  { value: 'ONCE', label: '一次' }, { value: 'DAILY', label: '每天' },
-  { value: 'MONTHLY', label: '每月' }, { value: 'EVERY_N_MONTHS', label: '每隔几月' },
-  { value: 'YEARLY', label: '每年' },
-]
-const intervalNumber = computed(() => recurrence.value === 'EVERY_N_MONTHS' ? Number(monthInterval.value) : 1)
 const beijingTime = (offsetMs = 0) => new Date(Date.now() + offsetMs + 8 * 60 * 60 * 1000).toISOString().slice(0, 16)
-const snapshot = () => JSON.stringify([title.value, note.value, date.value, time.value, recurrence.value, monthInterval.value, remind.value])
+const snapshot = () => JSON.stringify([title.value, note.value, date.value, time.value, recurrence.value, remind.value, customRepeat.value])
 const newKey = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`
 function stableKey(signature: string) {
   let key = requestKeys.get(signature)
@@ -75,9 +71,20 @@ async function loadDetail() {
     const next = item.dueAt.slice(0, 16) > beijingTime() ? item.dueAt.slice(0, 16) : beijingTime(60 * 60 * 1000)
     date.value = next.slice(0, 10)
     time.value = next.slice(11, 16)
-    recurrence.value = item.recurrence
-    monthInterval.value = String(item.monthInterval)
+    recurrence.value = item.recurrence === 'ONCE' ? 'ONCE' : 'CUSTOM'
+    if (item.recurrence !== 'ONCE' && item.recurrence !== 'CUSTOM') {
+      const monthly = item.recurrence === 'MONTHLY' || item.recurrence === 'EVERY_N_MONTHS'
+      customRepeat.value = { repeatMode: 'TIME', repeatUnit: monthly ? 'MONTH' : item.recurrence === 'YEARLY' ? 'YEAR' : 'DAY',
+        repeatInterval: item.recurrence === 'EVERY_N_MONTHS' ? item.monthInterval : 1,
+        monthDays: monthly ? String(Number(item.anchorAt.slice(8, 10))) : '',
+        yearDays: item.recurrence === 'YEARLY' ? item.anchorAt.slice(5, 10) : '' }
+    }
     remind.value = item.remind
+    if (item.recurrence === 'CUSTOM') customRepeat.value = {
+      repeatMode: item.repeatMode, repeatUnit: item.repeatUnit || 'DAY', repeatInterval: item.repeatInterval || 1,
+      weekDays: item.weekDays || '', monthDays: item.monthDays || '', lastDay: item.lastDay,
+      yearDays: item.yearDays || '', fixedDates: item.fixedDates || '' }
+
     initialValue.value = snapshot()
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : '待办加载失败，请重试'
@@ -92,8 +99,8 @@ onLoad((options) => {
   void loadDetail()
 })
 
-function chooseRecurrence(event: { detail: { value: number | string } }) {
-  recurrence.value = recurrenceOptions[Number(event.detail.value)]?.value || 'ONCE'
+function chooseRepeat(event: Event) {
+  recurrence.value = Boolean((event as Event & { detail?: { value?: unknown } }).detail?.value) ? 'CUSTOM' : 'ONCE'
 }
 function chooseRemind(event: Event) {
   remind.value = Boolean((event as Event & { detail?: { value?: unknown } }).detail?.value)
@@ -115,12 +122,11 @@ function payload(): Omit<TodoPayload, 'idempotencyKey'> | null {
   if (dueAt.slice(0, 16) <= beijingTime()) {
     uni.showToast({ title: '计划时间须晚于现在', icon: 'none' }); return null
   }
-  if (!Number.isInteger(intervalNumber.value) || intervalNumber.value < 1 || intervalNumber.value > 120 ||
-      recurrence.value === 'EVERY_N_MONTHS' && intervalNumber.value < 2) {
-    uni.showToast({ title: '间隔月数须为2至120', icon: 'none' }); return null
-  }
-  return { title: cleanTitle, note: note.value.trim(), recurrence: recurrence.value,
-    monthInterval: intervalNumber.value, dueAt, remind: remind.value }
+  const repeat = recurrence.value === 'CUSTOM' ? cleanRepeat(customRepeat.value) : {}
+  const error = recurrence.value === 'CUSTOM' ? repeatError(repeat) : ''
+  if (error) { uni.showToast({ title: error, icon: 'none' }); return null }
+  return { ...repeat, title: cleanTitle, note: note.value.trim(), recurrence: recurrence.value,
+    monthInterval: 1, dueAt, remind: remind.value }
 }
 async function save() {
   if (saving.value || loading.value || loadError.value) return
@@ -157,8 +163,11 @@ async function save() {
         <view class="todo-editor-field"><text class="todo-editor-label">标题</text><input v-model="title" aria-label="待办标题" maxlength="100" placeholder="要完成什么？" :disabled="saving" /></view>
         <view class="todo-editor-field"><text class="todo-editor-label">备注（选填）</text><textarea v-model="note" aria-label="待办备注" maxlength="500" placeholder="写下补充信息" :disabled="saving" /></view>
         <view class="todo-editor-field"><text class="todo-editor-label">{{ editId ? '下次计划时间 · 北京时间' : '首次计划时间 · 北京时间' }}</text><view class="todo-editor-date-row"><button :disabled="saving" @click="pickerMode = 'date'">{{ date || '选择日期' }}</button><button :disabled="saving" @click="pickerMode = 'time'">{{ time || '选择时间' }}</button></view></view>
-        <view class="todo-editor-field"><text class="todo-editor-label">重复</text><picker :range="recurrenceOptions" range-key="label" :value="recurrenceOptions.findIndex(option => option.value === recurrence)" :disabled="saving" @change="chooseRecurrence"><view class="todo-editor-select">{{ recurrenceOptions.find(option => option.value === recurrence)?.label }} <text>⌄</text></view></picker><text v-if="recurrence === 'MONTHLY' || recurrence === 'EVERY_N_MONTHS' || recurrence === 'YEARLY'" class="todo-editor-tip">修改计划时间或重复方式后，以所选日期重新指定；该月没有此日时取月末。</text></view>
-        <view v-if="recurrence === 'EVERY_N_MONTHS'" class="todo-editor-field"><text class="todo-editor-label">间隔月数（2–120）</text><input v-model="monthInterval" aria-label="间隔月数" type="number" maxlength="3" :disabled="saving" /></view>
+        <view class="todo-editor-field">
+          <view class="todo-editor-repeat-toggle"><text class="todo-editor-label">重复</text><switch :checked="recurrence !== 'ONCE'" aria-label="是否重复" :disabled="saving" color="#49ad9c" @change="chooseRepeat" /></view>
+          <TodoRepeatFieldsInput v-model="customRepeat" :disabled="saving || recurrence === 'ONCE'" :min-date="beijingTime().slice(0, 10)" />
+          <text v-if="recurrence === 'ONCE'" class="todo-editor-tip">不重复，仅执行一次。</text>
+        </view>
         <view class="todo-editor-remind"><view><text>到期提醒</text><text>通过通知中心已配置的 Bark / pushplus 发送</text></view><switch :checked="remind" color="#49ad9c" :disabled="saving" @change="chooseRemind" /></view>
       </view>
       <text class="todo-editor-footnote">到期仍未完成时发送提醒。删除未完成的重复待办会结束整条规则。</text>
@@ -181,6 +190,8 @@ async function save() {
 .todo-editor-date-row button { flex:1; display:flex; align-items:center; justify-content:center; min-height:44px; margin:0; border:1px solid #deebe7; border-radius:11px; color:#26776a; background:#f9fcfb; font-size:13px; line-height:1.2; }
 .todo-editor-select { display:flex; align-items:center; justify-content:space-between; }
 .todo-editor-tip { display:block; margin-top:7px; color:#8a9f96; font-size:10px; line-height:1.5; }
+.todo-editor-repeat-toggle { display:flex; align-items:center; justify-content:space-between; min-height:44px; }
+.todo-editor-repeat-toggle .todo-editor-label { margin-bottom:0; }
 .todo-editor-remind { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:17px 0; }
 .todo-editor-remind > view { display:flex; flex-direction:column; gap:5px; }
 .todo-editor-remind text:first-child { color:#52655f; font-size:12px; font-weight:700; }

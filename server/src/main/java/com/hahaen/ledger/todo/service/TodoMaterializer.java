@@ -29,6 +29,7 @@ public class TodoMaterializer {
             occurrence.setTitle(rule.getTitle()); occurrence.setNote(rule.getNote());
             occurrence.setRecurrence(rule.getRecurrence()); occurrence.setMonthInterval(rule.getMonthInterval());
             occurrence.setRemind(rule.getRemind());
+            TodoRepeat.snapshot(rule, occurrence);
             occurrence.setCreatedBy(AuditIdentity.SYSTEM_USER_ID);
             occurrence.setCreatedName("系统");
             occurrences.insert(occurrence);

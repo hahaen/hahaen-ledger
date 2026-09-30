@@ -12,4 +12,13 @@ public record TodoSaveRequest(
         Integer monthInterval,
         @NotNull LocalDateTime dueAt,
         boolean remind,
-        @NotBlank String idempotencyKey) {}
+        @NotBlank String idempotencyKey,
+        String repeatMode, String repeatUnit, Integer repeatInterval,
+        @Size(max = 20) String weekDays, @Size(max = 100) String monthDays, boolean lastDay,
+        @Size(max = 2200) String yearDays, @Size(max = 1100) String fixedDates) {
+    public TodoSaveRequest(String title, String note, String recurrence, Integer monthInterval,
+                           LocalDateTime dueAt, boolean remind, String idempotencyKey) {
+        this(title, note, recurrence, monthInterval, dueAt, remind, idempotencyKey,
+                null, null, null, null, null, false, null, null);
+    }
+}

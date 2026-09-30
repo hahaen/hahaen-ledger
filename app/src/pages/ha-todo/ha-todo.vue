@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import NativeNavigation from '../../components/NativeNavigation.vue'
 import CenterModal from '../../components/CenterModal.vue'
+import { recurrenceLabel } from '../../utils/todoRepeat'
 import { todoApi, type TodoAttempt, type TodoItem, type TodoStatus } from '../../utils/api'
 import { registerWechatShare } from '../../utils/wechatShare'
 import { useLedger } from '../../stores/ledger'
@@ -26,14 +27,6 @@ const attemptError = ref('')
 const actingId = ref('')
 const requestKeys = new Map<string, string>()
 let loadSequence = 0
-const recurrenceLabel = (item: TodoItem) => {
-  if (item.recurrence === 'ONCE') return '仅一次'
-  if (item.recurrence === 'DAILY') return '每天'
-  const day = Number(item.anchorAt.slice(8, 10))
-  if (item.recurrence === 'MONTHLY') return `每月 ${day} 日`
-  if (item.recurrence === 'EVERY_N_MONTHS') return `每隔 ${item.monthInterval} 月 ${day} 日`
-  return `每年 ${Number(item.anchorAt.slice(5, 7))} 月 ${day} 日`
-}
 const niceDate = (value: string) => value ? value.slice(0, 16).replace('T', ' ') : ''
 const newKey = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`
 function stableKey(signature: string) {

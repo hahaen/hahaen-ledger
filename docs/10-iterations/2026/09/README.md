@@ -75,3 +75,5 @@
 - [ha-todo](ha-todo/README.md)：独立待办清单、重复发生项、到期提醒及逐次消息记录（2026-09-30）。
 
 - [item-cost-chart-scale](item-cost-chart-scale/README.md)：长期日均成本图自适应纵轴及跨年日期（2026-09-30）。
+
+- [待办自定义重复](todo-custom-repeat/README.md)：三模式、跨端统一表单、V11与历史快照。

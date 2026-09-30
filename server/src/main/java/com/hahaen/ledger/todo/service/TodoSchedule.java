@@ -10,8 +10,9 @@ public final class TodoSchedule {
     private TodoSchedule() {}
     public static LocalDateTime next(TodoRule rule, LocalDateTime current) {
         LocalDateTime anchor = rule.getAnchorAt();
-        return switch (rule.getRecurrence()) {
+        LocalDateTime result = switch (rule.getRecurrence()) {
             case "ONCE" -> null;
+            case "CUSTOM" -> TodoRepeat.afterCompletion(rule) ? null : TodoRepeat.scheduled(rule, current, false);
             case "DAILY" -> current.plusDays(1);
             case "MONTHLY", "EVERY_N_MONTHS" -> {
                 int interval = rule.getRecurrence().equals("MONTHLY") ? 1 : rule.getMonthInterval();
@@ -24,5 +25,6 @@ public final class TodoSchedule {
             }
             default -> throw new BusinessException("TODO_RECURRENCE_INVALID", "重复规则无效");
         };
+        return result != null && result.getYear() > 2099 ? null : result;
     }
 }

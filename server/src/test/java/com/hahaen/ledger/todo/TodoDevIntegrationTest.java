@@ -29,7 +29,7 @@ class TodoDevIntegrationTest {
     @Autowired TodoMaterializer materializer;
 
     @Test void migrationSchemaAndMaterialization() {
-        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM haji_flyway_history WHERE version='10' AND success=1",Integer.class));
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM haji_flyway_history WHERE version='11' AND success=1",Integer.class));
         for (String table : new String[]{"ha_todo_rule","ha_todo_occurrence","ha_todo_delivery","ha_todo_delivery_attempt","ha_todo_request"}) {
             assertEquals("utf8mb4_general_ci",jdbc.queryForObject("SELECT TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?",String.class,table));
             assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_COMMENT=''",Integer.class,table));

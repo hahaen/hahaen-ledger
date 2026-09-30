@@ -62,14 +62,21 @@ export const notificationConfigApi = {
     request<NotificationConfig>(`/api/app/user/notification-configs/${type}`, { method: 'PUT', data }),
 }
 
-export type TodoRecurrence = 'ONCE' | 'DAILY' | 'MONTHLY' | 'EVERY_N_MONTHS' | 'YEARLY'
+export type TodoRecurrence = 'ONCE' | 'DAILY' | 'MONTHLY' | 'EVERY_N_MONTHS' | 'YEARLY' | 'CUSTOM'
+export type TodoRepeatMode = 'TIME' | 'AFTER_COMPLETION' | 'FIXED_DATES'
+export type TodoRepeatUnit = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR'
+export type TodoRepeatFields = {
+  repeatMode?: TodoRepeatMode | null; repeatUnit?: TodoRepeatUnit | null; repeatInterval?: number | null
+  weekDays?: string | null; monthDays?: string | null; lastDay?: boolean
+  yearDays?: string | null; fixedDates?: string | null
+}
 export type TodoStatus = 'PENDING' | 'COMPLETED'
-export type TodoItem = {
+export type TodoItem = TodoRepeatFields & {
   id: string; ruleId: string; title: string; note: string | null; recurrence: TodoRecurrence
   monthInterval: number; dueAt: string; anchorAt: string; remind: boolean; status: TodoStatus; completedAt: string | null
 }
 export type TodoPage = { pendingCount: number; completedCount: number; items: TodoItem[]; hasMore: boolean }
-export type TodoPayload = {
+export type TodoPayload = TodoRepeatFields & {
   title: string; note: string; recurrence: TodoRecurrence; monthInterval: number
   dueAt: string; remind: boolean; idempotencyKey: string
 }

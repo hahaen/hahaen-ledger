@@ -19,6 +19,15 @@ public class TodoOccurrence extends BaseAuditEntity {
     private String note;
     private String recurrence;
     private Integer monthInterval;
+    private String repeatMode;
+    private String repeatUnit;
+    private Integer repeatInterval;
+    private String weekDays;
+    private String monthDays;
+    private Integer lastDay;
+    private String yearDays;
+    private String fixedDates;
+
     private Integer remind;
     private String status;
     private LocalDateTime completedAt;

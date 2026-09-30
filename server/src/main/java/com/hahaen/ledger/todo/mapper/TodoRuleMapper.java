@@ -22,6 +22,8 @@ public interface TodoRuleMapper extends BaseMapper<TodoRule> {
     int advance(@Param("id") long id, @Param("nextDueAt") LocalDateTime nextDueAt);
     @Update("""
       UPDATE ha_todo_rule SET title=#{title},note=#{note},recurrence=#{recurrence},month_interval=#{monthInterval},
+      repeat_mode=#{repeatMode},repeat_unit=#{repeatUnit},repeat_interval=#{repeatInterval},
+      week_days=#{weekDays},month_days=#{monthDays},last_day=#{lastDay},year_days=#{yearDays},fixed_dates=#{fixedDates},
       anchor_at=#{anchorAt},next_due_at=#{nextDueAt},remind=#{remind},active=1,
       updated_at=CURRENT_TIMESTAMP(3),updated_by=#{userId},update_name=#{updateName}
       WHERE id=#{id} AND user_id=#{userId} AND deleted=0
