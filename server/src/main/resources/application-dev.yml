@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT:9898}
 spring:
   config:
     # 兼容从 server 目录、项目根目录以及 IntelliJ IDEA 启动。

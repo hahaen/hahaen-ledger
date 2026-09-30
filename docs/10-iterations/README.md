@@ -49,3 +49,5 @@
 
 - [2026-09-28 独立物品管理](2026/09/item-lifecycle/README.md)：五导航、成本口径、V6迁移、真实DEV接口和视觉证据。
 - [2026-09-29 物品清单退役行灰底](2026/09/item-retired-row-background/README.md)：按退役状态区分列表行底色。
+
+- [2026-09 本地后端端口 9898](2026/09/local-backend-port-9898/README.md)：仅开发后端及开发 API 地址调整，正式环境不变。
