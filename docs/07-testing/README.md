@@ -34,3 +34,7 @@ node --test tests/entry.test.mjs tests/page-flows.test.mjs 通过 9 项前端回
 ItemServiceTest覆盖11项核心金额/日期/冻结/用户隔离/幂等/删除审计测试。ItemDevIntegrationTest默认跳过，显式-Ditem.dev.verify=true连接DEV依赖，通过真实HTTP RSA登录与6路并发创建，核对Flyway、information_schema与Entity。合成用户/物品在finally按精确ID清理，会话logout；不读取真实用户密码、不记录Token或验证码。H5只读夹具与真实API证据分开，微信构建不替代工具/真机。完整记录见 [物品验收](../10-iterations/2026/09/item-lifecycle/09-verification.md)。
 
 真实H5验收可显式追加-Ditem.ui.verify=true：ItemUiVerifier只在测试代码中启用localhost短期桥接，真实会话只驻留内存；手工从浏览器新增/退役后通过target/item-ui-complete结束，测试继续验证物品已退役和记账零影响并清理。默认测试不启动此服务，不输出/保存凭证。已执行证据见dev-ui.json；真实页面删除按钮提交和微信工具/真机仍NOT_RUN。
+
+## 验证与自动提交门槛
+
+按 [长期工程规则](../../AGENTS.md) 的“验证、同步与自动提交”执行：本次改动的必需测试和构建通过后，拉取当前分支 upstream，解决冲突并复验最终代码，再自动本地提交。必需验证 FAIL、BLOCKED 或 NOT_RUN 时不得自动提交；纯文档变更只做内容、链接及 Git 空白检查，不要求无关业务构建。远端更新影响代码或依赖时，即使无冲突也需复验。提交前审查暂存差异，只包含本次任务，并使用 `<type>(<scope>): <中文摘要>`。

@@ -1016,3 +1016,14 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 | 外部通知实际送达 | BLOCKED | 无真实 Bark/pushplus Key 和接收设备验证。 |
 
 详见 [待办清单迭代](../10-iterations/2026/09/ha-todo/README.md)及[客户端测试报告](../10-iterations/2026/09/ha-todo/11-client-test-report.md)。
+
+## 2026-09-30｜验证后同步与自动提交规范
+
+| 检查 | 状态 | 证据与范围 |
+| --- | --- | --- |
+| 长期提交流程及中文格式 | PASS（文档） | AGENTS.md 明确测试、同步、解冲突、复验与自动本地提交；README、文档中心及测试规范同步。 |
+| 本地链接与空白检查 | PASS | Python 核对修改文件本地 Markdown 链接及规则入口；`git diff --check` 退出 0。 |
+| 远端同步 | PASS | 当前 main 的 upstream 为 origin/main；修改前及验证后 `git pull --ff-only` 均返回 Already up to date。 |
+| 本次真实冲突处理 | NOT_RUN | 本次没有产生冲突；仅制定后续处理与复验规则。 |
+
+本次仅修改规范，不涉及业务代码；后端测试、前端构建、数据库及设备验收不适用。

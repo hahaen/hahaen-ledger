@@ -249,3 +249,13 @@ H5 Chrome 与微信开发者工具模拟器逐页核对主导航及常用二级�
 新增与账本无关的独立待办、V10 五表、按用户归属和幂等操作、重复发生项、到期提醒与逐次消息记录。DEV Flyway V10、`information_schema`/Entity、合成用户真实 HTTP/权限/生命周期、定向测试及前端双端构建已验证；Chrome H5 与微信开发者工具模拟器已实际点击测试。微信原生重复选值后的持久化 PARTIAL，真机 NOT_RUN，真实 Bark/pushplus 送达 BLOCKED。完整证据见 [ha-todo](../ha-todo/README.md)和[客户端测试报告](../ha-todo/11-client-test-report.md)。
 
 同日补充独立新增/编辑路由、本人未完成详情读取、保存返回和按钮内容居中。H5/微信模拟器已执行增改删与返回流程；H5 刷新编辑页返回问题已修复并重测。详情见上述客户端测试报告。
+
+## 2026-09-30 追加：验证后同步与自动提交
+
+- requirement：用户要求每次代码写完且测试无误后，拉取远端、解决冲突并自动按中文 Conventional Commit 提交，写入长期规范。
+- design：AGENTS.md 为权威入口，README、文档中心和测试规范同步引用；必需验证失败或阻塞时不自动提交，当次用户限制优先。
+- database / api / backend / frontend：本次均无业务修改。
+- testing：纯文档内容、Markdown 本地链接和 Git 空白检查；业务测试与构建不适用。
+- commands：`git status --short` 初始无输出；upstream 查询为 origin/main；修改前与验证后 `git pull --ff-only` 均 Already up to date；Python 链接与规则入口核对 PASS；`git diff --check` 退出 0。
+- verification：上述实际检查 PASS；真实冲突处理 NOT_RUN（没有冲突），后续提交结果以 Git 历史及交付报告为准。
+- rollback：需要撤回时可 revert 本次规范提交，恢复此前项目规则。
