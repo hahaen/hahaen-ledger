@@ -72,3 +72,4 @@
 - [item-retired-row-background](item-retired-row-background/README.md)：物品清单中已退役行使用灰色底色（2026-09-29）。
 
 - [notification-center](notification-center/README.md)：通知配置移至“我的”下的独立通知中心，回显已保存 Key，并增加个人中心同款顶部引导卡（2026-09-30）。
+- [ha-todo](ha-todo/README.md)：独立待办清单、重复发生项、到期提醒及逐次消息记录（2026-09-30）。

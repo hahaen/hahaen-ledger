@@ -15,7 +15,7 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
         LocalDateTime now = LocalDateTime.now();
         strictInsertFill(metaObject, "createdAt", LocalDateTime.class, now);
         strictInsertFill(metaObject, "deleted", Integer.class, 0);
-        if (hasField(metaObject, "createdBy")) {
+        if (hasField(metaObject, "createdBy") && getFieldValByName("createdBy", metaObject) == null) {
             Long actorId = CurrentUser.optionalId();
             // 创建人可空：仅使用真实登录身份，不从业务记录 ID 推断。
             if (actorId != null) {

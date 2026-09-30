@@ -39,3 +39,5 @@ V7新增 `personal_item_edit_request` 关系表，使用用户+幂等键作为�
 V8新增 `personal_item_reactivate_request` 关系表，保存用户内唯一的重新服役请求键和目标物品；仅含 `created_at` 与 `deleted` 公共关系字段。重新服役通过限定当前用户、未删除、已退役状态的显式 UPDATE 将 `retired_on`、`resale_cent` 置 NULL，同事务写入请求记录。2026-09-29 DEV 集成测试已确认 Flyway V8 执行、HTTP 切换成功及主表两列实际为 NULL；`information_schema` 已核对关系表 5 列、中文注释和公共字段可空/默认值。
 
 V9 新增 `user_notification_config` 通知配置主表和 `user_notification_config_request` 幂等关系表，详情见 [通知配置表](notification-config.md)。2026-09-29 DEV Flyway 已执行 V9；隔离集成测试核对了 `information_schema` 列集合、字符序和 Entity 列集合。
+
+V10 新增独立 [待办清单表](ha-todo.md)。2026-09-30 DEV Flyway 已执行 V10，五表 `utf8mb4_general_ci`、中文注释及规则/发生项 Entity 列集合已由显式集成测试核对；不得改写已执行的 V10。

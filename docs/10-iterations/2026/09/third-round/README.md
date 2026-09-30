@@ -1,5 +1,9 @@
 # `third-round`｜第三轮综合审计
 
+## 2026-09-30 追加：生产通知密钥示例
+
+生产 env 示例补上 `NOTIFICATION_KEY_AES_KEY` 占位项；应用配置映射与 Compose `env_file` 路径静态核对 PASS。生产服务器上的真实配置和运行 NOT_RUN。[通知中心迭代](../notification-center/README.md)。
+
 ## 2026-09-30 追加：通知中心顶部卡片
 
 通知中心增加个人中心同款薄荷渐变引导卡，复用公共样式和表单间距。类型检查、H5/微信生产构建及实际 H5 画面核对 PASS；微信工具/真机视觉 NOT_RUN。[追加档案及截图](../notification-center/README.md)。
@@ -239,3 +243,9 @@ PASS：移除 V5 首行误加的 cd，恢复数据库既有 checksum 266153221�
 ## 2026-09-29 追加：页面跨端适配复查
 
 H5 Chrome 与微信开发者工具模拟器逐页核对主导航及常用二级页面；修复公共页头、矮屏日历和横屏记账三处布局问题。前端 87/87、类型检查及双端构建 PASS；真机触摸、iOS Safari、全部有数据详情与业务写入 NOT_RUN。完整证据、尺寸和回退范围见 [responsive-pages-followup](../responsive-pages-followup/README.md)。
+
+## 2026-09-30：待办清单
+
+新增与账本无关的独立待办、V10 五表、按用户归属和幂等操作、重复发生项、到期提醒与逐次消息记录。DEV Flyway V10、`information_schema`/Entity、合成用户真实 HTTP/权限/生命周期、定向测试及前端双端构建已验证；Chrome H5 与微信开发者工具模拟器已实际点击测试。微信原生重复选值后的持久化 PARTIAL，真机 NOT_RUN，真实 Bark/pushplus 送达 BLOCKED。完整证据见 [ha-todo](../ha-todo/README.md)和[客户端测试报告](../ha-todo/11-client-test-report.md)。
+
+同日补充独立新增/编辑路由、本人未完成详情读取、保存返回和按钮内容居中。H5/微信模拟器已执行增改删与返回流程；H5 刷新编辑页返回问题已修复并重测。详情见上述客户端测试报告。

@@ -61,3 +61,25 @@ export const notificationConfigApi = {
   save: (type: NotificationType, data: { encryptedKey?: string; remove: boolean; idempotencyKey: string }) =>
     request<NotificationConfig>(`/api/app/user/notification-configs/${type}`, { method: 'PUT', data }),
 }
+
+export type TodoRecurrence = 'ONCE' | 'DAILY' | 'MONTHLY' | 'EVERY_N_MONTHS' | 'YEARLY'
+export type TodoStatus = 'PENDING' | 'COMPLETED'
+export type TodoItem = {
+  id: string; ruleId: string; title: string; note: string | null; recurrence: TodoRecurrence
+  monthInterval: number; dueAt: string; anchorAt: string; remind: boolean; status: TodoStatus; completedAt: string | null
+}
+export type TodoPage = { pendingCount: number; completedCount: number; items: TodoItem[]; hasMore: boolean }
+export type TodoPayload = {
+  title: string; note: string; recurrence: TodoRecurrence; monthInterval: number
+  dueAt: string; remind: boolean; idempotencyKey: string
+}
+export type TodoAttempt = { channel: string; messageTitle: string; messageBody: string; result: string; attemptedAt: string }
+export const todoApi = {
+  detail: (id: string) => request<TodoItem>(`/api/app/todos/${encodeURIComponent(id)}`),
+  attempts: (id: string) => request<TodoAttempt[]>(`/api/app/todos/${encodeURIComponent(id)}/attempts`),
+  list: (status: TodoStatus, page = 1) => request<TodoPage>(`/api/app/todos?status=${status}&page=${page}&pageSize=20`),
+  create: (data: TodoPayload) => request<string>('/api/app/todos', { method: 'POST', data }),
+  edit: (id: string, data: TodoPayload) => request<void>(`/api/app/todos/${encodeURIComponent(id)}`, { method: 'PUT', data }),
+  complete: (id: string, idempotencyKey: string) => request<void>(`/api/app/todos/${encodeURIComponent(id)}/complete`, { method: 'POST', data: { idempotencyKey } }),
+  remove: (id: string, idempotencyKey: string) => request<void>(`/api/app/todos/${encodeURIComponent(id)}/delete`, { method: 'POST', data: { idempotencyKey } }),
+}

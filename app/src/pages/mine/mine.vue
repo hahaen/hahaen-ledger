@@ -84,6 +84,11 @@ function openNotifications() {
   uni.navigateTo({ url: '/pages/notification-center/notification-center' })
 }
 
+function openTodos() {
+  if (!loggedIn.value) { openLogin(); return }
+  uni.navigateTo({ url: '/pages/ha-todo/ha-todo' })
+}
+
 function openLogout() {
   if (loggingOut.value || !loggedIn.value) return
   logoutOpen.value = true
@@ -153,6 +158,11 @@ onShow(() => {
         <button class="setting-item" aria-label="通知中心" @click="openNotifications">
           <view class="setting-icon" aria-hidden="true"><view class="setting-notification-bell" /></view>
           <text class="setting-text">通知中心</text>
+          <text class="setting-arrow">›</text>
+        </button>
+        <button class="setting-item" aria-label="待办清单" @click="openTodos">
+          <view class="setting-icon" aria-hidden="true"><view class="setting-todo-check" /></view>
+          <text class="setting-text">待办清单</text>
           <text class="setting-arrow">›</text>
         </button>
             <button class="setting-item" @click="openHelp">

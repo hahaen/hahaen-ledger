@@ -1,5 +1,15 @@
 # 通知中心与 Key 回显（2026-09-30）
 
+## 生产密钥配置示例补充（2026-09-30）
+
+requirement：生产运行时需要提供固定的通知 Key 加密密钥。
+
+design / database / api / backend / frontend：现有实现保持；`application.yml` 的 `hahaen.notification.key-aes-base64` 从 `NOTIFICATION_KEY_AES_KEY` 读取值。本次只为生产 env 示例增加无真实密钥的占位项。
+
+testing / commands / verification：PASS（静态核对），已执行 `rg` 核对示例项、`application.yml` 的变量绑定与 Compose `env_file` 路径，并通过 `git diff --check`；未访问或修改生产服务器，生产运行状态 NOT_RUN。
+
+rollback：删除示例占位项；若生产已有该密钥和密文，必须保留原密钥。
+
 ## requirement
 
 通知配置从个人中心移至独立通知中心；“我的”页入口紧跟个人中心。再次进入时回显已保存的 Bark / pushplus Key，两项仍选填且没有小眼睛。

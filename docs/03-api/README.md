@@ -107,3 +107,7 @@ PUT transactions/{id} 不覆盖原创建 idempotencyKey；还款编辑在事务�
 ## 独立物品（2026-09-28）
 
 新增 /api/app/items 查询、创建、详情、退役和删除，写入必须携带幂等键，全部归属当前登录用户，不信任前端userId。完整请求、计算口径与失败语义见 [items.md](items.md)。
+
+## 待办清单（2026-09-30）
+
+独立用户待办、重复发生项、完成历史、Bark/pushplus 到期提醒和逐次发送记录见 [ha-todo.md](ha-todo.md)。DEV 合成用户真实 HTTP 已验证 CRUD、重复完成、幂等与跨用户拒绝；外部平台真实送达待验。

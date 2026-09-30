@@ -124,3 +124,5 @@
 .help-page { height:100dvh; }
 .profile-page { min-height:100dvh; }
 /* #endif */
+
+.setting-todo-check { position:relative; width:17px; height:17px; border:2px solid currentColor; border-radius:5px; }.setting-todo-check::after { content:''; position:absolute; left:3px; top:3px; width:8px; height:5px; border-left:2px solid currentColor; border-bottom:2px solid currentColor; transform:rotate(-45deg); }
