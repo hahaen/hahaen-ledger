@@ -68,8 +68,8 @@ function moveMonth(delta: number) {
 .repeat-modes button { flex:1; }
 .repeat-fields .selected { background:#e2f4ef; border-color:#49ad9c; color:#26776a; font-weight:700; }
 .repeat-tip { display:block; margin:9px 0; color:#6e817a; font-size:12px; line-height:1.6; }
-.repeat-interval { margin:12px 0; color:#52655f; }
-.repeat-interval input { flex:1; min-width:0; height:44px; padding:0 12px; box-sizing:border-box; border:1px solid #deebe7; border-radius:10px; background:#f9fcfb; }
+.repeat-interval { min-height:44px; margin:10px 0; color:#52655f; font-size:13px; }
+.repeat-interval input { flex:0 0 68px; width:68px; min-width:0; height:36px; padding:0 8px; text-align:center; color:#253b34; font-size:14px; box-sizing:border-box; border:1px solid #deebe7; border-radius:10px; background:#f9fcfb; }
 .repeat-units { margin-bottom:12px; }
 .repeat-grid, .repeat-week { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; }
 .repeat-grid button { width:100%; }

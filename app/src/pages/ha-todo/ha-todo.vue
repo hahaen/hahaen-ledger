@@ -2,9 +2,8 @@
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import NativeNavigation from '../../components/NativeNavigation.vue'
-import CenterModal from '../../components/CenterModal.vue'
 import { recurrenceLabel } from '../../utils/todoRepeat'
-import { todoApi, type TodoAttempt, type TodoItem, type TodoStatus } from '../../utils/api'
+import { todoApi, type TodoItem, type TodoStatus } from '../../utils/api'
 import { registerWechatShare } from '../../utils/wechatShare'
 import { useLedger } from '../../stores/ledger'
 
@@ -20,10 +19,6 @@ const loading = ref(false)
 const loadingMore = ref(false)
 const loadError = ref('')
 const deleteTarget = ref<TodoItem | null>(null)
-const attemptTarget = ref<TodoItem | null>(null)
-const attemptRows = ref<TodoAttempt[]>([])
-const attemptLoading = ref(false)
-const attemptError = ref('')
 const actingId = ref('')
 const requestKeys = new Map<string, string>()
 let loadSequence = 0
@@ -82,15 +77,6 @@ async function complete(item: TodoItem) {
   } catch (error) { uni.showToast({ title: error instanceof Error ? error.message : '操作失败，请重试', icon: 'none' }) }
   finally { actingId.value = '' }
 }
-async function showAttempts(item: TodoItem) {
-  attemptTarget.value = item
-  attemptRows.value = []
-  attemptError.value = ''
-  attemptLoading.value = true
-  try { attemptRows.value = await todoApi.attempts(item.id) }
-  catch (error) { attemptError.value = error instanceof Error ? error.message : '记录加载失败' }
-  finally { attemptLoading.value = false }
-}
 async function remove() {
   const item = deleteTarget.value
   if (!item || actingId.value) return
@@ -133,7 +119,6 @@ onShow(() => { void load() })
         <view class="todo-card-actions">
           <button v-if="status === 'PENDING'" :disabled="Boolean(actingId)" class="todo-action-primary" @click="complete(item)">{{ actingId === item.id ? '处理中…' : '完成' }}</button>
           <button v-if="status === 'PENDING'" :disabled="Boolean(actingId)" class="todo-action-secondary" @click="openEdit(item)">修改规则</button>
-          <button v-if="item.remind" :disabled="Boolean(actingId)" class="todo-action-secondary" @click="showAttempts(item)">提醒记录</button>
           <button :disabled="Boolean(actingId)" class="todo-action-delete" @click="deleteTarget = item">删除</button>
         </view>
       </view>
@@ -142,16 +127,6 @@ onShow(() => { void load() })
     <button v-if="hasMore" class="todo-more" :disabled="loadingMore" @click="more">{{ loadingMore ? '加载中…' : '加载更多' }}</button>
     <text class="todo-footnote">重复待办按计划时间逐次生成；删除待完成事项会结束其重复规则，完成历史保留。</text>
 
-    <CenterModal v-if="attemptTarget" title="提醒发送记录" @close="attemptTarget = null">
-      <text v-if="attemptLoading" class="todo-attempt-state">正在加载…</text>
-      <view v-else-if="attemptError" class="todo-attempt-state"><text>{{ attemptError }}</text><button class="text-button" @click="attemptTarget && showAttempts(attemptTarget)">重试</button></view>
-      <text v-else-if="!attemptRows.length" class="todo-attempt-state">尚未发送提醒</text>
-      <view v-for="(row, index) in attemptRows" :key="index" class="todo-attempt-row">
-        <view><text>{{ row.channel === 'BARK' ? 'Bark' : 'pushplus' }}</text><text>{{ row.result === 'ACCEPTED' ? '平台已受理' : row.result === 'FAILED' ? '发送失败' : row.result === 'SKIPPED' ? '已跳过' : '发送中' }}</text></view>
-        <text>{{ niceDate(row.attemptedAt) }}</text><text>{{ row.messageTitle }}</text><text>{{ row.messageBody }}</text>
-      </view>
-      <template #actions><view class="sheet-actions"><button class="todo-modal-primary" @click="attemptTarget = null">关闭</button></view></template>
-    </CenterModal>
     <view v-if="deleteTarget" class="asset-create-backdrop" @click.self="!actingId && (deleteTarget = null)" @touchmove.stop.prevent><view class="account-delete-modal" role="dialog" aria-modal="true" aria-label="删除待办确认"><view class="asset-create-handle" /><text class="account-delete-title">删除这项待办？</text><text class="account-delete-copy">{{ deleteTarget.status === 'PENDING' ? '删除后将结束重复规则并移除所有待完成项，已完成记录保留。' : '这条完成记录将被删除。' }}</text><view class="account-delete-actions"><button class="account-delete-cancel" :disabled="Boolean(actingId)" @click="deleteTarget = null">取消</button><button class="account-delete-confirm" :disabled="Boolean(actingId)" @click="remove">{{ actingId ? '删除中…' : '删除' }}</button></view></view></view>
   </view>
 </template>
@@ -172,8 +147,6 @@ onShow(() => { void load() })
 .todo-completed-at { display:block; margin:9px 0 0 29px; color:#91a49f; font-size:10px; }.todo-card-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; padding-left:29px; }.todo-card-actions button { display:flex; align-items:center; justify-content:center; min-height:44px; flex:1 1 65px; margin:0; border-radius:10px; font-size:11px; font-weight:650; line-height:1.2; text-align:center; box-sizing:border-box; }.todo-action-primary { color:#fff; background:#49ad9c; }.todo-action-secondary { color:#26776a; background:#eaf7f2; }.todo-action-delete { color:#9d7469; background:#faf3f1; }
 .todo-empty { display:flex; flex-direction:column; align-items:center; gap:7px; padding:45px 15px; border:1px dashed #d8e8e1; border-radius:16px; color:#6e8d81; text-align:center; }.todo-empty text:first-child { font-size:14px; font-weight:700; }.todo-empty text:last-child { font-size:11px; }
 .todo-footnote { display:block; margin:20px 4px 0; color:#91a49f; font-size:10px; line-height:1.6; }.todo-more { display:flex; align-items:center; justify-content:center; width:100%; min-height:44px; margin:12px 0 0; border-radius:11px; color:#26776a; background:#eaf7f2; font-size:12px; line-height:1.2; text-align:center; }.todo-list-error { display:block; margin-top:10px; color:#b06f61; font-size:11px; }
-.todo-attempt-state { display:block; padding:28px 0; color:#71857d; font-size:12px; text-align:center; }.todo-attempt-row { display:flex; flex-direction:column; gap:5px; padding:12px 0; border-bottom:1px solid #eef2f0; color:#52655f; font-size:11px; white-space:pre-wrap; word-break:break-word; }.todo-attempt-row > view { display:flex; justify-content:space-between; color:#26776a; font-weight:700; }.todo-attempt-row > text:nth-child(3) { font-weight:700; }
-.todo-modal-primary { color:#fff; background:#49ad9c; }
-.todo-page .account-delete-actions button, .todo-page .sheet-actions button, .todo-page .text-button { display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.2; }
+.todo-page .account-delete-actions button, .todo-page .text-button { display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.2; }
 @media (max-width:340px) { .todo-card-actions { gap:5px; padding-left:0; }.todo-card-actions button { font-size:10px; }.todo-summary-tab { padding:12px; } }
 </style>

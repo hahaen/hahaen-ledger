@@ -5,8 +5,7 @@ import NativeNavigation from '../../components/NativeNavigation.vue'
 import EntryDateTimePicker from '../../components/EntryDateTimePicker.vue'
 import TodoRepeatFieldsInput from '../../components/TodoRepeatFields.vue'
 import { cleanRepeat, repeatError } from '../../utils/todoRepeat'
-import CenterModal from '../../components/CenterModal.vue'
-import { todoApi, type TodoPayload, type TodoRecurrence, type TodoRepeatFields } from '../../utils/api'
+import { todoApi, type TodoPayload, type TodoRepeatFields } from '../../utils/api'
 import { useLedger } from '../../stores/ledger'
 
 const ledger = useLedger()
@@ -20,15 +19,14 @@ const title = ref('')
 const note = ref('')
 const date = ref('')
 const time = ref('')
-const recurrence = ref<TodoRecurrence>('ONCE')
-const remind = ref(false)
+const remind = ref(true)
 const customRepeat = ref<TodoRepeatFields>({ repeatMode: 'TIME', repeatUnit: 'DAY', repeatInterval: 1, weekDays: '', monthDays: '', yearDays: '', fixedDates: '', lastDay: false })
 const initialValue = ref('')
 const requestKeys = new Map<string, string>()
 let allowBack = false
 
 const beijingTime = (offsetMs = 0) => new Date(Date.now() + offsetMs + 8 * 60 * 60 * 1000).toISOString().slice(0, 16)
-const snapshot = () => JSON.stringify([title.value, note.value, date.value, time.value, recurrence.value, remind.value, customRepeat.value])
+const snapshot = () => JSON.stringify([title.value, note.value, date.value, time.value, remind.value, customRepeat.value])
 const newKey = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`
 function stableKey(signature: string) {
   let key = requestKeys.get(signature)
@@ -48,7 +46,7 @@ function returnToList() {
 function back() {
   if (saving.value) return
   if (pickerMode.value) { pickerMode.value = ''; return }
-  if (!loading.value && !loadError.value && snapshot() !== initialValue.value) discardOpen.value = true
+  if (editId.value && !loading.value && !loadError.value && snapshot() !== initialValue.value) discardOpen.value = true
   else returnToList()
 }
 onBackPress(() => { if (allowBack) return false; back(); return true })
@@ -71,7 +69,6 @@ async function loadDetail() {
     const next = item.dueAt.slice(0, 16) > beijingTime() ? item.dueAt.slice(0, 16) : beijingTime(60 * 60 * 1000)
     date.value = next.slice(0, 10)
     time.value = next.slice(11, 16)
-    recurrence.value = item.recurrence === 'ONCE' ? 'ONCE' : 'CUSTOM'
     if (item.recurrence !== 'ONCE' && item.recurrence !== 'CUSTOM') {
       const monthly = item.recurrence === 'MONTHLY' || item.recurrence === 'EVERY_N_MONTHS'
       customRepeat.value = { repeatMode: 'TIME', repeatUnit: monthly ? 'MONTH' : item.recurrence === 'YEARLY' ? 'YEAR' : 'DAY',
@@ -99,9 +96,6 @@ onLoad((options) => {
   void loadDetail()
 })
 
-function chooseRepeat(event: Event) {
-  recurrence.value = Boolean((event as Event & { detail?: { value?: unknown } }).detail?.value) ? 'CUSTOM' : 'ONCE'
-}
 function chooseRemind(event: Event) {
   remind.value = Boolean((event as Event & { detail?: { value?: unknown } }).detail?.value)
 }
@@ -122,10 +116,10 @@ function payload(): Omit<TodoPayload, 'idempotencyKey'> | null {
   if (dueAt.slice(0, 16) <= beijingTime()) {
     uni.showToast({ title: '计划时间须晚于现在', icon: 'none' }); return null
   }
-  const repeat = recurrence.value === 'CUSTOM' ? cleanRepeat(customRepeat.value) : {}
-  const error = recurrence.value === 'CUSTOM' ? repeatError(repeat) : ''
+  const repeat = cleanRepeat(customRepeat.value)
+  const error = repeatError(repeat)
   if (error) { uni.showToast({ title: error, icon: 'none' }); return null }
-  return { ...repeat, title: cleanTitle, note: note.value.trim(), recurrence: recurrence.value,
+  return { ...repeat, title: cleanTitle, note: note.value.trim(), recurrence: 'CUSTOM',
     monthInterval: 1, dueAt, remind: remind.value }
 }
 async function save() {
@@ -160,13 +154,12 @@ async function save() {
         <view class="profile-orbit profile-orbit-one" aria-hidden="true" /><view class="profile-orbit profile-orbit-two" aria-hidden="true" />
       </view>
       <view class="todo-editor-card">
-        <view class="todo-editor-field"><text class="todo-editor-label">标题</text><input v-model="title" aria-label="待办标题" maxlength="100" placeholder="要完成什么？" :disabled="saving" /></view>
-        <view class="todo-editor-field"><text class="todo-editor-label">备注（选填）</text><textarea v-model="note" aria-label="待办备注" maxlength="500" placeholder="写下补充信息" :disabled="saving" /></view>
-        <view class="todo-editor-field"><text class="todo-editor-label">{{ editId ? '下次计划时间 · 北京时间' : '首次计划时间 · 北京时间' }}</text><view class="todo-editor-date-row"><button :disabled="saving" @click="pickerMode = 'date'">{{ date || '选择日期' }}</button><button :disabled="saving" @click="pickerMode = 'time'">{{ time || '选择时间' }}</button></view></view>
+        <view class="todo-editor-field"><text class="todo-editor-label">标题 <text class="todo-required">*</text></text><input v-model="title" aria-label="待办标题" maxlength="100" placeholder="要完成什么？" :disabled="saving" /></view>
+        <view class="todo-editor-field"><text class="todo-editor-label">备注 <text class="todo-optional">选填</text></text><textarea v-model="note" aria-label="待办备注" maxlength="500" placeholder="写下补充信息" :disabled="saving" /></view>
+        <view class="todo-editor-field"><text class="todo-editor-label">{{ editId ? '下次计划时间 · 北京时间' : '首次计划时间 · 北京时间' }} <text class="todo-required">*</text></text><view class="todo-editor-date-row"><button :disabled="saving" @click="pickerMode = 'date'">{{ date || '选择日期' }}</button><button :disabled="saving" @click="pickerMode = 'time'">{{ time || '选择时间' }}</button></view></view>
         <view class="todo-editor-field">
-          <view class="todo-editor-repeat-toggle"><text class="todo-editor-label">重复</text><switch :checked="recurrence !== 'ONCE'" aria-label="是否重复" :disabled="saving" color="#49ad9c" @change="chooseRepeat" /></view>
-          <TodoRepeatFieldsInput v-model="customRepeat" :disabled="saving || recurrence === 'ONCE'" :min-date="beijingTime().slice(0, 10)" />
-          <text v-if="recurrence === 'ONCE'" class="todo-editor-tip">不重复，仅执行一次。</text>
+          <text class="todo-editor-label">重复 <text class="todo-required">*</text></text>
+          <TodoRepeatFieldsInput v-model="customRepeat" :disabled="saving" :min-date="beijingTime().slice(0, 10)" />
         </view>
         <view class="todo-editor-remind"><view><text>到期提醒</text><text>通过通知中心已配置的 Bark / pushplus 发送</text></view><switch :checked="remind" color="#49ad9c" :disabled="saving" @change="chooseRemind" /></view>
       </view>
@@ -174,7 +167,13 @@ async function save() {
       <view class="profile-actions todo-editor-actions"><button class="profile-password-action" :disabled="saving" @click="back">取消</button><button class="profile-save-action" :disabled="saving" @click="save">{{ saving ? '保存中…' : editId ? '保存修改' : '保存待办' }}</button></view>
     </template>
     <EntryDateTimePicker v-if="pickerMode" :mode="pickerMode" :value="pickerMode === 'date' ? date : time" :title="pickerMode === 'date' ? '选择待办日期' : '选择待办时间'" :min-date="beijingTime().slice(0, 10)" @close="pickerMode = ''" @select="selectPicker" />
-    <CenterModal v-if="discardOpen" title="放弃本次编辑？" @close="discardOpen = false"><text class="todo-editor-discard-copy">未保存的内容将丢失。</text><template #actions><view class="sheet-actions"><button @click="discardOpen = false">继续编辑</button><button class="todo-editor-discard-confirm" @click="discardOpen = false; returnToList()">放弃</button></view></template></CenterModal>
+    <view v-if="discardOpen" class="asset-create-backdrop" @click.self="discardOpen = false" @touchmove.stop.prevent>
+      <view class="account-delete-modal" role="dialog" aria-modal="true" aria-label="放弃本次编辑">
+        <view class="asset-create-handle" /><text class="account-delete-title">放弃本次编辑？</text>
+        <text class="account-delete-copy">未保存的内容将丢失。</text>
+        <view class="account-delete-actions"><button class="account-delete-cancel" @click="discardOpen = false">继续编辑</button><button class="account-delete-confirm" @click="discardOpen = false; returnToList()">放弃</button></view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -184,20 +183,16 @@ async function save() {
 .todo-editor-card { overflow:hidden; margin-top:18px; padding:0 16px; border:1px solid #edf1ef; border-radius:18px; background:#fff; box-shadow:0 7px 18px rgba(49,76,71,.05); }
 .todo-editor-field { padding:16px 0; border-bottom:1px solid #f0f3f1; }
 .todo-editor-label { display:block; margin-bottom:9px; color:#52655f; font-size:12px; font-weight:700; }
-.todo-editor-field input, .todo-editor-field textarea, .todo-editor-select { width:100%; min-height:44px; padding:10px 12px; border:1px solid #deebe7; border-radius:11px; color:#253b34; background:#f9fcfb; font-size:13px; box-sizing:border-box; }
+.todo-editor-field > input, .todo-editor-field > textarea { width:100%; min-height:44px; padding:10px 12px; border:1px solid #deebe7; border-radius:11px; color:#253b34; background:#f9fcfb; font-size:13px; box-sizing:border-box; }
 .todo-editor-field textarea { height:78px; }
 .todo-editor-date-row { display:flex; gap:9px; }
 .todo-editor-date-row button { flex:1; display:flex; align-items:center; justify-content:center; min-height:44px; margin:0; border:1px solid #deebe7; border-radius:11px; color:#26776a; background:#f9fcfb; font-size:13px; line-height:1.2; }
-.todo-editor-select { display:flex; align-items:center; justify-content:space-between; }
-.todo-editor-tip { display:block; margin-top:7px; color:#8a9f96; font-size:10px; line-height:1.5; }
-.todo-editor-repeat-toggle { display:flex; align-items:center; justify-content:space-between; min-height:44px; }
-.todo-editor-repeat-toggle .todo-editor-label { margin-bottom:0; }
+.todo-required { color:#d9796b; }
+.todo-optional { margin-left:5px; color:#8a9f96; font-weight:400; }
 .todo-editor-remind { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:17px 0; }
 .todo-editor-remind > view { display:flex; flex-direction:column; gap:5px; }
 .todo-editor-remind text:first-child { color:#52655f; font-size:12px; font-weight:700; }
 .todo-editor-remind text:last-child { color:#8a9f96; font-size:10px; line-height:1.5; }
 .todo-editor-footnote { display:block; margin:13px 4px 0; color:#91a49f; font-size:10px; line-height:1.6; }
-.todo-editor-actions button, .todo-editor-page .sheet-actions button, .todo-editor-page .text-button { display:flex; align-items:center; justify-content:center; margin:0; line-height:1.2; text-align:center; }
-.todo-editor-discard-copy { display:block; padding:14px 0; color:#6e817a; font-size:13px; }
-.todo-editor-discard-confirm { color:#fff; background:#49ad9c; }
+.todo-editor-actions button, .todo-editor-page .account-delete-actions button, .todo-editor-page .text-button { display:flex; align-items:center; justify-content:center; margin:0; line-height:1.2; text-align:center; }
 </style>

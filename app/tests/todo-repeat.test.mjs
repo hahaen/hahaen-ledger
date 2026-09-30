@@ -12,7 +12,7 @@ async function editor(api) {
   const script = file.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
   const exposed = {}; const hooks = {}; const toasts = []; const navigation = []
   const dependencies = { vue: require('vue'), '@dcloudio/uni-app': { onLoad: cb => { hooks.load = cb }, onBackPress() {} }, '../../utils/api': { todoApi: api }, '../../utils/todoRepeat': helpers, '../../stores/ledger': { useLedger: () => ({ state: { token: 'fixture' } }) } }
-  new Function('require', 'exports', 'uni', 'getCurrentPages', transpile(script + '\nexport { title, recurrence, customRepeat, save, snapshot, initialValue, loadDetail, editId }'))(name => dependencies[name] || {}, exposed, { showToast: v => toasts.push(v.title), redirectTo: v => navigation.push(v.url) }, () => [])
+  new Function('require', 'exports', 'uni', 'getCurrentPages', transpile(script + '\nexport { title, remind, customRepeat, save, snapshot, initialValue, loadDetail, editId, back, discardOpen, pickerMode }'))(name => dependencies[name] || {}, exposed, { showToast: v => toasts.push(v.title), redirectTo: v => navigation.push(v.url) }, () => [])
   hooks.load({})
   return { ...exposed, hooks, toasts, navigation }
 }
@@ -30,13 +30,13 @@ test('切换模式清除隐藏选择，多选切换与校验', () => {
 test('新增校验、失败保留幂等键及成功返回', async () => {
   const calls = []; let fail = true
   const page = await editor({ create: async body => { calls.push(body); if (fail) throw new Error('暂时失败') } })
-  page.title.value = '周计划'; page.recurrence.value = 'CUSTOM'
+  page.title.value = '周计划'
   page.customRepeat.value = { repeatMode: 'TIME', repeatUnit: 'WEEK', repeatInterval: 2, weekDays: '' }
   await page.save(); assert.equal(calls.length, 0)
   page.customRepeat.value.weekDays = '1,5'
   await page.save(); fail = false; await page.save()
   assert.equal(calls.length, 2); assert.equal(calls[0].idempotencyKey, calls[1].idempotencyKey)
-  assert.equal(calls[1].weekDays, '1,5'); assert.deepEqual(page.navigation, ['/pages/ha-todo/ha-todo'])
+  assert.equal(calls[1].weekDays, '1,5'); assert.equal(calls[1].recurrence, 'CUSTOM'); assert.equal(calls[1].remind, true); assert.deepEqual(page.navigation, ['/pages/ha-todo/ha-todo'])
 })
 test('编辑回填、规则未保存状态和月末提交', async () => {
   const calls = []
@@ -44,7 +44,28 @@ test('编辑回填、规则未保存状态和月末提交', async () => {
   const page = await editor({ detail: async () => item, edit: async (id, body) => calls.push({ id, body }) })
   page.editId.value = '123'; await page.loadDetail()
   assert.equal(page.customRepeat.value.monthDays, '15,31'); assert.equal(page.customRepeat.value.lastDay, true)
-  assert.equal(page.snapshot(), page.initialValue.value)
+  assert.equal(page.snapshot(), page.initialValue.value); assert.equal(page.remind.value, false)
+  page.back(); assert.equal(page.discardOpen.value, false)
+  page.navigation.length = 0
   page.customRepeat.value.repeatInterval = 2; assert.notEqual(page.snapshot(), page.initialValue.value)
-  await page.save(); assert.equal(calls[0].id, '123'); assert.equal(calls[0].body.lastDay, true); assert.equal(calls[0].body.repeatInterval, 2)
+  page.back(); assert.equal(page.discardOpen.value, true); assert.equal(page.navigation.length, 0)
+  await page.save(); assert.equal(calls[0].body.remind, false); assert.equal(calls[0].id, '123'); assert.equal(calls[0].body.lastDay, true); assert.equal(calls[0].body.repeatInterval, 2)
+})
+
+test('新增默认按时间每一天并开启提醒，填写后直接返回', async () => {
+  const page = await editor({})
+  assert.equal(page.remind.value, true)
+  assert.deepEqual([page.customRepeat.value.repeatMode, page.customRepeat.value.repeatUnit, page.customRepeat.value.repeatInterval], ['TIME', 'DAY', 1])
+  page.title.value = '未保存的新待办'
+  page.pickerMode.value = 'date'; page.back()
+  assert.equal(page.pickerMode.value, ''); assert.equal(page.navigation.length, 0)
+  page.back(); assert.equal(page.discardOpen.value, false)
+  assert.deepEqual(page.navigation, ['/pages/ha-todo/ha-todo'])
+})
+test('历史一次性待办编辑后按必选自定义规则保存', async () => {
+  const calls = []
+  const page = await editor({ detail: async () => ({ title: '旧待办', dueAt: '2090-01-01T09:00:00', recurrence: 'ONCE', remind: false }), edit: async (id, body) => calls.push(body) })
+  page.editId.value = '456'; await page.loadDetail(); await page.save()
+  assert.equal(calls[0].recurrence, 'CUSTOM'); assert.equal(calls[0].repeatMode, 'TIME')
+  assert.equal(calls[0].repeatInterval, 1); assert.equal(calls[0].remind, false)
 })

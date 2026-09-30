@@ -77,3 +77,5 @@
 - [item-cost-chart-scale](item-cost-chart-scale/README.md)：长期日均成本图自适应纵轴及跨年日期（2026-09-30）。
 
 - [待办自定义重复](todo-custom-repeat/README.md)：三模式、跨端统一表单、V11与历史快照。
+
+- [待办表单反馈优化](todo-form-polish/README.md)：八项表单反馈、默认重复/提醒、仅编辑确认返回、隐藏发送记录入口。

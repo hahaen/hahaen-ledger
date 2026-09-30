@@ -277,3 +277,7 @@ PASS：开发后端默认端口及前端 development API 改为 9898；H5 仍为
 ## 2026-09-30｜待办自定义重复
 
 requirement/design：采用截图重复业务逻辑，沿用现有样式；取消旧预设下拉，直接三模式。database/api/backend/frontend：V11与8个快照字段、CUSTOM契约、实际完成后起算、有限固定日期、多选和月末、双端统一组件。testing/commands/verification：定向后端13项、前端39项、类型/双端构建/打包、DEV9898启动及模拟器规则交互PASS；完整真实用户点击写入PARTIAL，真机NOT_RUN，实际通知BLOCKED。rollback：CUSTOM规则停用后回退应用，保留已执行V11。详情见[完整迭代](../todo-custom-repeat/README.md)。
+
+## 2026-09-30｜待办表单反馈优化
+
+落实八项反馈：标题/计划时间/重复必填星号，重复移除开关且默认按时间每1天，68px居中间隔输入，新建默认提醒开启，备注“选填”无括号，新建直接返回，编辑变更确认复用系统居中按钮，清单隐藏发送记录而数据库审计保留。PASS：41项前端回归、类型及H5/微信构建、实际H5/微信模拟器默认值与返回/确认交互。无数据库/API/后端变更，本轮未启动额外9898服务。真实用户保存与微信真机/全尺寸NOT_RUN（补充验收），外部送达仍BLOCKED。详情见[完整迭代](../todo-form-polish/README.md)。
