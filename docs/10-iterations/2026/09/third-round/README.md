@@ -269,3 +269,7 @@ H5 Chrome 与微信开发者工具模拟器逐页核对主导航及常用二级�
 ## 2026-09-30｜本地后端端口 9898
 
 PASS：开发后端默认端口及前端 development API 改为 9898；H5 仍为 5180，正式配置无差异。Java 25 打包、DEV 启动、认证公开接口 HTTP 200 与 localhost:5180 跨域预检通过。未进行业务写入；业务全量回归不适用。详情见 docs/10-iterations/2026/09/local-backend-port-9898/README.md。
+
+## 2026-09-30｜物品日均成本图
+
+完成长期跨度自适应非等距纵轴与刻度说明；9 项前端定向回归、类型和双端构建 PASS，375/320px 只读 H5 视觉 PASS。真实登录态 PARTIAL，微信模拟器/真机视觉 NOT_RUN；数据库/API/后端无修改。requirement、design、database、api、backend、frontend、testing、commands、verification、rollback 见 [本次完整迭代](../item-cost-chart-scale/README.md)。

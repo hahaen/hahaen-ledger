@@ -73,3 +73,5 @@
 
 - [notification-center](notification-center/README.md)：通知配置移至“我的”下的独立通知中心，回显已保存 Key，并增加个人中心同款顶部引导卡（2026-09-30）。
 - [ha-todo](ha-todo/README.md)：独立待办清单、重复发生项、到期提醒及逐次消息记录（2026-09-30）。
+
+- [item-cost-chart-scale](item-cost-chart-scale/README.md)：长期日均成本图自适应纵轴及跨年日期（2026-09-30）。
