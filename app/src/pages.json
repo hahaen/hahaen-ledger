@@ -18,6 +18,7 @@
     { "path": "pages/profile/profile", "style": { "navigationStyle": "custom" } },
     { "path": "pages/notification-center/notification-center", "style": { "navigationStyle": "custom" } },
     { "path": "pages/ha-todo/ha-todo", "style": { "navigationStyle": "custom" } },
+    { "path": "pages/ha-todo-detail/ha-todo-detail", "style": { "navigationStyle": "custom" } },
     { "path": "pages/ha-todo-editor/ha-todo-editor", "style": { "navigationStyle": "custom" } }
   ],
   "tabBar": { "color": "#858B8B", "selectedColor": "#278879", "backgroundColor": "#FFFFFF", "borderStyle": "white", "list": [ { "pagePath": "pages/index/index", "text": "首页" }, { "pagePath": "pages/calendar/calendar", "text": "日历" }, { "pagePath": "pages/assets/assets", "text": "资产" }, { "pagePath": "pages/items/items", "text": "物品" }, { "pagePath": "pages/mine/mine", "text": "我的" } ] },

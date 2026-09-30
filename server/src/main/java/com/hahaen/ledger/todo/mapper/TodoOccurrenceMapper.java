@@ -8,8 +8,8 @@ import java.util.List;
 
 @Mapper
 public interface TodoOccurrenceMapper extends BaseMapper<TodoOccurrence> {
-    @Select("SELECT * FROM ha_todo_occurrence WHERE id=#{id} AND user_id=#{userId} AND deleted=0 AND status='PENDING'")
-    TodoOccurrence pendingOwned(@Param("userId") long userId,@Param("id") long id);
+    @Select("SELECT * FROM ha_todo_occurrence WHERE id=#{id} AND user_id=#{userId} AND deleted=0")
+    TodoOccurrence owned(@Param("userId") long userId,@Param("id") long id);
     @Select("SELECT * FROM ha_todo_occurrence WHERE id=#{id} AND user_id=#{userId} AND deleted=0 FOR UPDATE")
     TodoOccurrence ownedForUpdate(@Param("userId") long userId,@Param("id") long id);
     @Select("""

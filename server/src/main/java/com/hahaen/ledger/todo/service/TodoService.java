@@ -54,8 +54,8 @@ public class TodoService {
     public TodoItemVO detail(long occurrenceId) {
         long userId = CurrentUser.id();
         if (rules.activeUser(userId) == null) throw new BusinessException("USER_NOT_FOUND", "用户不存在或已停用");
-        TodoOccurrence occurrence = occurrences.pendingOwned(userId, occurrenceId);
-        if (occurrence == null) throw new BusinessException("TODO_NOT_FOUND", "未完成待办不存在，请刷新");
+        TodoOccurrence occurrence = occurrences.owned(userId, occurrenceId);
+        if (occurrence == null) throw new BusinessException("TODO_NOT_FOUND", "待办不存在，请刷新");
         return toVO(occurrence);
     }
 

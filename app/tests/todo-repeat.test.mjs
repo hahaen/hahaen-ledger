@@ -7,12 +7,12 @@ const require = createRequire(import.meta.url)
 const transpile = source => ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ESNext } }).outputText
 const helpers = {}
 new Function('exports', transpile(await readFile(new URL('../src/utils/todoRepeat.ts', import.meta.url), 'utf8')))(helpers)
-async function editor(api) {
+async function editor(api, previousPages = []) {
   const file = await readFile(new URL('../src/pages/ha-todo-editor/ha-todo-editor.vue', import.meta.url), 'utf8')
   const script = file.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
   const exposed = {}; const hooks = {}; const toasts = []; const navigation = []
   const dependencies = { vue: require('vue'), '@dcloudio/uni-app': { onLoad: cb => { hooks.load = cb }, onBackPress() {} }, '../../utils/api': { todoApi: api }, '../../utils/todoRepeat': helpers, '../../stores/ledger': { useLedger: () => ({ state: { token: 'fixture' } }) } }
-  new Function('require', 'exports', 'uni', 'getCurrentPages', transpile(script + '\nexport { title, remind, customRepeat, save, snapshot, initialValue, loadDetail, editId, back, discardOpen, pickerMode }'))(name => dependencies[name] || {}, exposed, { showToast: v => toasts.push(v.title), redirectTo: v => navigation.push(v.url) }, () => [])
+  new Function('require', 'exports', 'uni', 'getCurrentPages', transpile(script + '\nexport { title, remind, customRepeat, save, snapshot, initialValue, loadDetail, editId, back, discardOpen, pickerMode }'))(name => dependencies[name] || {}, exposed, { showToast: v => toasts.push(v.title), redirectTo: v => navigation.push(v.url), navigateBack: () => navigation.push('back') }, () => previousPages)
   hooks.load({})
   return { ...exposed, hooks, toasts, navigation }
 }
@@ -68,4 +68,10 @@ test('历史一次性待办编辑后按必选自定义规则保存', async () =>
   page.editId.value = '456'; await page.loadDetail(); await page.save()
   assert.equal(calls[0].recurrence, 'CUSTOM'); assert.equal(calls[0].repeatMode, 'TIME')
   assert.equal(calls[0].repeatInterval, 1); assert.equal(calls[0].remind, false)
+})
+
+test('编辑待办从详情进入时保存返回原详情并由onShow刷新', async () => {
+  const page = await editor({ detail: async () => ({ title: '原待办', dueAt: '2090-01-01T09:00:00', recurrence: 'ONCE', remind: false }), edit: async () => {} }, [{ route: 'pages/ha-todo-detail/ha-todo-detail' }, { route: 'pages/ha-todo-editor/ha-todo-editor' }])
+  page.editId.value = '123'; await page.loadDetail(); await page.save()
+  assert.deepEqual(page.navigation, ['back'])
 })

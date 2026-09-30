@@ -125,4 +125,7 @@
 .profile-page { min-height:100dvh; }
 /* #endif */
 
-.setting-todo-check { position:relative; width:17px; height:17px; border:2px solid currentColor; border-radius:5px; }.setting-todo-check::after { content:''; position:absolute; left:3px; top:3px; width:8px; height:5px; border-left:2px solid currentColor; border-bottom:2px solid currentColor; transform:rotate(-45deg); }
+.setting-todo-check { box-sizing:border-box; flex:0 0 auto; position:relative; width:21px; height:21px; border:2px solid currentColor; border-radius:5px; }.setting-todo-check::after { content:''; position:absolute; left:50%; top:50%; width:8px; height:5px; border-left:2px solid currentColor; border-bottom:2px solid currentColor; transform:translate(-50%,-50%) rotate(-45deg); }
+
+/* 待办期限使用与项目浅色卡片协调的暖黄提示。 */
+page, :root { --todo-due-color:#a07820; --todo-due-bg:#fff7dc; }

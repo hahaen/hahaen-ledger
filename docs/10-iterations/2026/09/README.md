@@ -79,3 +79,5 @@
 - [待办自定义重复](todo-custom-repeat/README.md)：三模式、跨端统一表单、V11与历史快照。
 
 - [待办表单反馈优化](todo-form-polish/README.md)：八项表单反馈、默认重复/提醒、仅编辑确认返回、隐藏发送记录入口。
+
+- [待办列表与详情整改](todo-list-detail/README.md)：居中圆圈完成、黄色期限、提醒角标、详情修改与删除及已完成详情查询。

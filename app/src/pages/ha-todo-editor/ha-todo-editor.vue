@@ -37,7 +37,7 @@ function returnToList() {
   allowBack = true
   const pages = getCurrentPages()
   const previous = pages.length > 1 ? pages[pages.length - 2]?.route : ''
-  if (previous !== 'pages/ha-todo/ha-todo') {
+  if (previous !== 'pages/ha-todo/ha-todo' && previous !== 'pages/ha-todo-detail/ha-todo-detail') {
     uni.redirectTo({ url: '/pages/ha-todo/ha-todo' })
     return
   }

@@ -54,7 +54,12 @@ class TodoApiDevIntegrationTest {
             assertEquals(0,data(call(HttpMethod.GET,"/api/app/todos?status=PENDING",null,otherToken)).path("pendingCount").asInt());
             assertNotEquals(0,call(HttpMethod.GET,"/api/app/todos/"+id+"/attempts",null,otherToken).path("code").asInt());
             data(call(HttpMethod.POST,"/api/app/todos/"+id+"/complete",Map.of("idempotencyKey","todo-complete-12345"),token));
-            assertNotEquals(0,call(HttpMethod.GET,"/api/app/todos/"+id,null,token).path("code").asInt());
+            JsonNode completedDetail=data(call(HttpMethod.GET,"/api/app/todos/"+id,null,token));
+            assertEquals("COMPLETED",completedDetail.path("status").asText());
+            assertFalse(completedDetail.path("completedAt").isNull());
+            assertEquals("浇水",completedDetail.path("title").asText());
+            assertNotEquals(0,call(HttpMethod.GET,"/api/app/todos/"+id,null,otherToken).path("code").asInt());
+            assertNotEquals(0,call(HttpMethod.PUT,"/api/app/todos/"+id,create,token).path("code").asInt());
             data(call(HttpMethod.POST,"/api/app/todos/"+id+"/complete",Map.of("idempotencyKey","todo-complete-12345"),token));
             JsonNode completed=data(call(HttpMethod.GET,"/api/app/todos?status=COMPLETED",null,token));
             assertEquals(1,completed.path("completedCount").asInt());
@@ -74,6 +79,7 @@ class TodoApiDevIntegrationTest {
             String newDue=LocalDateTime.now(ZoneId.of("Asia/Shanghai")).plusDays(2).withSecond(0).withNano(0).toString();
             data(call(HttpMethod.PUT,"/api/app/todos/"+nextId,Map.of("title","换水","note","","recurrence","ONCE","monthInterval",1,"dueAt",newDue,"remind",false,"idempotencyKey","todo-edit-12345"),token));
             assertEquals("浇水",data(call(HttpMethod.GET,"/api/app/todos?status=COMPLETED",null,token)).path("items").get(0).path("title").asText());
+            assertEquals("浇水",data(call(HttpMethod.GET,"/api/app/todos/"+id,null,token)).path("title").asText());
             long deliveryId=IdWorker.getId(),attemptId=IdWorker.getId();
             jdbc.update("INSERT INTO ha_todo_delivery(id,occurrence_id,channel,status,attempts,next_attempt_at) VALUES(?,?,'BARK','SENT',1,CURRENT_TIMESTAMP(3))",deliveryId,Long.valueOf(id));
             jdbc.update("INSERT INTO ha_todo_delivery_attempt(id,delivery_id,occurrence_id,channel,message_title,message_body,result,attempted_at) VALUES(?,?,?,'BARK','待办清单提醒','浇水','ACCEPTED',CURRENT_TIMESTAMP(3))",attemptId,deliveryId,Long.valueOf(id));
@@ -87,6 +93,7 @@ class TodoApiDevIntegrationTest {
             assertEquals(0,data(call(HttpMethod.GET,"/api/app/todos?status=PENDING",null,token)).path("pendingCount").asInt());
             data(call(HttpMethod.POST,"/api/app/todos/"+id+"/delete",Map.of("idempotencyKey","todo-delete-67890"),token));
             assertEquals(0,data(call(HttpMethod.GET,"/api/app/todos?status=COMPLETED",null,token)).path("completedCount").asInt());
+            assertNotEquals(0,call(HttpMethod.GET,"/api/app/todos/"+id,null,token).path("code").asInt());
             // 新规则真实HTTP + DB：完成后不提前生成，重复完成不增加项，编辑不改变历史。
             var custom = new java.util.HashMap<String,Object>();
             custom.put("title", "自定义验收"); custom.put("note", ""); custom.put("recurrence", "CUSTOM");
