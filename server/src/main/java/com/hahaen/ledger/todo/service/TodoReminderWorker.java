@@ -74,7 +74,7 @@ public class TodoReminderWorker {
         TodoOccurrence occurrence = occurrences.pending(delivery.getOccurrenceId());
         TodoRule rule = occurrence == null ? null : rules.selectById(occurrence.getRuleId());
         String title = "待办清单提醒";
-        String body = occurrence == null ? "待办已结束" : occurrence.getTitle() + "\n计划时间：" + occurrence.getDueAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        String body = "哈记账： " + (occurrence == null ? "待办已结束" : occurrence.getTitle() + "\n计划时间：" + occurrence.getDueAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
         TodoDeliveryAttempt attempt = new TodoDeliveryAttempt();
         attempt.setDeliveryId(delivery.getId());
         attempt.setOccurrenceId(delivery.getOccurrenceId());
