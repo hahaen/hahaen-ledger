@@ -43,6 +43,18 @@ function returnToList() {
   }
   uni.navigateBack({ delta: 1, fail: () => uni.redirectTo({ url: '/pages/ha-todo/ha-todo' }) })
 }
+function returnAfterSave() {
+  allowBack = true
+  const pages = getCurrentPages()
+  const previous = pages.length > 1 ? pages[pages.length - 2]?.route : ''
+  // 修改规则会替换未完成发生项，保存后不能再加载旧详情 ID。
+  const delta = previous === 'pages/ha-todo-detail/ha-todo-detail' ? 2 : 1
+  if (pages[pages.length - 1 - delta]?.route === 'pages/ha-todo/ha-todo') {
+    uni.navigateBack({ delta, fail: () => uni.redirectTo({ url: '/pages/ha-todo/ha-todo' }) })
+  } else {
+    uni.redirectTo({ url: '/pages/ha-todo/ha-todo' })
+  }
+}
 function back() {
   if (saving.value) return
   if (pickerMode.value) { pickerMode.value = ''; return }
@@ -134,7 +146,7 @@ async function save() {
     else await todoApi.create(body)
     requestKeys.delete(signature)
     uni.showToast({ title: '已保存', icon: 'none' })
-    returnToList()
+    returnAfterSave()
   } catch (error) {
     uni.showToast({ title: error instanceof Error ? error.message : '保存失败，请重试', icon: 'none' })
   } finally { saving.value = false }

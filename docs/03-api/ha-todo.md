@@ -7,7 +7,7 @@
 | GET | `/api/app/todos?status=PENDING\|COMPLETED&page=1&pageSize=20` | 分页清单，同时返回 `pendingCount`、`completedCount`、`hasMore` |
 | POST | `/api/app/todos` | 新增规则和首次发生项 |
 | GET | `/api/app/todos/{occurrenceId}` | 读取本人未删除的待完成/已完成发生项快照，供详情页与编辑页加载；已删除或他人记录不可读，编辑仍仅限未完成 |
-| PUT | `/api/app/todos/{occurrenceId}` | 根据未完成项修改整条规则，替换未完成项 |
+| PUT | `/api/app/todos/{occurrenceId}` | 根据未完成项修改整条规则，替换未完成项（原 occurrenceId 失效，客户端保存后刷新清单） |
 | POST | `/api/app/todos/{occurrenceId}/complete` | 手动完成本次发生项 |
 | POST | `/api/app/todos/{occurrenceId}/delete` | 删除未完成项时结束规则；删除已完成项时只移除该历史 |
 | GET | `/api/app/todos/{occurrenceId}/attempts` | 查看本人该待办最多 100 次提醒尝试，含渠道、消息标题、消息正文、状态、时间 |
