@@ -34,12 +34,13 @@ const editingAccountId = ref('')
 const editingAccountImpactCents = ref(0)
 const locked = computed(() => saving.value || loading.value || !!loadError.value)
 
-function handleCalculatorTouchStart(event: Event) {
-  const target = event.target
-  if (!(target instanceof Element)) return
-  const key = target.closest('.key')
-  if (!key || key.matches(':disabled, [disabled]')) return
+// 绑定实际按键点击：微信没有 DOM，H5 touchstart 也可能尚未获得用户激活。
+function pressCalculatorKey(key: string) {
+  if (locked.value) return
   triggerCalculatorFeedback()
+  if (key === 'confirm') void save('home')
+  else if (key === 'C') void save('again')
+  else appendKey(key)
 }
 const modal = ref<'account' | 'to' | 'date' | 'note' | ''>('')
 const formError = ref('')
@@ -251,7 +252,7 @@ async function save(afterSave: 'home' | 'again') {
 <template>
   <view class="page entry-page">
     <NativeNavigation variant="screen" :title="isEdit ? '编辑记账' : '新增记账'" compact :full-width="false" @back="back" />
-    <view class="entry-content">
+    <view class="entry-content" @touchmove.stop>
       <view v-if="loading" class="list-empty">正在加载账户与账单…</view><view v-else-if="loadError" class="list-empty">{{ loadError }}<button class="text-button" @click="initialize">重新加载</button></view>
       <view v-if="isEdit && !loading && !loadError" :class="['entry-edit-type', type.toLowerCase()]"><text class="entry-edit-type-label">当前账单类型</text><text class="entry-edit-type-value">{{ typeLabel }}记账</text></view>
       <view v-if="!isEdit" :class="['entry-type', { 'single-type': type === 'REPAYMENT' }]"><button v-for="option in typeOptions" :key="option.value" :disabled="locked || !!refundedCents" :class="{ active: type === option.value, 'income-active': type === 'INCOME' && type === option.value, 'transfer-active': type === 'TRANSFER' && type === option.value }" @click="setType(option.value)">{{ option.label }}</button></view>
@@ -264,11 +265,11 @@ async function save(afterSave: 'home' | 'again') {
         <button class="field-row" :disabled="locked" @click="openModal('note')"><text class="field-icon">⌁</text><text class="field-label">备注</text><text :class="['field-value', { placeholder: !note }]">{{ note || '写点说明...' }}</text></button>
       </view>
     </view>
-    <view class="keypad" aria-label="金额键盘" @touchstart.capture="handleCalculatorTouchStart">
+    <view class="keypad" aria-label="金额键盘">
       <view v-for="key in ['1', '2', '3', '⌫', '4', '5', '6', '+−', '7', '8', '9', '×÷', 'C', '0', '.', 'confirm']" :key="key" :class="['keypad-cell', { 'keypad-pair': key === '+−' || key === '×÷' }]">
-        <template v-if="key === '+−' || key === '×÷'"><button v-for="operator in key.split('')" :key="operator" class="key" :disabled="locked" @click="appendKey(operator)">{{ operator }}</button></template>
-        <button v-else-if="key === 'confirm'" class="key key-confirm" :disabled="locked" @click="save('home')">{{ saving ? '保存中' : '确定' }}</button>
-        <button v-else :class="['key', { 'key-text': key === 'C', 'key-backspace': key === '⌫' }]" :aria-label="key === 'C' ? '保存并重新记账' : key === '⌫' ? '退格' : key" :disabled="locked" @click="key === 'C' ? save('again') : appendKey(key)">{{ key === 'C' ? '再记' : key }}</button>
+        <template v-if="key === '+−' || key === '×÷'"><button v-for="operator in key.split('')" :key="operator" class="key" :disabled="locked" @click="pressCalculatorKey(operator)">{{ operator }}</button></template>
+        <button v-else-if="key === 'confirm'" class="key key-confirm" :disabled="locked" @click="pressCalculatorKey('confirm')">{{ saving ? '保存中' : '确定' }}</button>
+        <button v-else :class="['key', { 'key-text': key === 'C', 'key-backspace': key === '⌫' }]" :aria-label="key === 'C' ? '保存并重新记账' : key === '⌫' ? '退格' : key" :disabled="locked" @click="pressCalculatorKey(key)">{{ key === 'C' ? '再记' : key }}</button>
       </view>
     </view>
     <view v-if="successVisible" class="entry-success-toast" role="status" aria-live="polite"><view class="entry-success-icon">✓</view><text>记账成功</text></view>
@@ -291,7 +292,8 @@ async function save(afterSave: 'home' | 'again') {
         <view class="entry-account-picker-actions"><button class="entry-account-picker-cancel" @click="modal = ''">取消</button><button class="entry-account-picker-confirm" @click="confirmModal">完成</button></view>
       </view>
     </view>
-    <view v-else-if="modal === 'date'" class="entry-date-picker-backdrop" @click.self="modal = ''" @touchmove.stop.prevent>
+    <view v-else-if="modal === 'date'" class="entry-date-picker-backdrop">
+      <view class="picker-touch-mask" @click.stop="modal = ''" @touchmove.stop.prevent />
       <view class="entry-date-picker-modal" role="dialog" aria-modal="true" aria-label="日期与时间">
         <view class="entry-date-picker-handle" />
         <text class="entry-date-picker-title">日期与时间</text>

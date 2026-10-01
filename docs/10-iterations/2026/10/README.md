@@ -9,3 +9,5 @@
 - [我的页面资料刷新闪烁修复](mine-profile-refresh/README.md)。
 
 - [主导航页面后台刷新与闪烁修复](tab-background-refresh/README.md)。
+
+- [2026-10-01 记账日期、主体滚动和键盘振动修复](entry-touch-interactions/README.md)。

@@ -23,17 +23,24 @@ onMounted(async () => {
   syncScrollPosition()
   setTimeout(syncScrollPosition, 80)
 })
+// 仅 H5 阻止冒泡到页面禁滚监听；小程序不能在滚轮祖先使用 catchtouchmove。
+function onPickerTouchMove(event: Event) {
+  // #ifdef H5
+  event.stopPropagation()
+  // #endif
+}
 </script>
 <template>
-  <view class="month-picker-backdrop" @click.self="emit('close')" @touchmove.stop.prevent>
-    <view class="month-picker-modal" role="dialog" aria-modal="true" aria-label="日期">
+  <view class="month-picker-backdrop">
+    <view class="picker-touch-mask" @click.stop="emit('close')" @touchmove.stop.prevent />
+    <view class="month-picker-modal" @touchmove="onPickerTouchMove" role="dialog" aria-modal="true" aria-label="日期">
       <view class="month-picker-handle" />
       <text class="month-picker-title">日期</text>
       <view class="date-picker-columns">
-        <view class="date-picker-column"><text class="date-picker-label">年份</text><scroll-view scroll-y :scroll-top="yearScrollTop" class="date-picker-scroll"><button v-for="value in years" :key="value" :class="['date-picker-option', { selected: year === value }]" @click="selectYear(value)">{{ value }}年</button></scroll-view></view>
-        <view class="date-picker-column"><text class="date-picker-label">月份</text><scroll-view scroll-y :scroll-top="monthScrollTop" class="date-picker-scroll"><button v-for="value in months" :key="value" :class="['date-picker-option', { selected: month === value }]" @click="selectMonth(value)">{{ value }}月</button></scroll-view></view>
+        <view class="date-picker-column"><text class="date-picker-label">年份</text><scroll-view scroll-y :scroll-top="yearScrollTop" class="date-picker-scroll"><button v-for="value in years" :key="value" :class="['date-picker-option', { selected: year === value }]" @click.stop="selectYear(value)">{{ value }}年</button></scroll-view></view>
+        <view class="date-picker-column"><text class="date-picker-label">月份</text><scroll-view scroll-y :scroll-top="monthScrollTop" class="date-picker-scroll"><button v-for="value in months" :key="value" :class="['date-picker-option', { selected: month === value }]" @click.stop="selectMonth(value)">{{ value }}月</button></scroll-view></view>
       </view>
-      <view class="month-picker-actions"><button class="month-picker-cancel" @click="emit('close')">取消</button><button class="month-picker-confirm" @click="emit('select', `${year}-${String(month).padStart(2, '0')}`)">确定</button></view>
+      <view class="month-picker-actions"><button class="month-picker-cancel" @click.stop="emit('close')">取消</button><button class="month-picker-confirm" @click.stop="emit('select', `${year}-${String(month).padStart(2, '0')}`)">确定</button></view>
     </view>
   </view>
 </template>

@@ -53,3 +53,5 @@
 - [2026-09 本地后端端口 9898](2026/09/local-backend-port-9898/README.md)：仅开发后端及开发 API 地址调整，正式环境不变。
 
 - [2026-10-01 待办修改规则后详情失效修复](2026/10/todo-edit-return/README.md)。
+
+- [2026-10-01 记账日期、主体滚动和键盘振动修复](2026/10/entry-touch-interactions/README.md)。

@@ -326,3 +326,11 @@ PASS：47项前端定向回归、类型检查、H5/微信生产构建；Java25�
 - testing/commands：`node --test app/tests/*.test.mjs` 140/140 PASS；`pnpm --dir app run typecheck`、`pnpm --dir app run build:h5`、`pnpm --dir app run build:mp-weixin` 均退出0（PASS）。Python断言核对帮助页源码和微信构建WXML不含v1.0（PASS）。
 - verification：上述源码、回归和构建检查PASS；真实客户端画面验收NOT_RUN（补充），无部署操作。
 - rollback：将帮助页底部品牌文字恢复为原文案。
+
+## 2026-10-01｜记账日期、滚动与键盘振动
+
+PASS：145项全量回归、类型检查、H5/微信生产构建；本机 H5 新增/普通编辑/还款编辑触摸滚动，键盘固定；微信日期/时间选择二级与一级确认回填；实际 H5 按键振动探针 [15,15] 已恢复。修复 H5 禁滚监听误拦截、微信滚轮祖先拦截与一级弹窗 `.self` 误关、键盘 DOM 依赖。
+
+PARTIAL：硬件震感和所有共享组件调用页；BLOCKED（补充）：本机没有连接可用 Android 真机，手机浏览器尚未确认，微信真机触摸/震感未验；NOT_RUN（补充）：部署、真实账单保存。无必需代码验证 FAIL；无数据库/API/后端变更。
+
+见[完整迭代](../../10/entry-touch-interactions/README.md)。

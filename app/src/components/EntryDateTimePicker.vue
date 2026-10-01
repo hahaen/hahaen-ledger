@@ -91,26 +91,33 @@ onMounted(async () => {
   syncScrollPosition()
   setTimeout(syncScrollPosition, 80)
 })
+// 仅 H5 阻止冒泡到页面禁滚监听；小程序不能在滚轮祖先使用 catchtouchmove。
+function onPickerTouchMove(event: Event) {
+  // #ifdef H5
+  event.stopPropagation()
+  // #endif
+}
 </script>
 
 <template>
-  <view class="entry-value-picker-backdrop" @click.self="emit('close')" @touchmove.stop.prevent>
-    <view class="entry-value-picker-modal" role="dialog" aria-modal="true" :aria-label="title || (mode === 'date' ? '选择记账日期' : '选择记账时间')">
+  <view class="entry-value-picker-backdrop">
+    <view class="picker-touch-mask" @click.stop="emit('close')" @touchmove.stop.prevent />
+    <view class="entry-value-picker-modal" @touchmove="onPickerTouchMove" role="dialog" aria-modal="true" :aria-label="title || (mode === 'date' ? '选择记账日期' : '选择记账时间')">
       <view class="entry-value-picker-handle" />
       <text class="entry-value-picker-title">{{ title || (mode === 'date' ? '选择记账日期' : '选择记账时间') }}</text>
       <view :class="['entry-value-picker-columns', { 'two-columns': mode === 'time' }]">
         <template v-if="mode === 'date'">
-          <view class="entry-value-picker-column"><text>年份</text><scroll-view scroll-y :scroll-top="yearScrollTop" class="entry-value-picker-scroll" @scroll="scrollYear"><view class="entry-value-picker-year-spacer" /><button v-for="value in years" :key="value" :class="['entry-value-picker-option', { selected: year === value }]" @click="selectYear(value)">{{ value }}年</button><view class="entry-value-picker-year-spacer" /></scroll-view></view>
-          <view class="entry-value-picker-column"><text>月份</text><scroll-view scroll-y :scroll-top="monthScrollTop" class="entry-value-picker-scroll" @scroll="scrollMonth"><view class="entry-value-picker-year-spacer" /><button v-for="value in months" :key="value" :class="['entry-value-picker-option', { selected: month === value }]" @click="selectMonth(value)">{{ value }}月</button><view class="entry-value-picker-year-spacer" /></scroll-view></view>
-          <view class="entry-value-picker-column"><text>日期</text><scroll-view scroll-y :scroll-top="dayScrollTop" class="entry-value-picker-scroll" @scroll="scrollDay"><view class="entry-value-picker-year-spacer" /><button v-for="value in days" :key="value" :class="['entry-value-picker-option', { selected: day === value }]" @click="selectDay(value)">{{ value }}日</button><view class="entry-value-picker-year-spacer" /></scroll-view></view>
+          <view class="entry-value-picker-column"><text>年份</text><scroll-view scroll-y :scroll-top="yearScrollTop" class="entry-value-picker-scroll" @scroll="scrollYear"><view class="entry-value-picker-year-spacer" /><button v-for="value in years" :key="value" :class="['entry-value-picker-option', { selected: year === value }]" @click.stop="selectYear(value)">{{ value }}年</button><view class="entry-value-picker-year-spacer" /></scroll-view></view>
+          <view class="entry-value-picker-column"><text>月份</text><scroll-view scroll-y :scroll-top="monthScrollTop" class="entry-value-picker-scroll" @scroll="scrollMonth"><view class="entry-value-picker-year-spacer" /><button v-for="value in months" :key="value" :class="['entry-value-picker-option', { selected: month === value }]" @click.stop="selectMonth(value)">{{ value }}月</button><view class="entry-value-picker-year-spacer" /></scroll-view></view>
+          <view class="entry-value-picker-column"><text>日期</text><scroll-view scroll-y :scroll-top="dayScrollTop" class="entry-value-picker-scroll" @scroll="scrollDay"><view class="entry-value-picker-year-spacer" /><button v-for="value in days" :key="value" :class="['entry-value-picker-option', { selected: day === value }]" @click.stop="selectDay(value)">{{ value }}日</button><view class="entry-value-picker-year-spacer" /></scroll-view></view>
         </template>
         <template v-else>
-          <view class="entry-value-picker-column"><text>小时</text><scroll-view scroll-y :scroll-top="hourScrollTop" class="entry-value-picker-scroll" @scroll="scrollHour"><view class="entry-value-picker-year-spacer" /><button v-for="value in hours" :key="value" :class="['entry-value-picker-option', { selected: hour === value }]" @click="selectHour(value)">{{ String(value).padStart(2, '0') }}</button><view class="entry-value-picker-year-spacer" /></scroll-view></view>
-          <view class="entry-value-picker-column"><text>分钟</text><scroll-view scroll-y :scroll-top="minuteScrollTop" class="entry-value-picker-scroll" @scroll="scrollMinute"><view class="entry-value-picker-year-spacer" /><button v-for="value in minutes" :key="value" :class="['entry-value-picker-option', { selected: minute === value }]" @click="selectMinute(value)">{{ String(value).padStart(2, '0') }}</button><view class="entry-value-picker-year-spacer" /></scroll-view></view>
+          <view class="entry-value-picker-column"><text>小时</text><scroll-view scroll-y :scroll-top="hourScrollTop" class="entry-value-picker-scroll" @scroll="scrollHour"><view class="entry-value-picker-year-spacer" /><button v-for="value in hours" :key="value" :class="['entry-value-picker-option', { selected: hour === value }]" @click.stop="selectHour(value)">{{ String(value).padStart(2, '0') }}</button><view class="entry-value-picker-year-spacer" /></scroll-view></view>
+          <view class="entry-value-picker-column"><text>分钟</text><scroll-view scroll-y :scroll-top="minuteScrollTop" class="entry-value-picker-scroll" @scroll="scrollMinute"><view class="entry-value-picker-year-spacer" /><button v-for="value in minutes" :key="value" :class="['entry-value-picker-option', { selected: minute === value }]" @click.stop="selectMinute(value)">{{ String(value).padStart(2, '0') }}</button><view class="entry-value-picker-year-spacer" /></scroll-view></view>
         </template>
       </view>
       <text v-if="validationError" class="entry-value-picker-error" role="alert">{{ validationError }}</text>
-      <view class="entry-value-picker-actions"><button class="entry-value-picker-cancel" @click="emit('close')">取消</button><button class="entry-value-picker-confirm" @click="confirm">确定</button></view>
+      <view class="entry-value-picker-actions"><button class="entry-value-picker-cancel" @click.stop="emit('close')">取消</button><button class="entry-value-picker-confirm" @click.stop="confirm">确定</button></view>
     </view>
   </view>
 </template>
