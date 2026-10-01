@@ -1106,3 +1106,11 @@ PASS：108项前端回归、类型检查、H5/微信构建；H5通知中心/待�
 | 客户端整体 | PARTIAL | 实际页面脚本/编译模板与API夹具，真实用户切换及微信工具/真机NOT_RUN（补充）；无数据库、后端、部署修改。 |
 
 见[完整迭代](../10-iterations/2026/10/tab-background-refresh/README.md)。
+
+## 2026-10-01｜帮助页移除版本文案
+
+- requirement/design/frontend：按用户要求，将帮助页底部“哈记账 · v1.0”改为“哈记账”，同步移除分隔点，保留品牌图标和标语。
+- database/api/backend：无变更，相关验证不适用。
+- testing/commands：`node --test app/tests/*.test.mjs` 140/140 PASS；`pnpm --dir app run typecheck`、`pnpm --dir app run build:h5`、`pnpm --dir app run build:mp-weixin` 均退出0（PASS）。Python断言核对帮助页源码和微信构建WXML不含v1.0（PASS）。
+- verification：上述源码、回归和构建检查PASS；真实客户端画面验收NOT_RUN（补充），无部署操作。
+- rollback：将帮助页底部品牌文字恢复为原文案。

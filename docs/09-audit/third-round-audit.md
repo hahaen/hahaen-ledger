@@ -706,3 +706,11 @@ PASS：108项前端回归、类型检查、H5/微信构建；H5通知中心/待�
 ## 2026-10-01｜四个主导航页面刷新闪烁
 
 首页/日历/资产/物品同会话同条件切回时保留原内容并后台刷新，空状态同样保留；首次及月份/日期/筛选切换仍有反馈，后台失败toast告知，响应序号与会话清理防覆盖。PASS：22项专项、140项全量、类型与双端构建；PARTIAL：实际脚本和模板隔离验收；NOT_RUN（补充）：真实用户切换、微信工具/真机和部署。database/api/backend无变更，完整requirement/design/frontend/testing/commands/verification/rollback见[本轮迭代](../10-iterations/2026/10/tab-background-refresh/README.md)。
+
+## 2026-10-01｜帮助页移除版本文案
+
+- requirement/design/frontend：按用户要求，将帮助页底部“哈记账 · v1.0”改为“哈记账”，同步移除分隔点，保留品牌图标和标语。
+- database/api/backend：无变更，相关验证不适用。
+- testing/commands：`node --test app/tests/*.test.mjs` 140/140 PASS；`pnpm --dir app run typecheck`、`pnpm --dir app run build:h5`、`pnpm --dir app run build:mp-weixin` 均退出0（PASS）。Python断言核对帮助页源码和微信构建WXML不含v1.0（PASS）。
+- verification：上述源码、回归和构建检查PASS；真实客户端画面验收NOT_RUN（补充），无部署操作。
+- rollback：将帮助页底部品牌文字恢复为原文案。
