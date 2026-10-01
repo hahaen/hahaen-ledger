@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { onPullDownRefresh, onShow } from '@dcloudio/uni-app'
 import BottomNav from '../../components/BottomNav.vue'
 import PageHeader from '../../components/PageHeader.vue'
@@ -23,6 +23,9 @@ const hasMore = ref(false)
 const recentTransactions = ref<Transaction[]>([])
 const recentStartMonth = ref('')
 const summary = ref<Summary>()
+const recentLoaded = ref(false)
+const refreshing = ref(false)
+const summaryReady = computed(() => summary.value?.month === month.value)
 let loadSequence = 0
 let recentLoadSequence = 0
 const groups = computed(() => {
@@ -36,6 +39,17 @@ const monthTitle = computed(() => {
 })
 const dayTotal = (rows: Transaction[], type: string) => rows.filter(row => row.type === type).reduce((total, row) => total + row.amountCents, 0)
 const dateTitle = (date: string) => date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日')
+watch(() => state.token, () => {
+  ++loadSequence
+  ++recentLoadSequence
+  summary.value = undefined
+  recentTransactions.value = []
+  recentStartMonth.value = ''
+  recentLoaded.value = false
+  hasMore.value = false
+  loading.value = recentLoading.value = loadingMore.value = refreshing.value = false
+  loadError.value = recentLoadError.value = loadMoreError.value = false
+}, { flush: 'sync' })
 async function load(force = false) {
   month.value = localDateTime().slice(0, 7)
   if (!state.token) return
@@ -44,8 +58,10 @@ async function load(force = false) {
   loadError.value = false
   recentLoadError.value = false
   loadMoreError.value = false
+  loadingMore.value = false
   loading.value = true
   recentLoading.value = true
+  refreshing.value = force
   try {
     const summaryPromise = !force && state.summary?.month === month.value
       ? Promise.resolve(state.summary)
@@ -57,6 +73,7 @@ async function load(force = false) {
     }
     if (recentSequence === recentLoadSequence) {
       if (recentResult.status === 'fulfilled') {
+        recentLoaded.value = true
         recentTransactions.value = recentResult.value.transactions
         recentStartMonth.value = recentResult.value.startMonth
         hasMore.value = recentResult.value.hasMore
@@ -64,8 +81,12 @@ async function load(force = false) {
         recentLoadError.value = true
       }
     }
+    if ((sequence === loadSequence && loadError.value && summaryReady.value)
+      || (recentSequence === recentLoadSequence && recentLoadError.value && recentLoaded.value)) {
+      uni.showToast({ title: '刷新失败，已保留原数据，请重试', icon: 'none' })
+    }
   } finally {
-    if (sequence === loadSequence) loading.value = false
+    if (sequence === loadSequence) { loading.value = false; refreshing.value = false }
     if (recentSequence === recentLoadSequence) recentLoading.value = false
   }
 }
@@ -116,14 +137,14 @@ onPullDownRefresh(async () => { await load(true); uni.stopPullDownRefresh() })
     <PageHeader />
     <view class="summary-card">
       <text class="summary-kicker">{{ monthTitle }} · 日均消费</text>
-      <view v-if="loading || loadError" class="summary-placeholder">{{ loading ? '正在加载收支…' : '收支暂不可用' }}</view>
+      <view v-if="!summaryReady && (loading || loadError)" class="summary-placeholder">{{ loading ? '正在加载收支…' : '收支暂不可用' }}</view>
       <MoneyDisplay v-else class="summary-amount" :value="summary?.dailyExpenseCents" />
-      <view v-if="!loading && !loadError" class="summary-foot"><view>本月支出<MoneyDisplay :value="summary?.expenseCents" /></view><view>本月收入<MoneyDisplay class="income" :value="summary?.incomeCents" /></view></view>
+      <view v-if="summaryReady" class="summary-foot"><view>本月支出<MoneyDisplay :value="summary?.expenseCents" /></view><view>本月收入<MoneyDisplay class="income" :value="summary?.incomeCents" /></view></view>
     </view>
     <view class="section-row"><text class="section-title">最近记账</text></view>
-    <scroll-view scroll-y :show-scrollbar="false" class="home-recent-list transaction-list" :refresher-enabled="true" :refresher-triggered="loading || recentLoading" @refresherrefresh="() => load(true)" @scrolltolower="loadMore">
-      <view v-if="recentLoading" class="list-empty">正在加载账单…</view>
-      <view v-else-if="recentLoadError && !groups.length" class="list-empty">暂时无法加载账单<button class="text-button" @click="retry">重试</button></view>
+    <scroll-view scroll-y :show-scrollbar="false" class="home-recent-list transaction-list" :refresher-enabled="true" :refresher-triggered="refreshing" @refresherrefresh="() => load(true)" @scrolltolower="loadMore">
+      <view v-if="recentLoading && !recentLoaded" class="list-empty">正在加载账单…</view>
+      <view v-else-if="recentLoadError && !recentLoaded" class="list-empty">暂时无法加载账单<button class="text-button" @click="retry">重试</button></view>
       <template v-else>
         <view v-if="!groups.length" class="list-empty"><view class="empty-art" />暂无记账记录<button v-if="hasMore" class="text-button" @click="loadMore">加载更早账单</button></view>
         <view v-for="group in groups" :key="group[0]" class="date-group">

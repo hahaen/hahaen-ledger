@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import BottomNav from '../../components/BottomNav.vue'
 import MoneyDisplay from '../../components/MoneyDisplay.vue'
@@ -29,21 +29,33 @@ const reorderingAccountId = ref<string | null>(null)
 const reorderingKind = ref<AccountKind | null>(null)
 const reorderingSaving = ref(false)
 const accountOrder = (left: Account, right: Account) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id)
-const funds = computed(() => (overview.value?.accounts || state.accounts).filter(account => account.kind === 'FUND' && account.status === 'ACTIVE').sort(accountOrder))
-const credits = computed(() => (overview.value?.accounts || state.accounts).filter(account => account.kind === 'CREDIT' && account.status === 'ACTIVE').sort(accountOrder))
+const funds = computed(() => (overview.value?.accounts || []).filter(account => account.kind === 'FUND' && account.status === 'ACTIVE').sort(accountOrder))
+const credits = computed(() => (overview.value?.accounts || []).filter(account => account.kind === 'CREDIT' && account.status === 'ACTIVE').sort(accountOrder))
 
+let loadSequence = 0
+watch(() => state.token, () => {
+  ++loadSequence
+  overview.value = null
+  loading.value = error.value = false
+  reorderingAccountId.value = null
+  reorderingKind.value = null
+}, { flush: 'sync' })
 async function load() {
   if (!state.token) return
+  const sequence = ++loadSequence
   loading.value = true
   error.value = false
   try {
     const result = await request<AssetOverview>('/api/app/assets/overview')
+    if (sequence !== loadSequence) return
     overview.value = result
     state.accounts = result.accounts
   } catch {
+    if (sequence !== loadSequence) return
     error.value = true
+    if (overview.value) uni.showToast({ title: '刷新资产失败，已保留原数据，请重试', icon: 'none' })
   } finally {
-    loading.value = false
+    if (sequence === loadSequence) loading.value = false
   }
 }
 function open(id: string) { uni.navigateTo({ url: `/pages/account/account?id=${id}` }) }
@@ -142,8 +154,8 @@ onShow(() => { void load() })
   <view class="page assets-page">
     <PageHeader />
     <view class="asset-hero"><text class="asset-label">净资产</text><MoneyDisplay class="asset-net" :value="overview?.netAssetsCents" /><view class="asset-breakdown"><view><text>总资产</text><MoneyDisplay class="breakdown-value" :value="overview?.totalAssetsCents" /></view><view><text>总负债</text><MoneyDisplay class="breakdown-value liability" :value="overview?.totalLiabilitiesCents" /></view></view></view>
-    <view v-if="loading" class="card empty">正在加载资产…</view>
-    <view v-else-if="error" class="card empty">暂时无法加载资产<button class="text-button" @click="retry">重试</button></view>
+    <view v-if="loading && !overview" class="card empty">正在加载资产…</view>
+    <view v-else-if="error && !overview" class="card empty">暂时无法加载资产<button class="text-button" @click="retry">重试</button></view>
     <template v-else>
       <view class="account-section">
         <button class="account-heading" :aria-expanded="creditsExpanded" @click="creditsExpanded = !creditsExpanded"><text>信贷账户</text><view class="account-toggle">{{ creditsExpanded ? '收起' : '展开' }}</view></button>

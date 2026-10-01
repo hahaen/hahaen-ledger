@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { onShow, onPullDownRefresh } from '@dcloudio/uni-app'
 import BottomNav from '../../components/BottomNav.vue'
 import PageHeader from '../../components/PageHeader.vue'
@@ -47,11 +47,28 @@ const weekLabels = ['日', '一', '二', '三', '四', '五', '六']
 const visibleDays = computed(() => { const last = days.value.map(day => day.currentMonth).lastIndexOf(true); return days.value.slice(0, Math.ceil((last + 1) / 7) * 7) })
 const selectedTitle = computed(() => selected.value ? `${Number(selected.value.slice(5, 7))}月${Number(selected.value.slice(8, 10))}日` : '当天')
 const selectedWeek = computed(() => selected.value ? `周${weekLabels[new Date(`${selected.value}T00:00:00`).getDay()]}` : '')
+const loadedMonth = ref('')
+const monthReady = computed(() => loadedMonth.value === monthKey.value)
+const dayReady = computed(() => detail.value?.date === selected.value)
+watch(() => ledger.state.token, () => {
+  ++requestSequence
+  ++daySequence
+  days.value = []
+  monthTransactions.value = []
+  detail.value = null
+  loadedMonth.value = ''
+  loading.value = dayLoading.value = error.value = dayError.value = false
+}, { flush: 'sync' })
 async function loadMonth() {
   if (!ledger.state.token) return
   const sequence = ++requestSequence
+  const requestedMonth = monthKey.value
   loading.value = true
-  detail.value = null
+  if (!monthReady.value) {
+    days.value = []
+    monthTransactions.value = []
+    detail.value = null
+  }
   ++daySequence
   dayLoading.value = false
   dayError.value = false
@@ -62,6 +79,7 @@ async function loadMonth() {
       ledger.refresh(monthKey.value),
     ])
     if (sequence !== requestSequence) return
+    loadedMonth.value = requestedMonth
     days.value = result.days
     monthTransactions.value = summary.transactions
     const current = result.days.filter(day => day.currentMonth)
@@ -69,7 +87,10 @@ async function loadMonth() {
     selected.value = current.some(day => day.date === selected.value) ? selected.value : current.some(day => day.date === today) ? today : current.find(day => day.hasRecords)?.date || current[0]?.date || ''
     await loadDay(selected.value, sequence)
   } catch {
-    if (sequence === requestSequence) error.value = true
+    if (sequence === requestSequence) {
+      error.value = true
+      if (monthReady.value) uni.showToast({ title: '刷新月历失败，已保留原数据，请重试', icon: 'none' })
+    }
   } finally {
     if (sequence === requestSequence) loading.value = false
   }
@@ -79,13 +100,16 @@ async function loadDay(date: string, sequence = requestSequence) {
   if (!date) return
   const dayRequest = ++daySequence
   dayLoading.value = true
-  detail.value = null
+  if (detail.value?.date !== date) detail.value = null
   dayError.value = false
   try {
     const result = await request<DayDetail>(`/api/app/calendar/${date}`)
     if (sequence === requestSequence && dayRequest === daySequence && selected.value === date) detail.value = result
   } catch {
-    if (sequence === requestSequence && dayRequest === daySequence && selected.value === date) { detail.value = null; dayError.value = true }
+    if (sequence === requestSequence && dayRequest === daySequence && selected.value === date) {
+      dayError.value = true
+      if (dayReady.value) uni.showToast({ title: '刷新当天账单失败，已保留原数据，请重试', icon: 'none' })
+    }
   } finally { if (dayRequest === daySequence) dayLoading.value = false }
 }
 
@@ -111,14 +135,14 @@ onPullDownRefresh(async () => { try { await loadMonth() } finally { uni.stopPull
     <view class="calendar-card">
       <view class="calendar-toolbar"><button class="calendar-month" aria-label="选择月份" @click="monthOpen = true">{{ monthTitle }}</button><view class="calendar-controls"><button aria-label="上个月" @click="moveMonth(-1)">‹</button><button class="calendar-today" @click="today">今天</button><button aria-label="下个月" @click="moveMonth(1)">›</button></view></view>
       <view class="week-row"><text v-for="label in weekLabels" :key="label">{{ label }}</text></view>
-      <view v-if="loading" class="list-empty">正在加载月历…</view>
-      <view v-else-if="error" class="list-empty">暂时无法加载月历<button class="text-button" @click="loadMonth">重试</button></view>
+      <view v-if="loading && !monthReady" class="list-empty">正在加载月历…</view>
+      <view v-else-if="error && !monthReady" class="list-empty">暂时无法加载月历<button class="text-button" @click="loadMonth">重试</button></view>
       <view v-else class="calendar-grid"><view v-for="day in visibleDays" :key="day.date" :class="['calendar-cell', { muted: !day.currentMonth, selected: selected === day.date, today: day.today }]" role="button" :aria-label="day.date" :aria-pressed="selected === day.date" :aria-disabled="!day.currentMonth" @click="day.currentMonth && selectDay(day)"><view class="day-num">{{ day.day }}</view><view class="calendar-dots"><text v-for="type in dayTypes(day.date)" :key="type" :class="['calendar-dot', dotClass(type)]" /></view></view></view>
       <view class="calendar-legend"><view><text class="calendar-dot expense-dot" />支出</view><view><text class="calendar-dot income-dot" />收入</view><view><text class="calendar-dot neutral-dot" />转账</view><view><text class="calendar-dot repayment-dot" />还款</view></view>
-      <view v-if="!loading && !dayLoading && !error && !dayError && detail" class="day-summary"><view><text>当日支出</text><MoneyDisplay class="day-total expense" :value="detail?.expenseCents" /></view><view><text>当日收入</text><MoneyDisplay class="day-total income" :value="detail?.incomeCents" /></view><view><text>当日结余</text><MoneyDisplay class="day-total" :value="detail?.balanceCents" /></view></view>
+      <view v-if="dayReady" class="day-summary"><view><text>当日支出</text><MoneyDisplay class="day-total expense" :value="detail?.expenseCents" /></view><view><text>当日收入</text><MoneyDisplay class="day-total income" :value="detail?.incomeCents" /></view><view><text>当日结余</text><MoneyDisplay class="day-total" :value="detail?.balanceCents" /></view></view>
     </view>
     <view class="date-heading calendar-date"><view><text class="date-title">{{ selectedTitle }}</text><text class="date-week">{{ selectedWeek }}</text></view><text class="section-meta">{{ detail?.transactions.length || 0 }} 笔</text></view>
-    <scroll-view scroll-y :show-scrollbar="false" class="calendar-transaction-list transaction-list"><view v-if="loading || dayLoading" class="list-empty">正在加载当天账单…</view><view v-else-if="error" class="list-empty">请先重试加载月历</view><view v-else-if="dayError" class="list-empty">暂时无法加载当天账单<button class="text-button" @click="loadDay(selected)">重试</button></view><view v-else-if="!detail?.transactions.length" class="list-empty">这一天还没有记账记录</view><template v-else><TransactionRow v-for="transaction in detail.transactions" :key="transaction.id" :transaction="transaction" @open="open" /></template></scroll-view>
+    <scroll-view scroll-y :show-scrollbar="false" class="calendar-transaction-list transaction-list"><view v-if="!dayReady && (loading || dayLoading)" class="list-empty">正在加载当天账单…</view><view v-else-if="error && !monthReady" class="list-empty">请先重试加载月历</view><view v-else-if="dayError && !dayReady" class="list-empty">暂时无法加载当天账单<button class="text-button" @click="loadDay(selected)">重试</button></view><view v-else-if="!detail?.transactions.length" class="list-empty">这一天还没有记账记录</view><template v-else><TransactionRow v-for="transaction in detail.transactions" :key="transaction.id" :transaction="transaction" @open="open" /></template></scroll-view>
     <BottomNav active="calendar" />
     <MonthPicker v-if="monthOpen" :value="monthKey" @close="monthOpen = false" @select="cursor = new Date($event + '-01T00:00:00'); monthOpen = false; loadMonth()" />
   </view>
