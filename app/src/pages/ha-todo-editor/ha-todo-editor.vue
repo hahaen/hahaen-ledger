@@ -157,7 +157,7 @@ async function save() {
 
 <template>
   <view class="page profile-page todo-editor-page">
-    <NativeNavigation variant="help" :title="editId ? '编辑待办' : '新增待办'" back-label="返回待办清单" @back="back" />
+    <NativeNavigation variant="help" :page-top-extra="20" :title="editId ? '编辑待办' : '新增待办'" back-label="返回待办清单" @back="back" />
     <view v-if="loading" class="profile-loading">正在加载待办…</view>
     <view v-else-if="loadError" class="profile-error"><text>{{ loadError }}</text><button v-if="editId" class="text-button" @click="loadDetail">重新加载</button><button class="text-button" @click="returnToList">返回清单</button></view>
     <template v-else>

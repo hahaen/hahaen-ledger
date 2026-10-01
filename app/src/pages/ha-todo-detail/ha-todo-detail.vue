@@ -63,7 +63,7 @@ onShow(() => { void loadDetail() })
 
 <template>
   <view class="page profile-page todo-detail-page">
-    <NativeNavigation variant="help" title="待办详情" back-label="返回待办清单" @back="back" />
+    <NativeNavigation variant="help" :page-top-extra="20" title="待办详情" back-label="返回待办清单" @back="back" />
     <view v-if="loading" class="profile-loading">正在加载待办…</view>
     <view v-else-if="loadError" class="profile-error"><text>{{ loadError }}</text><button v-if="id" class="text-button" @click="loadDetail">重新加载</button></view>
     <template v-else-if="item">

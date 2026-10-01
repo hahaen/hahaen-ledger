@@ -85,7 +85,7 @@ onShow(() => { now.value = Date.now(); void load() })
 
 <template>
   <view class="page profile-page todo-page">
-    <NativeNavigation variant="help" title="待办清单" back-label="返回我的" @back="backToMine" />
+    <NativeNavigation variant="help" :page-top-extra="20" title="待办清单" back-label="返回我的" @back="backToMine" />
     <view class="profile-hero todo-hero">
       <text class="profile-eyebrow">TODO LIST</text>
       <text class="profile-hero-title">把要做的事，记在这里</text>

@@ -306,3 +306,7 @@ PASS：47项前端定向回归、类型检查、H5/微信生产构建；Java25�
 ## 2026-10-01｜新增页面跨端适配
 
 通知中心和待办清单/详情/新增按既有风格补齐窄屏换行、按钮居中、开关防压缩与详情固定底栏，两页漏接的统一微信转发已修复。PASS：108项回归、类型与两端构建，实际H5四种尺寸及微信430/320模拟器已测范围。PARTIAL：极限长文本/微信通知页/触摸键盘；NOT_RUN（补充）：真机、Safari和实际保存发送。无数据库/API/后端变化。完整requirement/design/database/api/backend/frontend/testing/commands/verification/rollback见[本次迭代](../../10/new-pages-responsive/README.md)。
+
+## 2026-10-01｜待办标题高度修复
+
+三个待办页漏传page-top-extra=20，导致微信标题较通知中心下移20px；已补齐。实际组件定位回归先失败后通过，110项测试、类型与双端构建PASS；模拟器画面PARTIAL，真机复验NOT_RUN（补充）。需求/设计/实现/验证及回退见[本轮完整迭代](../../10/todo-navigation-alignment/README.md)。

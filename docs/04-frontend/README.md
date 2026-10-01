@@ -103,3 +103,5 @@ items一级页位于资产右侧，item-detail为二级页。物品清单行左�
 ## 新增页面跨端适配（2026-10-01）
 
 待办统计使用原生text展示；列表/详情长文本可换行，重复模式和日期网格可收缩，开关保持完整尺寸。待办详情操作栏固定在底部，内容预留安全区与操作栏空间；资料/通知保存按钮明确flex居中和行高。新增待办编辑、详情均注册统一微信转发。H5四种尺寸与微信窄屏已测范围和补充验收见[完整迭代](../10-iterations/2026/10/new-pages-responsive/README.md)。
+
+待办清单、待办详情、待办编辑使用profile-page的公共20px顶部留白，NativeNavigation必须显式传入page-top-extra=20，与通知中心和个人中心一致，避免微信标题低于胶囊20px。定位回归与平台边界见[修复档案](../10-iterations/2026/10/todo-navigation-alignment/README.md)。
