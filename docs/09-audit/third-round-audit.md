@@ -698,3 +698,7 @@ PASS：108项前端回归、类型检查、H5/微信构建；H5通知中心/待�
 ## 2026-10-01｜待办页头与通知中心对齐
 
 待办清单、详情、编辑补齐公共20px页顶补偿参数，与通知中心按胶囊对齐。PASS：实际组件计算先复现top=80/预期60，再修复为60；110项回归、类型、H5/微信构建及diff检查。PARTIAL：修复后模拟器画面未核对；NOT_RUN（补充）：微信真机复验。无数据库/API/后端修改。详见[本次迭代](../10-iterations/2026/10/todo-navigation-alignment/README.md)。
+
+## 2026-10-01｜我的页面切回闪烁
+
+修复每次onShow将状态文案替换为加载提示、头像先回默认再加载的问题。同会话保留资料并后台刷新，复用未过期头像地址，处理更新/移除、失败与旧响应隔离。PASS：8项定向回归、118项全量、类型和H5/微信构建；PARTIAL：脚本与模板隔离验收；NOT_RUN（补充）：真实用户页面切换、微信工具/真机及部署。database/api/backend无修改。完整requirement/design/frontend/testing/commands/verification/rollback见[本次迭代](../10-iterations/2026/10/mine-profile-refresh/README.md)。

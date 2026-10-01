@@ -5,3 +5,5 @@
 - [新增通知与待办页面跨端适配](new-pages-responsive/README.md)。
 
 - [待办页头与通知中心对齐](todo-navigation-alignment/README.md)。
+
+- [我的页面资料刷新闪烁修复](mine-profile-refresh/README.md)。

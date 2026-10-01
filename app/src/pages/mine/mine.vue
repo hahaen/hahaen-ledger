@@ -26,6 +26,17 @@ const profile = ref<Profile | null>(null)
 const loading = ref(false)
 const loggingOut = ref(false)
 const logoutOpen = ref(false)
+let profileSession = ledger.state.token
+let loadSequence = 0
+let avatarObjectKey = ''
+let avatarExpiresAt = 0
+
+function clearProfile() {
+  profile.value = null
+  avatarUrl.value = DEFAULT_AVATAR_URL
+  avatarObjectKey = ''
+  avatarExpiresAt = 0
+}
 
 const loggedIn = computed(() => Boolean(ledger.state.token))
 const nickname = computed(() => profile.value?.nickname || ledger.state.user?.nickname || '账本主人')
@@ -33,30 +44,49 @@ const avatarStatus = computed(() => {
   return loggedIn.value ? (profile.value?.avatarAuthorized ? '资料已设置 · 数据随时可用' : '') : '登录后同步你的资料和记账数据'
 })
 async function loadProfile() {
-  if (!ledger.state.token) {
-    profile.value = null
-    avatarUrl.value = DEFAULT_AVATAR_URL
+  const session = ledger.state.token
+  const sequence = ++loadSequence
+  if (profileSession !== session) {
+    clearProfile()
+    profileSession = session
+  }
+  if (!session) {
+    clearProfile()
+    loading.value = false
     return
   }
-  loading.value = true
+  const isCurrent = () => sequence === loadSequence && session === ledger.state.token
+  // 仅首次加载显示提示，切回页面时保留已显示的资料。
+  loading.value = !profile.value
   try {
-    profile.value = await request<Profile>('/api/app/user/profile')
-    avatarUrl.value = DEFAULT_AVATAR_URL
-    if (profile.value.avatarFileUrl) {
+    const nextProfile = await request<Profile>('/api/app/user/profile')
+    if (!isCurrent()) return
+    profile.value = nextProfile
+    if (!nextProfile.avatarFileUrl) {
+      avatarUrl.value = DEFAULT_AVATAR_URL
+      avatarObjectKey = ''
+      avatarExpiresAt = 0
+    } else if (avatarObjectKey !== nextProfile.avatarFileUrl || Date.now() >= avatarExpiresAt) {
       try {
         const avatar = await currentAvatar()
-        if (avatar?.viewUrl) avatarUrl.value = avatar.viewUrl
+        if (!isCurrent()) return
+        if (avatar?.viewUrl) {
+          avatarUrl.value = avatar.viewUrl
+          avatarObjectKey = nextProfile.avatarFileUrl
+          avatarExpiresAt = Date.now() + Math.max(0, avatar.expiresInSeconds - 30) * 1000
+        }
       } catch {
-        // 头像预览失败不影响个人资料和累计天数展示。
+        // 保留已显示的头像；下次进入时重试预览，不影响资料展示。
       }
     }
   } catch {
-    if (!uni.getStorageSync('auth-token')) {
+    if (isCurrent() && !uni.getStorageSync('auth-token')) {
       ledger.state.token = ''
-      profile.value = null
+      clearProfile()
+      profileSession = ''
     }
   } finally {
-    loading.value = false
+    if (sequence === loadSequence) loading.value = false
   }
 }
 
@@ -107,8 +137,10 @@ async function confirmLogout() {
   } catch {
     // logout() 无论服务端响应如何都会清除本地会话，页面切换到未登录状态即可。
   } finally {
-    profile.value = null
-    avatarUrl.value = DEFAULT_AVATAR_URL
+    ++loadSequence
+    clearProfile()
+    profileSession = ledger.state.token
+    loading.value = false
     logoutOpen.value = false
     loggingOut.value = false
     // #ifdef H5
