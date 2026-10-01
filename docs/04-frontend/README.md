@@ -123,3 +123,6 @@ items一级页位于资产右侧，item-detail为二级页。物品清单行左�
 金额键盘在有效按键点击中调用 `triggerCalculatorFeedback`，禁止使用 DOM 事件委托适配小程序。加载/保存/错误禁用状态不触发反馈；小程序请求 light 短振动，失败退回默认短振动；H5 在浏览器支持时请求 15ms 振动，未支持时保留按压视觉效果。普通控件不启用全局振动。浏览器 API 调用成功不等于真机实际震感。
 
 见[本轮验证](../10-iterations/2026/10/entry-touch-interactions/README.md)。
+
+
+物品新增、资料编辑、退役共用 CenterModal；背景关闭和禁止触摸必须绑定独立遮罩，禁止在内容祖先使用 `.self` 关闭或 catchtouchmove。内容层定位在遮罩上方，H5 仅停止触摸冒泡，微信保留原生滚动与内部点击。日期确认只回填草稿，保存业务和日期上下限保持原规则。见[物品日期验证](../10-iterations/2026/10/item-date-modal-click/README.md)。

@@ -11,3 +11,5 @@
 - [主导航页面后台刷新与闪烁修复](tab-background-refresh/README.md)。
 
 - [2026-10-01 记账日期、主体滚动和键盘振动修复](entry-touch-interactions/README.md)。
+
+- [物品新增、编辑与退役日期点击修复](item-date-modal-click/README.md)。
