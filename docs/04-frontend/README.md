@@ -131,3 +131,6 @@ items一级页位于资产右侧，item-detail为二级页。物品清单行左�
 ## 记账主体跨端滚动（2026-10-02）
 
 新增与编辑共用 entry 页的 `scroll-view scroll-y`，外层提供明确 flex 高度（height:0 / min-height:0），内层承担左右与键盘避让留白。禁止恢复普通 view + overflow 滚动或主体 touchmove.stop；微信会编译为 catchtouchmove。页面不配置 disableScroll，避免 H5 document touchmove preventDefault；外层视口与 overflow:hidden 保持导航、键盘固定。账户弹窗的触摸遮罩与内容为兄弟节点。见[迭代与真机验收状态](../10-iterations/2026/10/entry-native-scroll/README.md)。
+
+
+新增与编辑记账的备注弹窗同样使用独立兄弟遮罩，只在遮罩绑定关闭与触摸拦截；textarea内容祖先不绑定 `.self` 关闭或 catchtouchmove，内容层使用position:relative位于遮罩上方。保留100字限制与完成回填、取消丢弃草稿。见[备注输入修复](../10-iterations/2026/10/entry-note-input/README.md)。

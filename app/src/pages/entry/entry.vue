@@ -305,7 +305,8 @@ async function save(afterSave: 'home' | 'again') {
         <view class="entry-date-picker-actions"><button class="entry-date-picker-cancel" @click="modal = ''">取消</button><button class="entry-date-picker-confirm" @click="confirmModal">确定</button></view>
       </view>
     </view>
-    <view v-else-if="modal === 'note'" class="entry-note-picker-backdrop" @click.self="modal = ''" @touchmove.stop.prevent>
+    <view v-else-if="modal === 'note'" class="entry-note-picker-backdrop">
+      <view class="picker-touch-mask" @click.stop="modal = ''" @touchmove.stop.prevent />
       <view class="entry-note-picker-modal" role="dialog" aria-modal="true" aria-label="添加备注">
         <view class="entry-note-picker-handle" />
         <text class="entry-note-picker-title">添加备注</text>

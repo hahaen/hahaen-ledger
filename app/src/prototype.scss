@@ -380,4 +380,4 @@ html, body, .page, .entry-content, .uni-scroll-view { scrollbar-width:none; }
 
 /* 背景拦截层与滚轮为兄弟节点，避免微信 catchtouchmove 吞掉滚轮手势。 */
 .picker-touch-mask { position:absolute; inset:0; }
-.center-modal, .entry-account-picker-modal, .entry-date-picker-modal, .entry-value-picker-modal, .month-picker-modal { position:relative; }
+.center-modal, .entry-account-picker-modal, .entry-date-picker-modal, .entry-value-picker-modal, .entry-note-picker-modal, .month-picker-modal { position:relative; }
