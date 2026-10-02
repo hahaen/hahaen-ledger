@@ -17,3 +17,5 @@
 - [新增与编辑记账跨端滚动及真机验收](entry-native-scroll/README.md)。
 
 - [微信全局转发修复](wechat-global-share/README.md)。
+
+- [固定启动页分享文案图](wechat-welcome-card/README.md)。
