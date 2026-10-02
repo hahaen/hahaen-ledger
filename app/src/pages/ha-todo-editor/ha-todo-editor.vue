@@ -7,10 +7,8 @@ import TodoRepeatFieldsInput from '../../components/TodoRepeatFields.vue'
 import { cleanRepeat, repeatError } from '../../utils/todoRepeat'
 import { todoApi, type TodoPayload, type TodoRepeatFields } from '../../utils/api'
 import { useLedger } from '../../stores/ledger'
-import { registerWechatShare } from '../../utils/wechatShare'
 
 const ledger = useLedger()
-registerWechatShare()
 const editId = ref('')
 const loading = ref(true)
 const loadError = ref('')

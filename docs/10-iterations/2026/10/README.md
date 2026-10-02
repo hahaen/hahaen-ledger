@@ -15,3 +15,5 @@
 - [物品新增、编辑与退役日期点击修复](item-date-modal-click/README.md)。
 
 - [新增与编辑记账跨端滚动及真机验收](entry-native-scroll/README.md)。
+
+- [微信全局转发修复](wechat-global-share/README.md)。

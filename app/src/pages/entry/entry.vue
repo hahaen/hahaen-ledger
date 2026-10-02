@@ -11,9 +11,7 @@ import { calculateAmount, creditExpenseOverLimitCents, validLocalDateTime, backT
 import { stringId } from '../../utils/id'
 import { staticResource } from '../../utils/staticResource'
 import { triggerCalculatorFeedback } from '../../utils/calculatorFeedback'
-import { registerWechatShare } from '../../utils/wechatShare'
 
-registerWechatShare()
 
 type EntryType = 'EXPENSE' | 'INCOME' | 'TRANSFER' | 'REPAYMENT'
 const ledger = useLedger()

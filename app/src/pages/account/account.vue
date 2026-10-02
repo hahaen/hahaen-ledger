@@ -9,10 +9,8 @@ import { request } from '../../utils/api'
 import { formatYuan } from '../../utils/money'
 import { stringId } from '../../utils/id'
 import { staticResource } from '../../utils/staticResource'
-import { registerWechatShare } from '../../utils/wechatShare'
 
 const ledger = useLedger()
-registerWechatShare()
 const account = ref<Account | null>(null)
 const records = ref<Transaction[]>([])
 const id = ref('')

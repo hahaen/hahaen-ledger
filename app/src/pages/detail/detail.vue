@@ -9,12 +9,10 @@ import { backToLedger } from '../../utils/entry'
 import { stringId } from '../../utils/id'
 import { staticResource } from '../../utils/staticResource'
 import { Transaction, useLedger } from '../../stores/ledger'
-import { registerWechatShare } from '../../utils/wechatShare'
 
 type Refund = { id: string; refundNo: string; amountCents: number; createdAt: string }
 type Detail = { transaction: Transaction; refundedCents: number; effectiveCents: number; refunds: Refund[] }
 const ledger = useLedger()
-registerWechatShare()
 const detail = ref<Detail | null>(null)
 const id = ref('')
 const refundAmount = ref('')

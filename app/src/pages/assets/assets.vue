@@ -7,10 +7,8 @@ import PageHeader from '../../components/PageHeader.vue'
 import { request } from '../../utils/api'
 import { Account, AccountKind, AssetOverview, useLedger } from '../../stores/ledger'
 import { staticResource } from '../../utils/staticResource'
-import { registerWechatShare } from '../../utils/wechatShare'
 
 const ledger = useLedger()
-registerWechatShare()
 const state = ledger.state
 const overview = ref<AssetOverview | null>(null)
 const loading = ref(false)

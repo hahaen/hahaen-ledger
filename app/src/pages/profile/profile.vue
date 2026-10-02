@@ -7,7 +7,6 @@ import { request } from '../../utils/api'
 import { encryptPassword } from '../../utils/passwordCrypto'
 import { useLedger } from '../../stores/ledger'
 import { staticResource } from '../../utils/staticResource'
-import { registerWechatShare } from '../../utils/wechatShare'
 
 type Profile = {
   userId: string
@@ -20,7 +19,6 @@ type Profile = {
 
 const ACCOUNT_PATTERN = /^[a-z0-9]{2,64}$/
 const ledger = useLedger()
-registerWechatShare()
 const DEFAULT_AVATAR_URL = staticResource('brand.png')
 const avatarUrl = ref(DEFAULT_AVATAR_URL)
 const avatarConfigured = ref(false)

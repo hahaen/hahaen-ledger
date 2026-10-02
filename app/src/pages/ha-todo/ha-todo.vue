@@ -5,10 +5,8 @@ import NativeNavigation from '../../components/NativeNavigation.vue'
 import { recurrenceLabel } from '../../utils/todoRepeat'
 import { todoDueLabel } from '../../utils/todoDisplay'
 import { todoApi, type TodoItem, type TodoStatus } from '../../utils/api'
-import { registerWechatShare } from '../../utils/wechatShare'
 import { useLedger } from '../../stores/ledger'
 
-registerWechatShare()
 const ledger = useLedger()
 const status = ref<TodoStatus>('PENDING')
 const items = ref<TodoItem[]>([])

@@ -9,8 +9,6 @@ import ItemCostChart from '../../components/ItemCostChart.vue'
 import CenterModal from '../../components/CenterModal.vue'
 import { itemApi } from '../../utils/api'
 import { itemSubmission, type ItemDetail } from '../../utils/items'
-import { registerWechatShare } from '../../utils/wechatShare'
-registerWechatShare()
 const detail = ref<ItemDetail>(), loading = ref(false), error = ref(false)
 const retireOpen = ref(false), editOpen = ref(false), deleteOpen = ref(false), deleting = ref(false), deleteError = ref('')
 const reactivateOpen = ref(false), reactivating = ref(false), reactivateError = ref('')

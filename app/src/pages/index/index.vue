@@ -7,10 +7,8 @@ import TransactionRow from '../../components/TransactionRow.vue'
 import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import { Summary, Transaction, useLedger } from '../../stores/ledger'
 import { localDateTime } from '../../utils/money'
-import { registerWechatShare } from '../../utils/wechatShare'
 
 const ledger = useLedger()
-registerWechatShare()
 const state = ledger.state
 const month = ref(localDateTime().slice(0, 7))
 const loading = ref(false)

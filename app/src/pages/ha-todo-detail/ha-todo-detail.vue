@@ -6,10 +6,8 @@ import { todoApi, type TodoItem } from '../../utils/api'
 import { recurrenceLabel } from '../../utils/todoRepeat'
 import { todoDueLabel } from '../../utils/todoDisplay'
 import { useLedger } from '../../stores/ledger'
-import { registerWechatShare } from '../../utils/wechatShare'
 
 const ledger = useLedger()
-registerWechatShare()
 const id = ref('')
 const item = ref<TodoItem | null>(null)
 const loading = ref(true)

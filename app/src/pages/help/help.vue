@@ -3,10 +3,8 @@ import { ref } from 'vue'
 import NativeNavigation from '../../components/NativeNavigation.vue'
 import { backToLedger } from '../../utils/entry'
 import { staticResource } from '../../utils/staticResource'
-import { registerWechatShare } from '../../utils/wechatShare'
 
 const openFaq = ref('quick-start')
-registerWechatShare()
 
 const faqs = [
   { id: 'quick-start', title: '如何开始记一笔？', answer: '点击首页右下角的“＋”，选择支出、收入或转账，输入金额后选择账户并确认日期时间，最后点击“确定”即可。常用账户会优先为你保留。' },

@@ -9,14 +9,12 @@ import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import { request } from '../../utils/api'
 import { Transaction, TransactionType, useLedger } from '../../stores/ledger'
 import { localDateTime } from '../../utils/money'
-import { registerWechatShare } from '../../utils/wechatShare'
 
 type CalendarDay = { date: string; day: number; currentMonth: boolean; today: boolean; hasRecords: boolean; expenseCents: number; incomeCents: number; balanceCents: number }
 type CalendarMonth = { month: string; days: CalendarDay[] }
 type DayDetail = { date: string; expenseCents: number; incomeCents: number; balanceCents: number; transactions: Transaction[] }
 
 const ledger = useLedger()
-registerWechatShare()
 const cursor = ref(new Date())
 const selected = ref(localDateTime().slice(0, 10))
 const days = ref<CalendarDay[]>([])

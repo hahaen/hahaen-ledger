@@ -8,8 +8,6 @@ import ItemEditor from '../../components/ItemEditor.vue'
 import { useLedger } from '../../stores/ledger'
 import { itemApi } from '../../utils/api'
 import { type ItemOverview, type Item } from '../../utils/items'
-import { registerWechatShare } from '../../utils/wechatShare'
-registerWechatShare()
 const overview = ref<ItemOverview>(), items = ref<Item[]>([]), filter = ref<'ACTIVE' | 'RETIRED' | 'ALL'>('ALL')
 const loading = ref(false), error = ref(false), createOpen = ref(false)
 const ledger = useLedger()

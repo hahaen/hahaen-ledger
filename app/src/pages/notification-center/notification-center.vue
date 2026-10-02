@@ -5,10 +5,8 @@ import NativeNavigation from '../../components/NativeNavigation.vue'
 import { notificationConfigApi, type NotificationType } from '../../utils/api'
 import { encryptPassword } from '../../utils/passwordCrypto'
 import { useLedger } from '../../stores/ledger'
-import { registerWechatShare } from '../../utils/wechatShare'
 
 const ledger = useLedger()
-registerWechatShare()
 const providers: { type: NotificationType; label: string }[] = [
   { type: 'BARK', label: 'Bark' }, { type: 'PUSHPLUS', label: 'pushplus' },
 ]
