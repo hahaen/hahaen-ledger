@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, type CSSProperties } from 'vue'
+import { computed, getCurrentInstance, nextTick, onMounted, ref, type CSSProperties } from 'vue'
 import { getNativeMenuMetrics } from '../utils/nativeNavigation'
 import { staticResource } from '../utils/staticResource'
 
@@ -23,11 +23,24 @@ const props = withDefaults(defineProps<{
 })
 const emit = defineEmits<{ back: [] }>()
 const menu = getNativeMenuMetrics()
+const instance = getCurrentInstance()
+const topCorrection = ref(0)
+// 微信工具与真机的CSS安全区可能不同，以首屏实际占位坐标校正正文位置。
+onMounted(() => {
+  if (!menu || !instance?.proxy) return
+  nextTick(() => {
+    uni.createSelectorQuery().in(instance.proxy).select('.native-navigation-spacer')
+      .boundingClientRect(rect => {
+        if (!rect || Array.isArray(rect) || typeof rect.top !== 'number') return
+        topCorrection.value = menu.top - rect.top
+      }).exec()
+  })
+})
 
 const menuAlignedStyle = computed<CSSProperties>(() => {
   if (!menu) return props.variant !== 'brand' && !props.fullWidth ? { marginLeft: '0px', marginRight: '0px' } : {}
   const pageTop = menu.rootInset + props.pageTopExtra
-  const marginBottom = props.variant === 'brand' ? 20 : props.variant === 'welcome' ? 8 : props.variant === 'help' ? (props.compact ? 10 : 16) : (props.compact ? 10 : 20)
+  const marginBottom = 10
   return {
     marginTop: `${menu.top - pageTop}px`,
     marginBottom: `${marginBottom}px`,
@@ -40,10 +53,10 @@ const menuAlignedStyle = computed<CSSProperties>(() => {
     ...(['brand', 'welcome'].includes(props.variant) ? { paddingRight: `${menu.rightPadding}px` } : {}),
   }
 })
-// 占位延续调用方原有的顶部补偿和下方间距，固定层只使用视口坐标。
+// 占位使用统一10px正文间距，固定层只使用视口坐标。
 const spacerStyle = computed(() => menu ? {
   height: `${menu.height}px`,
-  marginTop: menuAlignedStyle.value.marginTop,
+  marginTop: `${parseFloat(String(menuAlignedStyle.value.marginTop || 0)) + topCorrection.value}px`,
   marginBottom: menuAlignedStyle.value.marginBottom,
 } : {})
 const fixedStyle = computed(() => menu ? { paddingTop: `${menu.top}px` } : {})

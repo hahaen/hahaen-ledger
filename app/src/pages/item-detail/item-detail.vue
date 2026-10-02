@@ -50,7 +50,7 @@ onShow(() => { if (/^\d+$/.test(id) && !loading.value) void load() })
 onLoad(options => { id = options?.id || ''; if (!/^\d+$/.test(id)) error.value = true; else void load() })
 </script>
 <template>
-  <view class="page item-detail-page"><NativeNavigation variant="screen" title="物品详情" compact @back="back" />
+  <view class="page item-detail-page"><NativeNavigation variant="screen" title="物品详情" compact :page-top-extra="20" @back="back" />
     <view v-if="loading" class="card empty">正在加载物品…</view><view v-else-if="error" class="card empty">物品暂时无法查看<button class="text-button" @click="load">重试</button></view>
     <template v-else-if="detail">
       <view class="item-detail-hero"><view class="item-detail-heading"><view class="item-box-icon"><view /></view><view><text class="item-detail-name">{{ detail.item.name }}</text><text :class="['item-status', { retired: detail.item.status === 'RETIRED' }]">{{ detail.item.status === 'ACTIVE' ? '正在服役' : '已退役' }}</text></view></view><text class="item-caption">{{ detail.item.status === 'ACTIVE' ? '当前日均成本' : '最终日均成本' }}</text><view class="item-cost-value"><MoneyDisplay :value="detail.item.dailyCostCents" /><text>元 / 天</text></view><text class="item-caption">{{ detail.item.status === 'ACTIVE' ? '已陪伴' : '共服役' }} {{ detail.item.serviceDays }} 天{{ detail.item.status === 'ACTIVE' ? '，成本随陪伴逐日摊薄' : '，服役天数已冻结' }}</text></view>

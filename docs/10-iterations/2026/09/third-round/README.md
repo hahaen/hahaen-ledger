@@ -392,3 +392,8 @@ PARTIAL：微信生产产物已验证。BLOCKED：微信工具原生窗口操作
 提交前复验 PASS：`node --test app/tests/*.test.mjs`（134/134）、`pnpm --dir app run typecheck`、`pnpm --dir app run build:h5`、`pnpm --dir app run build:mp-weixin`；设置本机运行库和 Chrome 路径后执行 `node app/tests/fixed-navigation-browser.cjs`（24/24）与 `node app/tests/calendar-scroll-browser.cjs`（4/4视口）。微信生产 WXML 检查：唯一 scroll-view、无 catchtouchmove。浏览器证据使用只读夹具，无真实账务写入；无后端、数据库或 API 变更，未部署或发布。
 
 同步检查 PASS：包含未跟踪文件的 stash 安全备份后，`git pull --ff-only` 返回 Already up to date；恢复后16个文件 SHA-256 全部一致，确认无代码或依赖变化后删除本次 stash。构建与浏览器运行证据对应同一份代码；同步后再次检查回归、类型和差异。
+
+
+## 2026-10-03｜微信统一10px间距
+
+requirement/design/frontend：全部微信顶栏与正文统一10px，真实首屏坐标校正安全区，补齐品牌及物品详情顶部补偿。database/api/backend无变化。testing/commands/verification：134项回归、类型、双端构建、本机64组组件布局及微信首页/资产初始抽查PASS；其余页面手动抽查PARTIAL，真机与发布NOT_RUN（补充）。rollback恢复公共组件、品牌头及物品详情原布局。详见[记录](../../10/wechat-navigation-spacing/README.md)。

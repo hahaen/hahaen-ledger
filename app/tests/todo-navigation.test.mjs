@@ -12,7 +12,7 @@ const compiled = ts.transpileModule(script + '\nexport { menuAlignedStyle }', {
 function navigationStyle(input, menu) {
   const exports = {}
   new Function('require', 'exports', 'defineProps', 'withDefaults', 'defineEmits', compiled)(
-    name => name === 'vue' ? { computed } : name.includes('nativeNavigation') ? { getNativeMenuMetrics: () => menu } : {},
+    name => name === 'vue' ? { computed, ref: value => ({ value }), getCurrentInstance: () => null, nextTick: () => {}, onMounted: () => {} } : name.includes('nativeNavigation') ? { getNativeMenuMetrics: () => menu } : {},
     exports, () => input, (props, defaults) => ({ ...defaults, ...props }), () => () => {},
   )
   return exports.menuAlignedStyle.value
