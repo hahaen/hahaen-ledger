@@ -25,7 +25,7 @@ test('各业务页面顶部导航共享微信胶囊定位且记账类型按钮�
   const navigation = await read('components/NativeNavigation.vue')
   const metrics = await read('utils/nativeNavigation.ts')
   const pageHeader = await read('components/PageHeader.vue')
-  assert.match(entry, /<view class="page entry-page"[^>]*>\s*<NativeNavigation variant="screen"[\s\S]*\s*<view class="entry-content"[^>]*>/)
+  assert.match(entry, /<view class="page entry-page"[^>]*>\s*<NativeNavigation variant="screen"[\s\S]*\s*<scroll-view[^>]*class="entry-content"[^>]*>/)
   assert.match(navigation, /getNativeMenuMetrics\(\)/)
   assert.match(navigation, /height: `\$\{menu\.height\}px`/)
   assert.match(metrics, /uni\.getMenuButtonBoundingClientRect\(\)/)
@@ -54,9 +54,9 @@ test('帮助页和固定资料操作栏使用动态视口与底部安全区', ()
   assert.match(styles, /\.profile-actions \{[^}]*env\(safe-area-inset-bottom\)/)
 })
 
-test('H5 新增和编辑记账页明确把主体作为可触摸滚动的 flex 容器', () => {
+test('H5 新增和编辑记账页给原生滚动主体提供明确 flex 高度', () => {
   assert.match(prototype, /\.entry-page \{ height:100dvh; min-height:0; overflow:hidden; \}/)
-  assert.match(prototype, /\.entry-content \{ flex:1 1 0; width:100%; height:0; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; \}/)
+  assert.match(prototype, /\.entry-content \{ flex:1 1 0; width:100%; height:0; min-height:0; overflow:hidden; \}/)
 })
 
 test('微信小程序资料保存按钮显式覆盖原生按钮外观', () => {

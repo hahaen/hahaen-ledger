@@ -252,19 +252,21 @@ async function save(afterSave: 'home' | 'again') {
 <template>
   <view class="page entry-page">
     <NativeNavigation variant="screen" :title="isEdit ? '编辑记账' : '新增记账'" compact :full-width="false" @back="back" />
-    <view class="entry-content" @touchmove.stop>
-      <view v-if="loading" class="list-empty">正在加载账户与账单…</view><view v-else-if="loadError" class="list-empty">{{ loadError }}<button class="text-button" @click="initialize">重新加载</button></view>
-      <view v-if="isEdit && !loading && !loadError" :class="['entry-edit-type', type.toLowerCase()]"><text class="entry-edit-type-label">当前账单类型</text><text class="entry-edit-type-value">{{ typeLabel }}记账</text></view>
-      <view v-if="!isEdit" :class="['entry-type', { 'single-type': type === 'REPAYMENT' }]"><button v-for="option in typeOptions" :key="option.value" :disabled="locked || !!refundedCents" :class="{ active: type === option.value, 'income-active': type === 'INCOME' && type === option.value, 'transfer-active': type === 'TRANSFER' && type === option.value }" @click="setType(option.value)">{{ option.label }}</button></view>
-      <view class="amount-panel"><text class="amount-label">{{ type === 'REPAYMENT' ? '还款金额' : type === 'TRANSFER' ? '转账金额' : '记账金额' }}</text><view class="amount-display"><text :class="['amount-value', { 'amount-placeholder': !amount, 'long-amount': amount.length > 10 }]">{{ amount || '输入金额' }}</text></view><button class="calculation-line" :aria-label="expression ? `当前算式：${expression}` : '支持加减乘除连续计算'" @click="appendKey('=')">{{ expression || '支持 + − × ÷ 连续计算' }}</button></view>
-      <view v-if="creditOverLimitCents > 0" class="credit-over-limit-hint">本次会超出信用卡可用额度 {{ formatYuan(creditOverLimitCents) }} 元，仍可继续记账。</view>
-      <view class="fields-card">
-        <button class="field-row" :disabled="locked || !!refundedCents" @click="openModal('account')"><text class="field-icon">{{ paired ? '↗' : '◉' }}</text><text class="field-label">{{ type === 'REPAYMENT' ? '还款账户' : type === 'TRANSFER' ? '转出账户' : type === 'EXPENSE' ? '支出账户' : '资金账户' }}</text><text class="field-value">{{ accounts[accountIndex]?.name || '请选择' }}</text><text class="arrow">›</text></button>
-        <button v-if="paired" class="field-row" :disabled="locked || !!refundedCents" @click="openModal('to')"><text class="field-icon">↘</text><text class="field-label">{{ type === 'REPAYMENT' ? '信贷账户' : '转入账户' }}</text><text class="field-value">{{ targetAccounts[toIndex]?.name || '请选择' }}</text><text class="arrow">›</text></button>
-        <button class="field-row" :disabled="locked" @click="openModal('date')"><text class="field-icon">◷</text><text class="field-label">日期与时间</text><text class="field-value">{{ dateTime.replace('T', ' ').slice(0, 16) }}</text><text class="arrow">›</text></button>
-        <button class="field-row" :disabled="locked" @click="openModal('note')"><text class="field-icon">⌁</text><text class="field-label">备注</text><text :class="['field-value', { placeholder: !note }]">{{ note || '写点说明...' }}</text></button>
+    <scroll-view scroll-y :show-scrollbar="false" class="entry-content">
+      <view class="entry-content-inner">
+        <view v-if="loading" class="list-empty">正在加载账户与账单…</view><view v-else-if="loadError" class="list-empty">{{ loadError }}<button class="text-button" @click="initialize">重新加载</button></view>
+        <view v-if="isEdit && !loading && !loadError" :class="['entry-edit-type', type.toLowerCase()]"><text class="entry-edit-type-label">当前账单类型</text><text class="entry-edit-type-value">{{ typeLabel }}记账</text></view>
+        <view v-if="!isEdit" :class="['entry-type', { 'single-type': type === 'REPAYMENT' }]"><button v-for="option in typeOptions" :key="option.value" :disabled="locked || !!refundedCents" :class="{ active: type === option.value, 'income-active': type === 'INCOME' && type === option.value, 'transfer-active': type === 'TRANSFER' && type === option.value }" @click="setType(option.value)">{{ option.label }}</button></view>
+        <view class="amount-panel"><text class="amount-label">{{ type === 'REPAYMENT' ? '还款金额' : type === 'TRANSFER' ? '转账金额' : '记账金额' }}</text><view class="amount-display"><text :class="['amount-value', { 'amount-placeholder': !amount, 'long-amount': amount.length > 10 }]">{{ amount || '输入金额' }}</text></view><button class="calculation-line" :aria-label="expression ? `当前算式：${expression}` : '支持加减乘除连续计算'" @click="appendKey('=')">{{ expression || '支持 + − × ÷ 连续计算' }}</button></view>
+        <view v-if="creditOverLimitCents > 0" class="credit-over-limit-hint">本次会超出信用卡可用额度 {{ formatYuan(creditOverLimitCents) }} 元，仍可继续记账。</view>
+        <view class="fields-card">
+          <button class="field-row" :disabled="locked || !!refundedCents" @click="openModal('account')"><text class="field-icon">{{ paired ? '↗' : '◉' }}</text><text class="field-label">{{ type === 'REPAYMENT' ? '还款账户' : type === 'TRANSFER' ? '转出账户' : type === 'EXPENSE' ? '支出账户' : '资金账户' }}</text><text class="field-value">{{ accounts[accountIndex]?.name || '请选择' }}</text><text class="arrow">›</text></button>
+          <button v-if="paired" class="field-row" :disabled="locked || !!refundedCents" @click="openModal('to')"><text class="field-icon">↘</text><text class="field-label">{{ type === 'REPAYMENT' ? '信贷账户' : '转入账户' }}</text><text class="field-value">{{ targetAccounts[toIndex]?.name || '请选择' }}</text><text class="arrow">›</text></button>
+          <button class="field-row" :disabled="locked" @click="openModal('date')"><text class="field-icon">◷</text><text class="field-label">日期与时间</text><text class="field-value">{{ dateTime.replace('T', ' ').slice(0, 16) }}</text><text class="arrow">›</text></button>
+          <button class="field-row" :disabled="locked" @click="openModal('note')"><text class="field-icon">⌁</text><text class="field-label">备注</text><text :class="['field-value', { placeholder: !note }]">{{ note || '写点说明...' }}</text></button>
+        </view>
       </view>
-    </view>
+    </scroll-view>
     <view class="keypad" aria-label="金额键盘">
       <view v-for="key in ['1', '2', '3', '⌫', '4', '5', '6', '+−', '7', '8', '9', '×÷', 'C', '0', '.', 'confirm']" :key="key" :class="['keypad-cell', { 'keypad-pair': key === '+−' || key === '×÷' }]">
         <template v-if="key === '+−' || key === '×÷'"><button v-for="operator in key.split('')" :key="operator" class="key" :disabled="locked" @click="pressCalculatorKey(operator)">{{ operator }}</button></template>
@@ -281,11 +283,12 @@ async function save(afterSave: 'home' | 'again') {
         <view class="account-delete-actions"><button class="account-delete-cancel" :disabled="saving" @click="closeDiscard">继续编辑</button><button class="account-delete-confirm" :disabled="saving" @click="confirmDiscard">放弃修改</button></view>
       </view>
     </view>
-    <view v-if="modal === 'account' || modal === 'to'" class="entry-account-picker-backdrop" @click.self="modal = ''" @touchmove.stop.prevent>
+    <view v-if="modal === 'account' || modal === 'to'" class="entry-account-picker-backdrop">
+      <view class="picker-touch-mask" @click.stop="modal = ''" @touchmove.stop.prevent />
       <view class="entry-account-picker-modal" role="dialog" aria-modal="true" :aria-label="modal === 'to' ? (type === 'REPAYMENT' ? '选择信贷账户' : '选择转入账户') : (type === 'TRANSFER' ? '请选择转出账户' : type === 'EXPENSE' ? '选择支出账户' : '选择资金账户')">
         <view class="entry-account-picker-handle" />
         <text class="entry-account-picker-title">{{ modal === 'to' ? (type === 'REPAYMENT' ? '选择信贷账户' : '选择转入账户') : (type === 'TRANSFER' ? '请选择转出账户' : type === 'EXPENSE' ? '选择支出账户' : '选择资金账户') }}</text>
-        <scroll-view scroll-y class="entry-account-choice-list" @touchmove.stop>
+        <scroll-view scroll-y class="entry-account-choice-list">
           <view v-if="!pickerAccounts.length" class="list-empty">暂无可用账户<button class="text-button" @click="modal = ''; uni.switchTab({ url: '/pages/assets/assets' })">去资产页添加账户</button></view>
           <button v-for="(account, index) in pickerAccounts" v-else :key="account.id" :disabled="isSameAccountSelection(index)" :class="['entry-account-choice-item', { selected: index === draftAccountIndex }]" @click="selectAccount(index)"><image class="entry-account-choice-icon" :src="staticResource(account.kind === 'CREDIT' ? 'prototype/credit-account.png' : 'prototype/funds-account.png')" mode="aspectFit" /><text class="entry-account-choice-name">{{ account.name }}</text><MoneyDisplay class="entry-account-choice-balance" :value="account.kind === 'CREDIT' ? -account.balanceCents : account.balanceCents" /><text class="entry-account-choice-state">{{ index === draftAccountIndex ? '✓' : '›' }}</text></button>
         </scroll-view>

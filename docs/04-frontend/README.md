@@ -126,3 +126,8 @@ items一级页位于资产右侧，item-detail为二级页。物品清单行左�
 
 
 物品新增、资料编辑、退役共用 CenterModal；背景关闭和禁止触摸必须绑定独立遮罩，禁止在内容祖先使用 `.self` 关闭或 catchtouchmove。内容层定位在遮罩上方，H5 仅停止触摸冒泡，微信保留原生滚动与内部点击。日期确认只回填草稿，保存业务和日期上下限保持原规则。见[物品日期验证](../10-iterations/2026/10/item-date-modal-click/README.md)。
+
+
+## 记账主体跨端滚动（2026-10-02）
+
+新增与编辑共用 entry 页的 `scroll-view scroll-y`，外层提供明确 flex 高度（height:0 / min-height:0），内层承担左右与键盘避让留白。禁止恢复普通 view + overflow 滚动或主体 touchmove.stop；微信会编译为 catchtouchmove。页面不配置 disableScroll，避免 H5 document touchmove preventDefault；外层视口与 overflow:hidden 保持导航、键盘固定。账户弹窗的触摸遮罩与内容为兄弟节点。见[迭代与真机验收状态](../10-iterations/2026/10/entry-native-scroll/README.md)。

@@ -9,7 +9,7 @@
     { "path": "pages/items/items", "style": { "navigationStyle": "custom" } },
     { "path": "pages/item-detail/item-detail", "style": { "navigationStyle": "custom" } },
     { "path": "pages/mine/mine", "style": { "navigationStyle": "custom" } },
-    { "path": "pages/entry/entry", "style": { "navigationStyle": "custom", "disableScroll": true } },
+    { "path": "pages/entry/entry", "style": { "navigationStyle": "custom" } },
     { "path": "pages/detail/detail", "style": { "navigationStyle": "custom" } },
     { "path": "pages/account/account", "style": { "navigationStyle": "custom" } },
     { "path": "pages/help/help", "style": { "navigationStyle": "custom" } },

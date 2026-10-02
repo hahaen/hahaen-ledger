@@ -13,3 +13,5 @@
 - [2026-10-01 记账日期、主体滚动和键盘振动修复](entry-touch-interactions/README.md)。
 
 - [物品新增、编辑与退役日期点击修复](item-date-modal-click/README.md)。
+
+- [新增与编辑记账跨端滚动及真机验收](entry-native-scroll/README.md)。

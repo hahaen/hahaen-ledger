@@ -31,8 +31,8 @@ test('保存按钮只反馈一次，禁用时不反馈也不保存', () => {
   assert.deepEqual(events,['feedback','home','feedback','again'])
 })
 test('内部触摸滚动不冒泡到页面或遮罩禁止滚动处理', () => {
-  // 确保原生默认滚动保留，stop 后不得 prevent。
-  assert.match(entry, /class="entry-content" @touchmove\.stop>/)
+  // 主体由跨端 scroll-view 承担滚动，不绑定拦截手势。
+  assert.match(entry, /<scroll-view scroll-y :show-scrollbar="false" class="entry-content">/)
   assert.match(entry, /class="entry-date-picker-backdrop">/)
   for (const [path, cls, count] of [['EntryDateTimePicker.vue','entry-value-picker-scroll',5],['MonthPicker.vue','date-picker-scroll',2]]) {
     const source = read(`../src/components/${path}`)
