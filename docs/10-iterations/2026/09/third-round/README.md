@@ -369,3 +369,26 @@ PARTIAL：工具抽查首页分享卡片。NOT_RUN（补充）：手机发送与
 PASS：134项回归、类型、H5/微信构建、微信DEV编译及两套WXML/WXSS边界；微信工具AX操作新增备注输入保留弹窗、6/100计数、完成回填、重开和取消保留；页面函数覆盖新增空备注及编辑已有备注。备注内容祖先关闭与触摸拦截改为独立兄弟遮罩，内容定位在遮罩上方。
 
 PARTIAL：工具AX未完整复现原始误关症状，根因由模板事件路径推断；真实编辑UI与手机键盘NOT_RUN（补充）。BLOCKED（补充）：原生坐标操作noWindowsAvailable、H5浏览器权限被拒绝。真实账单保存及发布NOT_RUN；后端/数据库/API无变更。详见[本轮迭代](../../10/entry-note-input/README.md)。
+
+
+## 2026-10-03｜微信顶部固定
+
+requirement/design/frontend：顶部标语、标题和返回按钮固定视口，等高占位保留胶囊对齐与首段位置。database/api/backend：无变化、不适用。testing/commands/verification：类型、134项回归、H5/微信构建及24组真实组件隔离滚动PASS；微信页面显示PARTIAL；工具自动滚动窗口失败及真机不可得BLOCKED。未提交推送、未部署发布。rollback：恢复公共组件原实现。完整记录见[本轮迭代](../../10/wechat-fixed-navigation/README.md)。
+
+
+## 2026-10-03｜日历主体整体滚动
+
+PASS：134项前端回归、类型检查、H5/微信生产构建、微信WXML唯一原生scroll-view且无catchtouchmove。H5生产只读夹具320×568、375×667、430×932、667×375触摸上滑，月历随主体移动，标题和底栏固定，第12笔完整可见且距底栏25px；五行/六行月历、日期选择、空态、失败重试及月份弹窗通过。取消账单独立高度与740px分支。
+
+PARTIAL：微信生产产物已验证。BLOCKED：微信工具原生窗口操作返回noWindowsAvailable，AX操作后截图与焦点状态未能证明实际滚动；必需微信平台滚动验收未完成，按AGENTS.md暂不提交/推送。NOT_RUN（补充）：手机微信/iOS Safari、部署与发布；无数据库/API/后端及真实账务写入。见[完整迭代](../../10/calendar-content-scroll/README.md)。
+
+2026-10-03 电脑控制复测：实际点击进入我的/帮助页；重绑进程、Raise及重置会话后，滚轮仍报noWindowsAvailable，键盘输入无可观察效果。实际微信滚动验收继续BLOCKED，未提交推送。
+
+
+## 2026-10-03｜用户明确要求提交当前改动
+
+用户本次明确要求“帮我提交代码”，将微信顶部导航固定与日历主体滚动一并纳入提交范围；此前“暂不自动提交”的记录保留为历史状态，本次按明确提交指令执行。微信实际手势验收仍为 BLOCKED，未据此宣称平台运行验收完成。
+
+提交前复验 PASS：`node --test app/tests/*.test.mjs`（134/134）、`pnpm --dir app run typecheck`、`pnpm --dir app run build:h5`、`pnpm --dir app run build:mp-weixin`；设置本机运行库和 Chrome 路径后执行 `node app/tests/fixed-navigation-browser.cjs`（24/24）与 `node app/tests/calendar-scroll-browser.cjs`（4/4视口）。微信生产 WXML 检查：唯一 scroll-view、无 catchtouchmove。浏览器证据使用只读夹具，无真实账务写入；无后端、数据库或 API 变更，未部署或发布。
+
+同步检查 PASS：包含未跟踪文件的 stash 安全备份后，`git pull --ff-only` 返回 Already up to date；恢复后16个文件 SHA-256 全部一致，确认无代码或依赖变化后删除本次 stash。构建与浏览器运行证据对应同一份代码；同步后再次检查回归、类型和差异。

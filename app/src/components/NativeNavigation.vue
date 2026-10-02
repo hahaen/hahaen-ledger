@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, type CSSProperties } from 'vue'
 import { getNativeMenuMetrics } from '../utils/nativeNavigation'
 import { staticResource } from '../utils/staticResource'
 
@@ -24,7 +24,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ back: [] }>()
 const menu = getNativeMenuMetrics()
 
-const menuAlignedStyle = computed(() => {
+const menuAlignedStyle = computed<CSSProperties>(() => {
   if (!menu) return props.variant !== 'brand' && !props.fullWidth ? { marginLeft: '0px', marginRight: '0px' } : {}
   const pageTop = menu.rootInset + props.pageTopExtra
   const marginBottom = props.variant === 'brand' ? 20 : props.variant === 'welcome' ? 8 : props.variant === 'help' ? (props.compact ? 10 : 16) : (props.compact ? 10 : 20)
@@ -40,30 +40,51 @@ const menuAlignedStyle = computed(() => {
     ...(['brand', 'welcome'].includes(props.variant) ? { paddingRight: `${menu.rightPadding}px` } : {}),
   }
 })
+// 占位延续调用方原有的顶部补偿和下方间距，固定层只使用视口坐标。
+const spacerStyle = computed(() => menu ? {
+  height: `${menu.height}px`,
+  marginTop: menuAlignedStyle.value.marginTop,
+  marginBottom: menuAlignedStyle.value.marginBottom,
+} : {})
+const fixedStyle = computed(() => menu ? { paddingTop: `${menu.top}px` } : {})
+const navigationStyle = computed(() => menu ? {
+  ...menuAlignedStyle.value,
+  position: 'relative' as const,
+  top: '0px',
+  marginTop: '0px',
+  marginBottom: '0px',
+} : menuAlignedStyle.value)
 </script>
 
 <template>
-  <view v-if="variant === 'brand'" :class="['page-header', { 'menu-aligned': menu }]" :style="menuAlignedStyle">
-    <image class="page-brand" :src="staticResource('brand.png')" mode="aspectFill" aria-label="哈记账" />
-    <text class="page-subtitle">{{ subtitle }}</text>
-  </view>
-  <view v-else-if="variant === 'welcome'" :class="['welcome-brand', { 'menu-aligned': menu }]" :style="menuAlignedStyle">
-    <image :src="staticResource('brand.png')" mode="aspectFill" aria-label="哈记账" />
-    <text>哈记账</text>
-  </view>
-  <view v-else-if="variant === 'screen'" :class="['screen-nav', { 'menu-aligned': menu, compact }]" :style="menuAlignedStyle">
-    <button class="back nav-side" :aria-label="backLabel" :disabled="backDisabled" @click="emit('back')">‹</button>
-    <text class="page-title">{{ title }}</text>
-    <view class="nav-side" />
-  </view>
-  <view v-else :class="['help-nav', { 'menu-aligned': menu, compact }]" :style="menuAlignedStyle">
-    <button class="help-back" :aria-label="backLabel" @click="emit('back')">‹</button>
-    <text class="help-title">{{ title }}</text>
-    <view class="help-nav-side" />
+  <view v-if="menu" class="native-navigation-spacer" :style="spacerStyle" aria-hidden="true" />
+  <view class="native-navigation-host" :class="{ 'native-navigation-fixed': menu }" :style="fixedStyle">
+    <view v-if="variant === 'brand'" :class="['page-header', { 'menu-aligned': menu }]" :style="navigationStyle">
+      <image class="page-brand" :src="staticResource('brand.png')" mode="aspectFill" aria-label="哈记账" />
+      <text class="page-subtitle">{{ subtitle }}</text>
+    </view>
+    <view v-else-if="variant === 'welcome'" :class="['welcome-brand', { 'menu-aligned': menu }]" :style="navigationStyle">
+      <image :src="staticResource('brand.png')" mode="aspectFill" aria-label="哈记账" />
+      <text>哈记账</text>
+    </view>
+    <view v-else-if="variant === 'screen'" :class="['screen-nav', { 'menu-aligned': menu, compact }]" :style="navigationStyle">
+      <button class="back nav-side" :aria-label="backLabel" :disabled="backDisabled" @click="emit('back')">‹</button>
+      <text class="page-title">{{ title }}</text>
+      <view class="nav-side" />
+    </view>
+    <view v-else :class="['help-nav', { 'menu-aligned': menu, compact }]" :style="navigationStyle">
+      <button class="help-back" :aria-label="backLabel" @click="emit('back')">‹</button>
+      <text class="help-title">{{ title }}</text>
+      <view class="help-nav-side" />
+    </view>
   </view>
 </template>
 
 <style scoped>
+.native-navigation-host { display:contents; }
+.native-navigation-spacer { flex-shrink:0; pointer-events:none; }
+.native-navigation-fixed { position:fixed; z-index:9; top:0; left:0; right:0; display:block; padding-right:16px; padding-left:16px; background:#f7f8f7; }
+
 .page-header { flex-shrink:0; margin-bottom:20px; }
 .page-brand { display:block; width:22px; height:22px; margin-bottom:8px; border-radius:7px; }
 .page-subtitle { display:block; color:#858b8b; font-size:13px; line-height:normal; }

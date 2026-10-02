@@ -21,3 +21,7 @@
 - [固定启动页分享文案图](wechat-welcome-card/README.md)。
 
 - [微信记账备注输入修复](entry-note-input/README.md)。
+
+- [微信顶部标语及标题固定](wechat-fixed-navigation/README.md)。
+
+- [日历标题固定与主体整体滚动](calendar-content-scroll/README.md)。

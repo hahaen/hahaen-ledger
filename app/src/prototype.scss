@@ -117,17 +117,14 @@ input, textarea { font:inherit; }
 .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }.back { display:flex; width:40px; min-height:44px; align-items:center; justify-content:flex-start; padding:0; font-size:30px; line-height:1; text-align:left; }
 .screen-nav { position:sticky; z-index:3; top:calc(var(--status-bar-height, 0px) + env(safe-area-inset-top, 0px)); display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 -16px 20px; padding:8px 16px; min-height:62px; border-bottom:1px solid rgba(224,232,228,.7); background:rgba(247,248,247,.96); }
 .screen-nav .page-title { flex:1; text-align:center; font-size:18px; font-weight:700; }.nav-side { width:40px; flex-shrink:0; }
-.calendar-page { display:flex; flex-direction:column; height:100vh; min-height:0; overflow:hidden; background:linear-gradient(180deg,#f5faf8 0%,#f7f8f7 42%); }
-.calendar-page .page-header,
-.calendar-page .calendar-card,
-.calendar-page .calendar-date { flex-shrink:0; }
-.calendar-transaction-list { flex:1; width:100%; height:0; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
-/* 矮屏无法同时容纳月历、当日记录和底栏时，让整页滚动并给记录区保留可用高度。 */
-@media (max-height:740px) {
-  .calendar-page { height:auto; min-height:100vh; overflow:visible; }
-  .calendar-transaction-list { flex:none; height:200px; min-height:200px; }
-}
-.calendar-transaction-list ::-webkit-scrollbar { display:none; width:0; height:0; }
+/* 标题与底栏固定，月历、汇总和全部账单共用一个原生滚动区域。 */
+.calendar-page { display:flex; flex-direction:column; height:100vh; min-height:0; padding-bottom:calc(76px + env(safe-area-inset-bottom)); overflow:hidden; background:linear-gradient(180deg,#f5faf8 0%,#f7f8f7 42%); }
+@supports (height:100dvh) { .calendar-page { height:100dvh; } }
+.calendar-page .page-header { flex-shrink:0; }
+.calendar-content { flex:1 1 0; width:100%; height:0; min-height:0; overflow:hidden; }
+.calendar-content-inner { padding:0 0 24px; }
+.calendar-transaction-list { width:100%; }
+.calendar-content ::-webkit-scrollbar { display:none; width:0; height:0; }
 .calendar-card { padding:16px 12px 14px; border:1px solid rgba(73,173,156,.16); border-radius:20px; background:linear-gradient(180deg,#edf8f5 0%,#fff 82%); box-shadow:0 8px 22px rgba(73,173,156,.09); }
 .calendar-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; padding:0 3px; }
 .calendar-month { color:#164f48; font-size:16px; font-weight:700; }.calendar-controls { display:flex; align-items:center; gap:8px; }
