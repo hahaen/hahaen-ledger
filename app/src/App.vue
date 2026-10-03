@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onLaunch } from '@dcloudio/uni-app'
+import { onLaunch, onShow } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { useLedger } from './stores/ledger'
 import { setAuthExpiredHandler } from './utils/api'
@@ -9,7 +9,11 @@ const initialized = ref(false)
 const mpLoginError = ref('')
 let mpRecoveryPromise: Promise<void> | undefined
 // #ifdef MP-WEIXIN
+import { getWechatUpdateGuard } from './utils/wechatUpdate'
+const wechatUpdate = getWechatUpdateGuard()
+onShow(() => wechatUpdate.enforce())
 function redirectMpAuthPageToHome() {
+  if (wechatUpdate.isBlocked()) return
   if (!ledger.state.token) return
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
@@ -62,6 +66,9 @@ async function retryMpLogin() {
 }
 
 onLaunch(async () => {
+  // #ifdef MP-WEIXIN
+  wechatUpdate.start()
+  // #endif
   await ledger.restore()
   // #ifdef H5
   const currentPath = currentH5Path(window.location)
