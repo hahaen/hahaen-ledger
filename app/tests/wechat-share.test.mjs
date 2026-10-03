@@ -12,16 +12,17 @@ const runtimeSource = await readFile(uniRequire.resolve('@dcloudio/uni-mp-weixin
 const runtimeHooks = runtimeSource.slice(runtimeSource.indexOf('function findHooks('), runtimeSource.indexOf('\nconst HOOKS ='))
 const pages = JSON.parse(await readFile(new URL('../src/pages.json', import.meta.url), 'utf8')).pages
 const transpile = source => ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
-const defaultUni = { getFileSystemManager: () => ({ copyFileSync(source, destination) { assert.equal(source, '/static/share-welcome.png'); assert.equal(destination, 'wxfile://usr/share-welcome.png') } }) }
+const staticResourceSource = await readFile(new URL('../src/utils/staticResource.ts', import.meta.url), 'utf8')
+const expectedImage = 'https://hahaen.xyz/minio-api/haji/wx/share-welcome.png'
 function preprocess(source, platform) {
   return source.replace(/\/\/ #ifdef MP-WEIXIN\n([\s\S]*?)\/\/ #endif/g, (_, body) => platform === 'mp-weixin' ? body : '')
 }
-function moduleExports(source, dependencies = {}, nativeUni = defaultUni) {
+function moduleExports(source, dependencies = {}) {
   const exports = {}
-  new Function('require', 'exports', 'uni', 'wx', transpile(source))(name => {
+  new Function('require', 'exports', transpile(source))(name => {
     if (!(name in dependencies)) throw new Error(`Unexpected dependency ${name}`)
     return dependencies[name]
-  }, exports, nativeUni, { env: { USER_DATA_PATH: 'wxfile://usr' } })
+  }, exports)
   return exports
 }
 function nativeMethods(options, getApp = () => undefined) {
@@ -31,13 +32,13 @@ function nativeMethods(options, getApp = () => undefined) {
     shared.once, value => typeof value === 'function', Array.isArray, getApp, shared.isUniLifecycleHook, true, options,
   )
 }
-async function pageOptions(path, platform, nativeUni = defaultUni) {
+async function pageOptions(path, platform) {
   const source = await readFile(new URL(`../src/${path}.vue`, import.meta.url), 'utf8')
   const optionsScript = source.match(/<script lang="ts">([\s\S]*?)<\/script>/)?.[1] || 'export default {}'
-  const share = moduleExports(preprocess(shareSource, platform), {}, nativeUni)
+  const share = moduleExports(preprocess(shareSource, platform), { './staticResource': moduleExports(staticResourceSource) })
   const result = moduleExports(preprocess(optionsScript, platform), {
     '../../utils/wechatShare': share, '../../../utils/wechatShare': share,
-  }, nativeUni)
+  })
   return result.default
 }
 
@@ -47,7 +48,7 @@ for (const { path } of pages) {
     const methods = nativeMethods(options)
     assert.equal(typeof methods.onShareAppMessage, 'function', '分享方法不能依赖全局 App 实例')
     const result = methods.onShareAppMessage.call({ $vm: { $callHook: hook => options[hook]() } }, { from: 'menu' })
-    assert.deepEqual(result, { title: '哈记账｜简单记账，安心生活', path: '/pages/index/index', imageUrl: 'wxfile://usr/share-welcome.png' })
+    assert.deepEqual(result, { title: '哈记账｜简单记账，安心生活', path: '/pages/index/index', imageUrl: expectedImage })
   })
 }
 
@@ -60,23 +61,20 @@ test('H5 所有页面不注册微信分享选项或全局 mixin', async () => {
   assert.equal(preprocess(main, 'h5').includes('wechatShare'), false)
 })
 
-test('固定欢迎分享图为本地5:4 PNG，小于200KB', async () => {
-  const image = await readFile(new URL('../src/static/share-welcome.png', import.meta.url))
+test('欢迎图备份保持5:4 PNG，小于200KB', async () => {
+  const image = await readFile(new URL('../offloaded-static-assets/wx/share-welcome.png', import.meta.url))
   assert.equal(image.subarray(0, 8).toString('hex'), '89504e470d0a1a0a')
   assert.equal(image.readUInt32BE(16), 500)
   assert.equal(image.readUInt32BE(20), 400)
   assert.ok(image.length < 200 * 1024)
 })
 
-test('首次分享同步准备图片，准备成功后不重复复制', () => {
-  let copies = 0
-  const share = moduleExports(shareSource, {}, { getFileSystemManager: () => ({ copyFileSync() { copies++ } }) })
-  assert.equal(share.createWechatShareMessage().imageUrl, 'wxfile://usr/share-welcome.png')
-  assert.equal(share.createWechatShareMessage().imageUrl, 'wxfile://usr/share-welcome.png')
-  assert.equal(copies, 1)
-})
-
-test('本地图片准备失败仍指定固定图片，不回退当前页面截图', () => {
-  const share = moduleExports(shareSource, {}, { getFileSystemManager: () => ({ copyFileSync() { throw new Error('fixture copy failure') } }) })
-  assert.equal(share.createWechatShareMessage().imageUrl, '/static/share-welcome.png')
+test('分享无需微信本地文件API，始终返回公开HTTPS固定图片', () => {
+  // 未提供 uni/wx，分享函数也应直接返回完整配置，避免本地图片准备影响回调。
+  const share = moduleExports(shareSource, { './staticResource': moduleExports(staticResourceSource) })
+  for (let index = 0; index < 2; index++) {
+    assert.deepEqual(share.createWechatShareMessage(), {
+      title: '哈记账｜简单记账，安心生活', path: '/pages/index/index', imageUrl: expectedImage,
+    })
+  }
 })

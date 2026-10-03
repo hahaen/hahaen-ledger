@@ -39,3 +39,8 @@ pnpm run build:mp-weixin
 ## 证据要求
 
 每次运行验收记录真实命令、退出码、环境前提、实际输出和未覆盖范围。缺少 MySQL、Redis、MinIO、微信开发者工具或真实凭证时，分别记录 `BLOCKED` 或 `NOT_RUN`；不得使用“端口监听”替代数据库 Schema、事务和对象上传证据。
+
+
+## 固定分享欢迎图（2026-10-03）
+
+微信分享图与品牌图片共用 `staticResource.ts` 公网根地址，对象为 `haji/wx/share-welcome.png`。公开HTTPS地址应返回HTTP200、image/png；本轮远端文件17580字节、500×400且与备份相同。备份位于 `app/offloaded-static-assets/wx/share-welcome.png`，渲染脚本输出也位于该目录。修改对象内容由用户部署维护，代码地址变更须重新构建和上传小程序。验证与回退见[本轮档案](../10-iterations/2026/10/wechat-share-remote-image/README.md)。

@@ -57,3 +57,5 @@
 - [2026-10-01 记账日期、主体滚动和键盘振动修复](2026/10/entry-touch-interactions/README.md)。
 
 - 2026-10-03：[体验版分享回调注册整改](2026/10/wechat-experience-share/README.md)；源码及生产包原生回调、154项回归、双端构建与工具首页分享预览PASS，手机新包待验。
+
+- 2026-10-03：[分享欢迎图改用服务器资源](2026/10/wechat-share-remote-image/README.md)；公开PNG、153项回归、类型、双端构建、20页生产回调和工具预览PASS，手机新包待验。

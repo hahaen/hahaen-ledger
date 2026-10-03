@@ -14,7 +14,7 @@ const assert = require('node:assert/strict');
     assert.ok(text.includes('记录每一笔') && text.includes('让生活更清晰'));
     assert.doesNotMatch(text, /账单|余额|本月支出|本月收入|最近记账/);
     assert.equal(await page.evaluate(() => document.body.scrollHeight <= 400 && document.body.scrollWidth <= 500), true);
-    await page.screenshot({ path: resolve(__dirname, '../src/static/share-welcome.png') });
+    await page.screenshot({ path: resolve(__dirname, '../offloaded-static-assets/wx/share-welcome.png') });
     console.log('PASS：500×400启动页欢迎图，仅固定文案，无账单余额，无溢出');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
