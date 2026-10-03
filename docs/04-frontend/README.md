@@ -141,4 +141,6 @@ items一级页位于资产右侧，item-detail为二级页。物品清单行左�
 NativeNavigation 在取得微信胶囊几何时使用固定顶层，品牌标语、标题及返回按钮不随正文滚动；占位保留原有内容高度与顶部补偿。顶层覆盖状态栏背景，保留胶囊避让，低于弹窗。H5 保留原布局。实现及微信手势待验范围见[本轮记录](../10-iterations/2026/10/wechat-fixed-navigation/README.md)。
 
 
-微信顶栏与正文初始间距统一10px，主页面品牌头和物品详情传入20px顶部补偿；组件在首屏读取实际占位坐标，校正CSS安全区与系统高度不一致的偏差。H5布局保持原规格，详见[间距优化](../10-iterations/2026/10/wechat-navigation-spacing/README.md)。
+微信顶栏与正文初始间距统一10px，主页面品牌头和物品详情传入20px顶部补偿；导航占位和页面padding共用 `max(var(--status-bar-height, 25px), env(safe-area-inset-top, 0px))`，用CSS直接抵消页面顶部留白；禁止以一次异步坐标采样固化补偿，避免切页、安全区变化或采样期间滚动造成额外空隙。H5布局保持原规格，详见[间距优化](../10-iterations/2026/10/wechat-navigation-spacing/README.md)。
+
+2026-10-03 滚动间距回归：13种真实调用配置、四尺寸、两种安全区及动态变化共104组通过；微信小屏日历、物品、记账完成上滑及回顶截图验证。见[修复与证据](../10-iterations/2026/10/navigation-scroll-gap/README.md)。

@@ -25,8 +25,7 @@ test('待办三个实际调用方与通知中心标题同高，微信胶囊上�
     const call = page.match(/<NativeNavigation\b[^>]+>/)[0]
     const extra = Number(call.match(/:page-top-extra="(\d+)"/)?.[1] ?? 0)
     const style = navigationStyle({ variant: 'help', pageTopExtra: extra }, menu)
-    const actualTop = menu.rootInset + 20 + parseFloat(style.marginTop)
-    assert.equal(actualTop, menu.top, `${name} 应对齐胶囊顶部`)
+    assert.equal(style.marginTop, `calc(${menu.top - 20}px - max(var(--status-bar-height, 25px), env(safe-area-inset-top, 0px)))`, `${name} 应随页面安全区同步抵消顶部留白`)
     assert.equal(style.height, `${menu.height}px`)
   }
 })

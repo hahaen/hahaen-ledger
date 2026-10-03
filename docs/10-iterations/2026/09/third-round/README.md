@@ -397,3 +397,9 @@ PARTIAL：微信生产产物已验证。BLOCKED：微信工具原生窗口操作
 ## 2026-10-03｜微信统一10px间距
 
 requirement/design/frontend：全部微信顶栏与正文统一10px，真实首屏坐标校正安全区，补齐品牌及物品详情顶部补偿。database/api/backend无变化。testing/commands/verification：134项回归、类型、双端构建、本机64组组件布局及微信首页/资产初始抽查PASS；其余页面手动抽查PARTIAL，真机与发布NOT_RUN（补充）。rollback恢复公共组件、品牌头及物品详情原布局。详见[记录](../../10/wechat-navigation-spacing/README.md)。
+
+## 2026-10-03｜滚动后导航大空隙修复
+
+PASS：移除共享导航一次性异步坐标补偿，以同一CSS安全区抵消页面padding；修复前安全区变化时多出29px的失败用例，修复后104组实际调用配置布局、134项前端回归、类型检查、H5/微信构建、H5日历4视口和记账16组触摸回归通过。微信iPhone 5模拟器日历、物品、新增记账实际滚动及回顶截图验证通过，页头、底栏和键盘保持固定，回顶恢复10px初始间距。
+
+PARTIAL：未在微信工具手动逐页检查全部配置，其余调用配置已由104组组件运行回归覆盖。NOT_RUN（补充）：手机微信、iOS Safari、部署发布；数据库/API/后端及真实账务写入不适用。本轮无必需FAIL/BLOCKED；CLI服务端口关闭与早期窗口控制错误已通过原生工具界面复测替代，无安全设置变更。详见[迭代与截图](../../10/navigation-scroll-gap/README.md)。
