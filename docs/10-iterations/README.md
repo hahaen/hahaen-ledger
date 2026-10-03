@@ -55,3 +55,5 @@
 - [2026-10-01 待办修改规则后详情失效修复](2026/10/todo-edit-return/README.md)。
 
 - [2026-10-01 记账日期、主体滚动和键盘振动修复](2026/10/entry-touch-interactions/README.md)。
+
+- 2026-10-03：[体验版分享回调注册整改](2026/10/wechat-experience-share/README.md)；源码及生产包原生回调、154项回归、双端构建与工具首页分享预览PASS，手机新包待验。

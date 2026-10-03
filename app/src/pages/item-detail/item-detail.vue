@@ -1,3 +1,15 @@
+<script lang="ts">
+// #ifdef MP-WEIXIN
+import { createWechatShareMessage } from '../../utils/wechatShare'
+// #endif
+
+export default {
+  // #ifdef MP-WEIXIN
+  onShareAppMessage: createWechatShareMessage,
+  // #endif
+}
+</script>
+
 <script setup lang="ts">
 import { ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
