@@ -29,3 +29,5 @@
 - [微信顶部与正文统一10px间距](wechat-navigation-spacing/README.md)。
 
 - [滚动后导航下方空隙修复](navigation-scroll-gap/README.md)。
+
+- [账单与账户逻辑删除及同类排查](logical-delete-fix/README.md)。

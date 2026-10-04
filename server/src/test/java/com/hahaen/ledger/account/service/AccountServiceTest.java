@@ -16,6 +16,33 @@ import static org.mockito.Mockito.*;
 
 class AccountServiceTest {
     @Test
+    void deletesWithAuditAndRejectsMissingOrOtherUsersAccount() {
+        var mapper = mock(AssetAccountMapper.class);
+        var account = account(11L, "资金", "FUND", 1); account.setUserId(7L);
+        when(mapper.selectOwnedForUpdate(11L, 7L)).thenReturn(account).thenReturn(null);
+        when(mapper.softDeleteById(account)).thenReturn(1);
+        try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
+            current.when(CurrentUser::id).thenReturn(7L);
+            current.when(CurrentUser::optionalId).thenReturn(7L);
+            var service = new AccountService(mapper); service.delete(11L);
+            assertEquals(1, account.getDeleted()); assertEquals(7L, account.getDeletedBy());
+            assertThrows(BusinessException.class, () -> service.delete(11L));
+            assertThrows(BusinessException.class, () -> service.delete(99L));
+            verify(mapper).softDeleteById(account); verify(mapper, never()).updateById(account);
+        }
+    }
+
+    @Test
+    void zeroDeletionRowsIsNotReportedAsSuccess() {
+        var mapper = mock(AssetAccountMapper.class);
+        when(mapper.selectOwnedForUpdate(11L, 7L)).thenReturn(account(11L, "资金", "FUND", 1));
+        try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
+            current.when(CurrentUser::id).thenReturn(7L);
+            assertThrows(BusinessException.class, () -> new AccountService(mapper).delete(11L));
+        }
+    }
+
+    @Test
     void createsFundAccountWithFundOnlyAmountColumns() {
         AssetAccountMapper mapper = mock(AssetAccountMapper.class);
         doAnswer(invocation -> { AssetAccount value = invocation.getArgument(0); value.setId(11L); return 1; }).when(mapper).insert(any(AssetAccount.class));

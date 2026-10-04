@@ -41,3 +41,7 @@ V8新增 `personal_item_reactivate_request` 关系表，保存用户内唯一的
 V9 新增 `user_notification_config` 通知配置主表和 `user_notification_config_request` 幂等关系表，详情见 [通知配置表](notification-config.md)。2026-09-29 DEV Flyway 已执行 V9；隔离集成测试核对了 `information_schema` 列集合、字符序和 Entity 列集合。
 
 V10 新增独立 [待办清单表](ha-todo.md)。2026-09-30 DEV Flyway 已执行 V10，五表 `utf8mb4_general_ci`、中文注释及规则/发生项 Entity 列集合已由显式集成测试核对；不得改写已执行的 V10。
+
+## 逻辑删除 SQL 约束（2026-10-04）
+
+`@TableLogic` 字段会被 MyBatis-Plus 普通 `updateById` 排除；设置 Entity.deleted=1 后普通更新不会落库该标记。账单与账户使用显式条件逻辑删除，同写删除/更新审计，Service 检查影响行数并保证事务回滚。无 Schema 或 Flyway 变化，历史审计疑点通过 [只读 SQL](../../sql/audit-logical-delete.sql) 人工核对，不自动更改既有记录。

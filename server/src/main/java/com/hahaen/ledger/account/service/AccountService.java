@@ -100,7 +100,9 @@ public class AccountService {
     public void delete(long id) {
         AssetAccount account = ownedForUpdate(id, CurrentUser.id());
         AuditSupport.markDeleted(account);
-        accountMapper.updateById(account);
+        if (accountMapper.softDeleteById(account) != 1) {
+            throw new BusinessException("ACCOUNT_NOT_FOUND", "账户不存在或已被删除");
+        }
     }
 
     public AssetAccount owned(long id, boolean forUpdate) {

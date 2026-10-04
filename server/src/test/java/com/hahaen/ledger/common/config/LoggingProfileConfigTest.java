@@ -12,7 +12,7 @@ class LoggingProfileConfigTest {
 
     @Test
     void shouldUseConfiguredLogDirectoryForEachProfile() throws Exception {
-        assertEquals("D:/github/log/haji", yamlLoader
+        assertEquals("/Users/hahaen/mi/github", yamlLoader
                 .load("dev", new ClassPathResource("application-dev.yml"))
                 .getFirst()
                 .getProperty("logging.file.path"));

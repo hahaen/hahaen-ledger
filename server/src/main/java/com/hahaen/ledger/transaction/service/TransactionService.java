@@ -158,7 +158,9 @@ public class TransactionService {
             }
         }
         AuditSupport.markDeleted(transaction);
-        transactionMapper.updateById(transaction);
+        if (transactionMapper.softDeleteById(transaction) != 1) {
+            throw new BusinessException("TRANSACTION_NOT_FOUND", "账单不存在或已被删除");
+        }
     }
 
     public TransactionDetailVO detail(long id) {

@@ -5,12 +5,27 @@ import com.hahaen.ledger.transaction.entity.TransactionDetail;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
 public interface TransactionDetailMapper extends BaseMapper<TransactionDetail> {
+    /** 普通 updateById 会排除 @TableLogic 字段，删除必须显式更新并校验归属。 */
+    @Update("""
+            UPDATE transaction_detail
+               SET deleted = 1,
+                   deleted_at = #{transaction.deletedAt},
+                   deleted_by = #{transaction.deletedBy},
+                   deleted_name = #{transaction.deletedName},
+                   updated_at = #{transaction.deletedAt},
+                   updated_by = #{transaction.deletedBy},
+                   update_name = #{transaction.deletedName}
+             WHERE id = #{transaction.id} AND user_id = #{transaction.userId} AND deleted = 0
+            """)
+    int softDeleteById(@Param("transaction") TransactionDetail transaction);
+
     @Select("""
             SELECT MIN(occurred_at) FROM transaction_detail
              WHERE user_id = #{userId} AND deleted = 0

@@ -21,6 +21,48 @@ import static org.mockito.Mockito.*;
 
 class TransactionServiceTest {
     @Test
+    void deletionUsesConditionalSqlAndDoesNotRestoreBalanceTwice() {
+        var transactions = mock(TransactionDetailMapper.class);
+        var refunds = mock(TransactionRefundMapper.class);
+        var accounts = mock(AssetAccountMapper.class);
+        var bill = new TransactionDetail();
+        bill.setId(20L); bill.setUserId(7L); bill.setTransactionType("EXPENSE");
+        bill.setAccountId(10L); bill.setAmount(100L); bill.setDeleted(0);
+        var fund = fund(10L, 900L);
+        when(transactions.selectOwnedForUpdate(20L, 7L)).thenReturn(bill).thenReturn(null);
+        when(accounts.selectOwnedForUpdate(10L, 7L)).thenReturn(fund);
+        when(transactions.softDeleteById(bill)).thenReturn(1);
+        try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
+            current.when(CurrentUser::id).thenReturn(7L);
+            current.when(CurrentUser::optionalId).thenReturn(7L);
+            var service = new TransactionService(transactions, refunds, accounts);
+            service.delete(20L);
+            assertEquals(1, bill.getDeleted()); assertEquals(7L, bill.getDeletedBy());
+            assertEquals(1000L, fund.getBalanceCent());
+            assertThrows(BusinessException.class, () -> service.delete(20L));
+            assertEquals(1000L, fund.getBalanceCent());
+            verify(transactions).softDeleteById(bill);
+            verify(transactions, never()).updateById(bill);
+            verify(accounts).updateById(fund);
+        }
+    }
+
+    @Test
+    void zeroDeletionRowsThrowsToRollBackTransaction() {
+        var transactions = mock(TransactionDetailMapper.class);
+        var refunds = mock(TransactionRefundMapper.class);
+        var accounts = mock(AssetAccountMapper.class);
+        var bill = new TransactionDetail(); bill.setId(20L); bill.setTransactionType("EXPENSE");
+        bill.setAccountId(10L); bill.setAmount(100L);
+        when(transactions.selectOwnedForUpdate(20L, 7L)).thenReturn(bill);
+        when(accounts.selectOwnedForUpdate(10L, 7L)).thenReturn(fund(10L, 900L));
+        try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
+            current.when(CurrentUser::id).thenReturn(7L);
+            assertThrows(BusinessException.class, () -> new TransactionService(transactions, refunds, accounts).delete(20L));
+        }
+    }
+
+    @Test
     void repaymentEditValidatesRestoredBalanceAndDebt() {
         var transactions = mock(TransactionDetailMapper.class);
         var refunds = mock(TransactionRefundMapper.class);
