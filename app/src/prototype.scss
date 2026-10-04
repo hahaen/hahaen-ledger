@@ -146,7 +146,12 @@ input, textarea { font:inherit; }
 .day-summary > view + view { border-left:1px solid #e4f0ed; }.day-summary > view > text:not(.money-display) { display:block; margin-bottom:5px; color:#858b8b; font-size:11px; }
 .day-summary .day-total { display:inline-flex; margin:0; color:#31534d; font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }.day-summary .day-total > text { display:inline; margin:0; color:inherit; font-size:inherit; }
 .day-total.expense { color:#278879; }.day-total.income { color:#ff5b5b; }
-.calendar-date { margin-top:20px; }.assets-page { background:linear-gradient(180deg,#f7f8f7 0%,#f3faf7 56%,#f7f8f7 100%); }
+.calendar-date { margin-top:20px; flex-wrap:wrap; }
+.calendar-date-meta { display:flex; align-items:baseline; justify-content:flex-end; flex-wrap:wrap; gap:8px; min-width:0; max-width:100%; margin-left:auto; }
+.calendar-date-meta .date-flow { flex-shrink:1; flex-wrap:wrap; justify-content:flex-end; min-width:0; }
+.calendar-date-meta .money-display { white-space:normal; overflow-wrap:anywhere; }
+.calendar-date-meta .section-meta { flex-shrink:0; white-space:nowrap; }
+.assets-page { background:linear-gradient(180deg,#f7f8f7 0%,#f3faf7 56%,#f7f8f7 100%); }
 .asset-hero { padding:20px; border:1px solid rgba(73,173,156,.12); border-radius:20px; background:linear-gradient(145deg,#e8f6f2 0%,#fff 70%); box-shadow:0 8px 22px rgba(49,76,71,.08); }
 .asset-label { color:#57948b; font-size:12px; }.asset-net { display:flex; align-items:baseline; margin:6px 0 18px; color:#164f48; font-size:31px; font-weight:750; letter-spacing:-.06em; overflow-wrap:anywhere; }.asset-net.money-long { font-size:26px; }
 .asset-breakdown { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }.asset-breakdown > view { padding:10px 12px; border-radius:11px; background:#f4faf8; }.asset-breakdown > view:last-child { background:#fff7f2; }

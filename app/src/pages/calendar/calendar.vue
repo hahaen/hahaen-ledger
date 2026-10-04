@@ -19,7 +19,7 @@ import TransactionRow from '../../components/TransactionRow.vue'
 import MonthPicker from '../../components/MonthPicker.vue'
 import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import { request } from '../../utils/api'
-import { Transaction, TransactionType, useLedger } from '../../stores/ledger'
+import { Summary, Transaction, TransactionType, useLedger } from '../../stores/ledger'
 import { localDateTime } from '../../utils/money'
 
 type CalendarDay = { date: string; day: number; currentMonth: boolean; today: boolean; hasRecords: boolean; expenseCents: number; incomeCents: number; balanceCents: number }
@@ -31,6 +31,7 @@ const cursor = ref(new Date())
 const selected = ref(localDateTime().slice(0, 10))
 const days = ref<CalendarDay[]>([])
 const detail = ref<DayDetail | null>(null)
+const monthSummary = ref<Summary | null>(null)
 const loading = ref(false)
 const error = ref(false)
 const dayError = ref(false)
@@ -66,6 +67,7 @@ watch(() => ledger.state.token, () => {
   days.value = []
   monthTransactions.value = []
   detail.value = null
+  monthSummary.value = null
   loadedMonth.value = ''
   loading.value = dayLoading.value = error.value = dayError.value = false
 }, { flush: 'sync' })
@@ -78,6 +80,7 @@ async function loadMonth() {
     days.value = []
     monthTransactions.value = []
     detail.value = null
+    monthSummary.value = null
   }
   ++daySequence
   dayLoading.value = false
@@ -90,6 +93,7 @@ async function loadMonth() {
     ])
     if (sequence !== requestSequence) return
     loadedMonth.value = requestedMonth
+    monthSummary.value = summary
     days.value = result.days
     monthTransactions.value = summary.transactions
     const current = result.days.filter(day => day.currentMonth)
@@ -151,9 +155,9 @@ onPullDownRefresh(async () => { try { await loadMonth() } finally { uni.stopPull
           <view v-else-if="error && !monthReady" class="list-empty">暂时无法加载月历<button class="text-button" @click="loadMonth">重试</button></view>
           <view v-else class="calendar-grid"><view v-for="day in visibleDays" :key="day.date" :class="['calendar-cell', { muted: !day.currentMonth, selected: selected === day.date, today: day.today }]" role="button" :aria-label="day.date" :aria-pressed="selected === day.date" :aria-disabled="!day.currentMonth" @click="day.currentMonth && selectDay(day)"><view class="day-num">{{ day.day }}</view><view class="calendar-dots"><text v-for="type in dayTypes(day.date)" :key="type" :class="['calendar-dot', dotClass(type)]" /></view></view></view>
           <view class="calendar-legend"><view><text class="calendar-dot expense-dot" />支出</view><view><text class="calendar-dot income-dot" />收入</view><view><text class="calendar-dot neutral-dot" />转账</view><view><text class="calendar-dot repayment-dot" />还款</view></view>
-          <view v-if="dayReady" class="day-summary"><view><text>当日支出</text><MoneyDisplay class="day-total expense" :value="detail?.expenseCents" /></view><view><text>当日收入</text><MoneyDisplay class="day-total income" :value="detail?.incomeCents" /></view><view><text>当日结余</text><MoneyDisplay class="day-total" :value="detail?.balanceCents" /></view></view>
+          <view v-if="monthReady" class="day-summary"><view><text>当月支出</text><MoneyDisplay class="day-total expense" :value="monthSummary?.expenseCents" /></view><view><text>当月收入</text><MoneyDisplay class="day-total income" :value="monthSummary?.incomeCents" /></view><view><text>当月结余</text><MoneyDisplay class="day-total" :value="monthSummary?.balanceCents" /></view></view>
         </view>
-        <view class="date-heading calendar-date"><view><text class="date-title">{{ selectedTitle }}</text><text class="date-week">{{ selectedWeek }}</text></view><text class="section-meta">{{ detail?.transactions.length || 0 }} 笔</text></view>
+        <view class="date-heading calendar-date"><view><text class="date-title">{{ selectedTitle }}</text><text class="date-week">{{ selectedWeek }}</text></view><view class="calendar-date-meta"><view v-if="dayReady" class="date-flow"><MoneyDisplay class="income" prefix="收 " :value="detail?.incomeCents" /><MoneyDisplay class="expense" prefix="支 " :value="detail?.expenseCents" /></view><text class="section-meta">{{ detail?.transactions.length || 0 }} 笔</text></view></view>
         <view class="calendar-transaction-list transaction-list"><view v-if="!dayReady && (loading || dayLoading)" class="list-empty">正在加载当天账单…</view><view v-else-if="error && !monthReady" class="list-empty">请先重试加载月历</view><view v-else-if="dayError && !dayReady" class="list-empty">暂时无法加载当天账单<button class="text-button" @click="loadDay(selected)">重试</button></view><view v-else-if="!detail?.transactions.length" class="list-empty">这一天还没有记账记录</view><template v-else><TransactionRow v-for="transaction in detail.transactions" :key="transaction.id" :transaction="transaction" @open="open" /></template></view>
       </view>
     </scroll-view>
