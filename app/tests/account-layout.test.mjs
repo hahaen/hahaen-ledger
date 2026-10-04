@@ -7,7 +7,7 @@ const prototypeStyles = await readFile(new URL('../src/prototype.scss', import.m
 
 test('账户详情固定筛选按钮并让日期和流水区域独立滚动', () => {
   const filterIndex = accountPage.indexOf('<view class="filter-row">')
-  const listIndex = accountPage.indexOf('<scroll-view scroll-y :show-scrollbar="false" class="account-record-list">')
+  const listIndex = accountPage.indexOf('<scroll-view scroll-y :show-scrollbar="false" class="account-record-list"')
   assert.ok(filterIndex >= 0 && listIndex > filterIndex)
   assert.match(accountPage.slice(listIndex), /class="date-heading"/)
   assert.match(accountPage.slice(listIndex), /class="transaction-list"/)

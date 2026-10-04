@@ -383,3 +383,13 @@ html, body, .page, .entry-content, .uni-scroll-view { scrollbar-width:none; }
 /* 背景拦截层与滚轮为兄弟节点，避免微信 catchtouchmove 吞掉滚轮手势。 */
 .picker-touch-mask { position:absolute; inset:0; }
 .center-modal, .entry-account-picker-modal, .entry-date-picker-modal, .entry-value-picker-modal, .entry-note-picker-modal, .month-picker-modal { position:relative; }
+
+/* 详情内容可滚至固定操作栏上方；普通视图图表不使用微信独立canvas层。 */
+.item-detail-page { padding-bottom:calc(100px + env(safe-area-inset-bottom)); }
+.item-detail-actions { background:#fff; }
+.account-record-status { padding:16px; text-align:center; color:#858b8b; font-size:12px; }
+@media (max-height:500px) and (orientation:landscape) {
+  .account-page { height:auto; min-height:100vh; overflow:visible; }
+  .account-page .detail-section { flex:none; }
+  .account-page .account-record-list { flex:none; height:260px; }
+}

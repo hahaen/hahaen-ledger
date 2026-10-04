@@ -18,7 +18,7 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import { Account, AccountKind, Transaction, TransactionPage, useLedger } from '../../stores/ledger'
 import { request } from '../../utils/api'
-import { formatYuan } from '../../utils/money'
+import { inputYuan } from '../../utils/money'
 import { stringId } from '../../utils/id'
 import { staticResource } from '../../utils/staticResource'
 
@@ -46,6 +46,12 @@ const groupedRecords = computed(() => {
   return Object.entries(groups).sort((left, right) => right[0].localeCompare(left[0]))
 })
 const recordFilter = ref('')
+const recordsTotal = ref(0)
+const recordsPage = ref(0)
+const recordsLoading = ref(false)
+const recordsError = ref(false)
+const recordsHasMore = computed(() => recordsPage.value === 0 || records.value.length < recordsTotal.value)
+let recordsSequence = 0
 const repayAmount = ref('0')
 const formKind = computed<AccountKind>(() => account.value?.kind || 'FUND')
 const fundAccounts = computed(() => ledger.state.accounts.filter(value => value.kind === 'FUND' && value.status === 'ACTIVE'))
@@ -60,15 +66,16 @@ onLoad((query) => {
 onShow(() => { if (id.value) void load() })
 
 async function load() {
+  if (loading.value) return
   loading.value = true
   loadError.value = false
   try {
     const accountData = await request<Account>(`/api/app/accounts/${id.value}`)
     account.value = accountData
     formName.value = accountData.name
-    fundBalance.value = formatYuan(accountData.kind === 'FUND' ? accountData.balanceCents : 0)
-    creditLimit.value = formatYuan(accountData.kind === 'CREDIT' ? accountData.creditLimitCents : 0)
-    currentDebt.value = formatYuan(accountData.kind === 'CREDIT' ? accountData.balanceCents : 0)
+    fundBalance.value = inputYuan(accountData.kind === 'FUND' ? accountData.balanceCents : 0)
+    creditLimit.value = inputYuan(accountData.kind === 'CREDIT' ? accountData.creditLimitCents : 0)
+    currentDebt.value = inputYuan(accountData.kind === 'CREDIT' ? accountData.balanceCents : 0)
     repayAmount.value = currentDebt.value
     included.value = accountData.includedInNetAsset
     await loadRecords()
@@ -76,9 +83,43 @@ async function load() {
 }
 
 async function loadRecords() {
-  const query = recordFilter.value ? `?type=${recordFilter.value}` : ''
-  const page = await request<TransactionPage>(`/api/app/accounts/${id.value}/transactions${query}`)
-  records.value = page.items
+  ++recordsSequence
+  records.value = []
+  recordsTotal.value = recordsPage.value = 0
+  recordsLoading.value = false
+  recordsError.value = false
+  await loadMoreRecords()
+}
+
+async function loadMoreRecords() {
+  if (recordsLoading.value || !recordsHasMore.value) return
+  const sequence = recordsSequence
+  const nextPage = recordsPage.value + 1
+  recordsLoading.value = true
+  recordsError.value = false
+  try {
+    const type = recordFilter.value ? `&type=${recordFilter.value}` : ''
+    const page = await request<TransactionPage>(`/api/app/accounts/${id.value}/transactions?page=${nextPage}&pageSize=50${type}`)
+    if (sequence !== recordsSequence) return
+    const existingIds = new Set(records.value.map(record => record.id))
+    records.value.push(...page.items.filter(record => !existingIds.has(record.id)))
+    recordsTotal.value = page.total
+    recordsPage.value = page.page
+  } catch {
+    if (sequence === recordsSequence) recordsError.value = true
+  } finally {
+    if (sequence === recordsSequence) recordsLoading.value = false
+  }
+}
+
+function openEdit() {
+  if (!account.value || saving.value || deleting.value) return
+  formName.value = account.value.name
+  fundBalance.value = inputYuan(formKind.value === 'FUND' ? account.value.balanceCents : 0)
+  creditLimit.value = inputYuan(account.value.creditLimitCents)
+  currentDebt.value = inputYuan(formKind.value === 'CREDIT' ? account.value.balanceCents : 0)
+  included.value = account.value.includedInNetAsset
+  editing.value = true
 }
 
 function centsFromInput(value: string, label: string, allowNegative = false) {
@@ -97,10 +138,12 @@ async function save() {
   try {
     const common = { name: formName.value.trim(), kind: formKind.value, includedInNetAsset: included.value }
     if (!common.name) throw new Error('请输入账户名称')
+    if (common.name.length > 20) throw new Error('账户名称最多20个字')
     const payload: Record<string, unknown> = formKind.value === 'FUND'
       ? { ...common, balanceCents: centsFromInput(fundBalance.value, '余额', true), creditLimitCents: null, currentDebtCents: null }
       : { ...common, balanceCents: null, creditLimitCents: centsFromInput(creditLimit.value, '总额度'), currentDebtCents: centsFromInput(currentDebt.value, '当前欠款', true) }
-    await request<Account>(`/api/app/accounts/${id.value}`, { method: 'PUT', data: payload })
+    const updated = await request<Account>(`/api/app/accounts/${id.value}`, { method: 'PUT', data: payload })
+    ledger.state.accounts = ledger.state.accounts.map(value => value.id === updated.id ? updated : value)
     uni.showToast({ title: '账户已保存', icon: 'success' })
     editing.value = false
     await load()
@@ -182,18 +225,18 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
     <template v-else>
       <template v-if="account">
         <view :class="['detail-hero', 'fund-hero', { 'credit-hero': formKind === 'CREDIT' }]"><view class="fund-heading"><view><text class="fund-name">{{ account.name }}</text><text class="account-desc">{{ formKind === 'FUND' ? '资金账户' : '信贷账户' }}</text></view><text class="fund-included">{{ account.includedInNetAsset ? '计入净资产' : '不计入净资产' }}</text></view><text class="fund-balance-label">{{ formKind === 'FUND' ? '当前余额' : (account.balanceCents < 0 ? '溢缴余额' : '当前欠款') }}</text><MoneyDisplay class="detail-amount" :value="account.balanceCents" /><view v-if="formKind === 'CREDIT'" class="credit-stats"><view>总额度<MoneyDisplay :value="account.creditLimitCents" /></view><view>可用额度<MoneyDisplay :value="account.creditLimitCents - account.balanceCents" /></view></view><view class="detail-orbit orbit-one" /></view>
-        <view class="detail-section"><view class="detail-section-heading"><text class="section-title">账户流水</text><text class="section-meta">{{ records.length }} 笔记录</text></view><view class="filter-row"><button v-for="filter in filters" :key="filter.value" :class="{ active: recordFilter === filter.value }" @click="recordFilter = filter.value; loadRecords()">{{ filter.label }}</button></view><scroll-view scroll-y :show-scrollbar="false" class="account-record-list"><view v-if="!records.length" class="fund-empty"><text class="empty-symbol">◷</text><text class="empty-title">暂无相关记录</text><text>这个账户的收支会在这里呈现</text></view><view v-for="group in groupedRecords" :key="group[0]" class="date-group"><view class="date-heading"><text class="date-title">{{ group[0] }}</text><text class="section-meta">{{ group[1].length }} 笔</text></view><view class="transaction-list"><TransactionRow v-for="record in group[1]" :key="record.id" :transaction="record" @open="openTransaction" /></view></view></scroll-view></view>
-        <view class="detail-actions"><button class="detail-action" :disabled="saving || deleting" @click="editing = true">编辑账户</button><button v-if="formKind === 'CREDIT'" class="detail-action refund" :disabled="saving || deleting || account.balanceCents <= 0" @click="openRepay">{{ account.balanceCents > 0 ? '还款' : account.balanceCents < 0 ? '有溢缴款' : '已还清' }}</button><button class="detail-action delete" :disabled="saving || deleting" @click="remove">删除账号</button></view>
+        <view class="detail-section"><view class="detail-section-heading"><text class="section-title">账户流水</text><text class="section-meta">{{ recordsTotal }} 笔记录</text></view><view class="filter-row"><button v-for="filter in filters" :key="filter.value" :class="{ active: recordFilter === filter.value }" @click="recordFilter = filter.value; loadRecords()">{{ filter.label }}</button></view><scroll-view scroll-y :show-scrollbar="false" class="account-record-list" :key="recordFilter" @scrolltolower="loadMoreRecords"><view v-if="!records.length && !recordsLoading && !recordsError" class="fund-empty"><text class="empty-symbol">◷</text><text class="empty-title">暂无相关记录</text><text>这个账户的收支会在这里呈现</text></view><view v-for="group in groupedRecords" :key="group[0]" class="date-group"><view class="date-heading"><text class="date-title">{{ group[0] }}</text><text class="section-meta">{{ group[1].length }} 笔</text></view><view class="transaction-list"><TransactionRow v-for="record in group[1]" :key="record.id" :transaction="record" @open="openTransaction" /></view></view><view class="account-record-status"><text v-if="recordsLoading">正在加载流水…</text><button v-else-if="recordsError" class="text-button" @click="loadMoreRecords">加载失败，点击重试</button><button v-else-if="recordsHasMore" class="text-button" @click="loadMoreRecords">加载更多流水</button><text v-else-if="records.length">已显示全部 {{ recordsTotal }} 笔流水</text></view></scroll-view></view>
+        <view class="detail-actions"><button class="detail-action" :disabled="saving || deleting" @click="openEdit">编辑账户</button><button v-if="formKind === 'CREDIT'" class="detail-action refund" :disabled="saving || deleting || account.balanceCents <= 0" @click="openRepay">{{ account.balanceCents > 0 ? '还款' : account.balanceCents < 0 ? '有溢缴款' : '已还清' }}</button><button class="detail-action delete" :disabled="saving || deleting" @click="remove">删除账号</button></view>
       </template>
     </template>
     <view v-if="editing" class="asset-create-backdrop" @click.self="!saving && (editing = false)" @touchmove.stop.prevent>
-      <view class="asset-create-modal asset-edit-modal" role="dialog" aria-modal="true" :aria-label="formKind === 'FUND' ? '编辑资产账户' : '编辑信贷账户'">
+      <view class="asset-create-modal asset-edit-modal" role="dialog" aria-modal="true" :aria-label="formKind === 'FUND' ? '编辑资产账户' : '编辑信贷账户'" @click.stop>
         <view class="asset-create-handle" />
         <text class="asset-create-title">{{ formKind === 'FUND' ? '编辑资产账户' : '编辑信贷账户' }}</text>
         <view class="asset-create-fields asset-edit-fields">
           <view class="asset-create-row"><text>账户名称</text><input v-model="formName" maxlength="20" placeholder="请输入账户名称" aria-required="true" :disabled="saving" /></view>
-          <view v-if="formKind === 'FUND'" class="asset-create-row"><text>余额</text><view class="asset-create-money"><input v-model="fundBalance" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="saving" /></view></view>
-          <template v-else><view class="asset-create-row"><text>总额度</text><view class="asset-create-money"><input v-model="creditLimit" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="saving" /></view></view><view class="asset-create-row"><text>当前欠款</text><view class="asset-create-money"><input v-model="currentDebt" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="saving" /></view></view></template>
+          <view v-if="formKind === 'FUND'" class="asset-create-row"><text>余额</text><view class="asset-create-money"><input v-model="fundBalance" type="text" inputmode="decimal" placeholder="0" aria-required="true" :disabled="saving" /></view></view>
+          <template v-else><view class="asset-create-row"><text>总额度</text><view class="asset-create-money"><input v-model="creditLimit" type="digit" inputmode="decimal" placeholder="0" aria-required="true" :disabled="saving" /></view></view><view class="asset-create-row"><text>当前欠款</text><view class="asset-create-money"><input v-model="currentDebt" type="text" inputmode="decimal" placeholder="0" aria-required="true" :disabled="saving" /></view></view></template>
           <view class="asset-create-row asset-create-switch"><text>计入净资产</text><switch :checked="included" aria-required="true" :disabled="saving" color="#49AD9C" @change="onIncluded" /></view>
         </view>
         <view class="asset-create-actions"><button class="asset-create-cancel" :disabled="saving" @click="editing = false">取消</button><button class="asset-create-save" :disabled="saving" @click="save">{{ saving ? '保存中…' : '保存账户' }}</button></view>
