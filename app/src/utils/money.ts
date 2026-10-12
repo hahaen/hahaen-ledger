@@ -23,10 +23,15 @@ function normalizeCents(value: MoneyCents): number {
   return Number.isFinite(normalized) && !Object.is(normalized, -0) ? normalized : 0
 }
 
-/** 将整数分格式化为人民币金额文本；整数金额不展示 .00，有效小数保留两位。 */
+/** 按分四舍五入；整数元隐藏 .00，其余保留两位，不依赖平台 Intl 支持。 */
 export function formatYuan(value: MoneyCents): string {
-  const formatted = (normalizeCents(value) / 100).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  return formatted.endsWith('.00') ? formatted.slice(0, -3) : formatted
+  const normalized = normalizeCents(value)
+  // 日均成本可含小数分；先舍入分，避免换算元后浮点误差影响半分边界。
+  const rounded = Math.round(Math.abs(normalized))
+  const sign = normalized < 0 && rounded > 0 ? '-' : ''
+  const whole = String(Math.trunc(rounded / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  const fraction = rounded % 100
+  return `${sign}${whole}${fraction ? '.' + String(fraction).padStart(2, '0') : ''}`
 }
 
 export function localDateTime(): string { const d = new Date(); const pad = (x: number) => String(x).padStart(2, '0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00` }
