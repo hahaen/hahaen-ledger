@@ -448,3 +448,12 @@ PARTIAL：运行证据为H5合成接口夹具；NOT_RUN（补充）：微信工�
 ## 2026-10-12 追加：Android 微信全局金额格式化
 
 共享金额展示脱离 Intl/locale 参数依赖，整数隐藏 .00，非整数固定两位；截图长小数及图表刻度由实际组件与微信生产包模拟渲染回归覆盖。173 项前端回归、类型和双端构建 PASS；Android/iOS 手机新包与上传发布 NOT_RUN。详见[本轮档案](../../10/android-number-format/README.md)。
+
+
+## 2026-10-15｜代码 Review 前置规则
+
+- requirement/design：每次代码完成后先 Review，发现问题先修复并复审，确认无未解决问题后再测试，验证通过后才提交推送；后续代码变化与远端同步后的最终代码同样遵循该顺序，并记录 Review 范围、结论和修复情况。
+- database/api/backend/frontend：无业务实现变更；更新 AGENTS.md、项目 README 与测试规范，审计记录同步追加。
+- testing/commands：已执行 `git diff -- AGENTS.md README.md docs/07-testing/README.md` 审阅，本次差异符合需求，无未解决问题；Python 检查三个当前规范文件的本地 Markdown 链接及流程顺序断言通过，`git diff --check` 退出 0。
+- verification：上述文档审阅、内容与链接检查 PASS；业务测试、构建和 DEV 运行因纯文档修改不适用，无本轮 PARTIAL、FAIL 或 BLOCKED。
+- rollback：回退本次文档提交，恢复原工作流表述。

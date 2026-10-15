@@ -1247,3 +1247,8 @@ PARTIAL：运行证据为H5合成接口夹具；NOT_RUN（补充）：微信工�
 PASS：共享 formatYuan 改为按分四舍五入、手动千分位，消除 Intl/toLocaleString 参数差异。整数隐藏 .00，非整数固定两位，负金额与舍入为零保持正确。覆盖首页、日历、资产、账户/账单详情、记账账户选择与提示、退款、物品列表/详情/图表及账单无障碍标签。4 项针对性回归、173 项前端回归、类型检查、H5/微信生产构建及实际微信产物两类兼容环境的组件渲染数据验证通过。
 
 PARTIAL：Android 行为为隔离模拟，未取得手机新包画面。NOT_RUN（补充）：Android/iOS 微信新包、真实账号、H5 浏览器视觉复测和上传发布。后端/数据库/API 无变更，无本轮必需 FAIL/BLOCKED。详见[完整迭代](../10-iterations/2026/10/android-number-format/README.md)。
+
+
+## 2026-10-15｜代码 Review 前置规则
+
+PASS：已审阅 AGENTS.md、项目 README 和测试规范的本次差异，确认顺序为代码 Review、问题修复与复审通过后再测试，最终验证通过后提交推送；测试修复及远端同步产生的代码变化需重新 Review。内容一致性、本地链接检查和 `git diff --check` 通过。纯文档修改，业务测试、构建和 DEV 运行不适用；无本轮 PARTIAL、FAIL 或 BLOCKED。记录见[第三轮追加](../10-iterations/2026/09/third-round/README.md)。
