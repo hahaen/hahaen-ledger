@@ -475,3 +475,12 @@ PARTIAL：运行证据为H5合成接口夹具；NOT_RUN（补充）：微信工�
 - testing/commands：本轮差异 Review 无未解决问题；Python 文档内容/链接/锚点、JSON、Git 忽略与权限检查通过，`git diff --check` 退出 0；系统 curl 查询文件夹 API HTTP 200，确认两个任务存在。
 - verification：规则及本地文件检查 PASS；后续鉴权验收因本地用户名/API Token 未填为 BLOCKED，真实发布 NOT_RUN，本轮纯规则配置不发布。业务测试、构建和 DEV 联调不适用。
 - rollback：回退本轮文档及示例提交；真实 Token 在 Jenkins 撤销后再删除本地文件。详见[本轮档案](../../10/jenkins-auto-release/README.md)。
+
+
+## 2026-10-15 追加｜Jenkins 真实发布验收
+
+- requirement/design：用户本地填写 Key 后授权实测发布；进程内读取凭证，以 `BRANCH=main` 顺序发布后端、检查公开接口，再发布 H5。
+- database/api/backend/frontend：无实现、Schema、Pipeline 或配置修改；目标 `9c58af6` 与上次构建的后端/前端业务内容一致，无新增迁移，无需手工执行 SQL。
+- testing/commands：身份认证成功，GitHub/Gitee/本地 main 一致。队列 113 → haji-server #34 SUCCESS、部署目录更新到目标修订、容器运行，公开接口 HTTP 200/code=0；队列 115 → haji-h5 #28 SUCCESS，类型/编译/Nginx 配置检查和线上 HTML/JS/CSS 探针通过；凭证仍受 Git 忽略且权限 700/600。
+- verification：上述真实发布与公开探针 PASS，原鉴权 BLOCKED 已解除，本轮无 FAIL/BLOCKED。PARTIAL：未做真实账号业务、数据库/MinIO 全链路与浏览器视觉验收；小程序工具/真机和发布 NOT_RUN。
+- rollback：采用已验证版本重新构建，不自动回滚 Schema。完整构建链接见[本轮档案](../../10/jenkins-auto-release/README.md#2026-10-15-追加真实凭证与发布验收)。本轮后续仅提交证据文档，不再次发布。

@@ -1264,3 +1264,10 @@ PASS：本次差异已审阅，AGENTS.md、项目 README 与测试规范统一�
 PASS：本次差异 Review、文档内容/本地链接及锚点、JSON 示例、Git 忽略、目录 700/文件 600、无凭证跟踪和 `git diff --check` 通过。已创建本地 `.local/jenkins.json`，空凭证示例可提交；后端 `haji-server` / 每次前端 `haji-h5` 的长期授权、测试提交推送前置条件、两端发布顺序、源码提交和构建结果核对已写入 AGENTS.md 并同步当前规范。系统 curl 的线上文件夹只读 API 返回 HTTP 200，确认两个任务存在。
 
 BLOCKED（后续鉴权验收）：用户名/API Token 未填写。NOT_RUN：真实 Jenkins 构建及线上可用性验收，本轮纯规则配置不触发业务部署。无业务实现/数据库变更，业务测试、双端构建和 DEV 联调不适用，无需执行 SQL。详见[本轮迭代](../10-iterations/2026/10/jenkins-auto-release/README.md)。
+
+
+## 2026-10-15｜Jenkins 真实凭证及发布验证
+
+PASS：用户填入本地凭证后，真实身份认证通过；GitHub/Gitee/本地 `main` 同为 `9c58af6`。使用 `BRANCH=main`，后端队列 113 → haji-server #34 SUCCESS，远端目录更新到目标提交、容器运行，公开接口 HTTP 200/code=0；随后 H5 队列 115 → haji-h5 #28 SUCCESS，类型检查、H5 编译和 Nginx 配置检查通过，线上 HTML/入口 JS/两份 CSS 全部 HTTP 200、类型正确。凭证未输出/跟踪，目录 700、文件 600。此前凭证缺失的 BLOCKED 已解除，真实发布已执行；本轮无 FAIL/BLOCKED。
+
+PARTIAL：公开接口及页面资源探针未替代真实账号业务、数据库/MinIO 全链路和浏览器视觉验收。微信工具/真机及小程序发布 NOT_RUN。无新增业务、Schema、Pipeline 或生产配置变化，无需手工执行 SQL。构建链接和命令证据见[本轮验收追加](../10-iterations/2026/10/jenkins-auto-release/README.md#2026-10-15-追加真实凭证与发布验收)。

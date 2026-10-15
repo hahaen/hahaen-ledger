@@ -40,3 +40,34 @@ BLOCKED（后续鉴权验收）：本地用户名和 API Token 尚未填写，�
 ## rollback
 
 回退本轮规则与示例提交可恢复原执行流程。删除本地凭证前应先在 Jenkins 撤销对应 API Token；本轮没有发布，不涉及线上版本回滚。若未来发布需要回滚，选择已验证版本重新构建，数据库变更须单独确认兼容性，禁止自动反向执行 Migration。
+
+
+## 2026-10-15 追加｜真实凭证与发布验收
+
+### requirement / design
+
+用户已在本地填写凭证，并明确要求测试能否发布。通过进程内读取 `.local/jenkins.json`，认证头经 curl 标准输入传入；不打印 Key、不关闭 HTTPS 校验、不把 Jenkins 返回的 HTTP URL 作为认证请求目的地。仅执行现有两个任务，不改 Jenkins 配置。
+
+### database / api / backend / frontend
+
+- 本地、GitHub `origin/main`、Gitee `main` 均为 `9c58af6dfc987c8a3d9f4fe4cf39c796298459d6`。两个任务实际配置均从 Gitee 加载仓库 Jenkinsfile，参数为 `BRANCH`，本次显式选择 `main`。
+- 与上次成功后端 #33 的 SCM 修订 `e683b940` 相比，后端、Compose 和 Migration 无差异；与 H5 #27 的 `1a0220e` 相比，前端无差异。本轮重跑现有版本的部署流程验证凭证，无新增迁移、无需手工执行 SQL。
+- 未修改业务代码、API、数据库、Pipeline 或生产配置；微信小程序未上传、提审或发布。
+
+### testing / commands
+
+- 本地凭证文件进程内读取；`whoAmI/api/json` 显示 authenticated=true，身份与配置一致；两个任务元数据/config.xml 均 HTTP 200，可构建，未处于排队/运行状态。
+- 发布前以 `git ls-remote` 核对两处远端 `main` 与本地 HEAD 一致；未输出配置内容或凭证。两个任务均 POST `buildWithParameters`，仅传 `BRANCH=main`；响应 HTTP 201 后跟踪各自队列，未重复触发。
+- 后端队列 **113** → [haji-server #34](https://hahaen.xyz/jenkins/job/%E5%93%88%E8%AE%B0%E8%B4%A6/job/haji-server/34/)：终态 SUCCESS，SCM 修订为 `9c58af6`。部署日志显示远端工作目录 Fast-forward `1a0220e..9c58af6`、镜像构建完成、haji-server 容器运行。
+- 后端发布后，`https://hahaen.xyz/haji-api/api/app/auth/password-key` 返回 HTTP 200、业务 code=0、公钥存在。只读探针不登录、不改真实用户数据；通过后再触发 H5。
+- H5 队列 **115** → [haji-h5 #28](https://hahaen.xyz/jenkins/job/%E5%93%88%E8%AE%B0%E8%B4%A6/job/haji-h5/28/)：终态 SUCCESS，SCM 修订为 `9c58af6`，远端源码 Already up to date，日志确认 vue-tsc、编译完成及 Nginx 配置检查通过。
+- 发布后 `https://hahaen.xyz/haji/` 返回 HTTP 200 HTML；入口 JS `index-qM33ZaVA.js`（235144 字节）和 CSS `uni.8b028421.css`（12023 字节）、`index-NuBEIWwF.css`（93170 字节）均 HTTP 200，类型正确，非 HTML fallback。
+- 本地凭证仍受 Git 忽略，未被跟踪；目录 700、文件 600。临时验证程序在系统临时目录执行，仓库不新增运行脚本或真实凭证。
+
+### verification / rollback
+
+本次证据更新仅 Review 本档案、verification-matrix、third-round-audit 与第三轮档案的新增差异，核对构建号、版本、实际输出、权限隔离、SQL 和未覆盖范围，无未解决问题。文档本地链接/锚点、JSON/忽略规则/权限及 `git diff --check` 检查 PASS；安全 stash 四份证据后执行 `git pull --ff-only` 返回 Already up to date，恢复文件 SHA-256 全部一致后删除备份。同步后复审本次差异无未解决问题，再复验并检查暂存范围。业务实现未改，不重复运行无关业务测试及本地构建。
+
+PASS：真实身份认证、两个任务实际构建触发与 SUCCESS、源码版本核对、后端部署及公开接口探针、H5 编译/部署及入口资源检查。此前因空凭证产生的鉴权 BLOCKED 已解除，真实构建 NOT_RUN 已被本次实测覆盖。本轮无 FAIL/BLOCKED。
+
+PARTIAL：线上验收为公开接口及页面/资源探针，未进行真实账号记账、数据库账务/MinIO 全链路或浏览器视觉验收；不据此宣称全部业务通过。微信工具/真机验证及小程序发布 NOT_RUN，本轮未修改小程序代码。后续文档证据提交不会再次触发业务发布。回滚仍采用前述已验证版本重新构建，不自动降级数据库。
