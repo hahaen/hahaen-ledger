@@ -8,3 +8,6 @@ logs/
 *.log
 data/
 *.iml
+
+# Local credentials and editor/temporary copies; never commit.
+/.local/

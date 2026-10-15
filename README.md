@@ -74,4 +74,6 @@ pnpm run build:mp-weixin
 
 ## 开发完成后的自动提交
 
-每次修改完成后，按 [AGENTS.md](AGENTS.md) 的“验证、同步与自动提交”规则执行：仅针对本次任务新增或修改的代码做 Review 并修复问题、复审通过 → 测试及必要构建通过 → 拉取当前分支 upstream 并解决冲突 → 重新 Review 本次任务改动及相关冲突解决差异并复验 → 自动提交并推送到当前分支 upstream，无需再次确认。提交信息使用中文 Conventional Commit，例如 `feat(todo): 新增独立待办清单与周期提醒`。仅提交并推送本次任务内容；部署与发布需另有授权。当次明确要求不提交或不推送时，以当次指令为准。
+每次修改完成后，按 [AGENTS.md](AGENTS.md) 的“验证、同步与自动提交”规则执行：仅针对本次任务新增或修改的代码做 Review 并修复问题、复审通过 → 测试及必要构建通过 → 拉取当前分支 upstream 并解决冲突 → 重新 Review 本次任务改动及相关冲突解决差异并复验 → 自动提交并推送到当前分支 upstream，无需再次确认。提交信息使用中文 Conventional Commit，例如 `feat(todo): 新增独立待办清单与周期提醒`。仅提交并推送本次任务内容；推送及远端核对通过后，后端改动自动发布 Jenkins `haji-server`，每次前端修改均自动发布 `haji-h5`，两端同时修改先后端再 H5。微信小程序上传、提审与发布由用户处理。纯文档/凭证规则修改不发布；当次明确限制以当次指令为准。其他部署与发布仍需授权。
+
+Jenkins 凭证保存在被 Git 忽略的 `.local/jenkins.json`，只在本机填写用户名与 API Token；可从 [jenkins.example.json](jenkins.example.json) 创建，目录/文件权限分别设为 700/600。不要将凭证发到聊天、打印或提交。发布前须核实 Pipeline 实际源码提交：现有 Pipeline 使用 Gitee `main`，本地 upstream 为 GitHub。完整配置及验收流程见 [Jenkins 运维说明](docs/05-operations/README.md#jenkins-自动发布)。

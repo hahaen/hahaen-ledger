@@ -1257,3 +1257,10 @@ PASS：已审阅 AGENTS.md、项目 README 和测试规范的本次差异，确�
 ## 2026-10-15｜Review 仅限本次任务改动
 
 PASS：本次差异已审阅，AGENTS.md、项目 README 与测试规范统一限定仅 Review 本次任务新增或修改的代码及相关冲突解决差异；可读取上下文，不扩大到无关历史代码、他人已有改动或无关远端提交。Python 内容与本地链接检查、`git diff --check` 通过。纯文档修改，业务测试、构建和 DEV 运行不适用；无本轮 PARTIAL、FAIL 或 BLOCKED。
+
+
+## 2026-10-15｜Jenkins 本地凭证与自动发布
+
+PASS：本次差异 Review、文档内容/本地链接及锚点、JSON 示例、Git 忽略、目录 700/文件 600、无凭证跟踪和 `git diff --check` 通过。已创建本地 `.local/jenkins.json`，空凭证示例可提交；后端 `haji-server` / 每次前端 `haji-h5` 的长期授权、测试提交推送前置条件、两端发布顺序、源码提交和构建结果核对已写入 AGENTS.md 并同步当前规范。系统 curl 的线上文件夹只读 API 返回 HTTP 200，确认两个任务存在。
+
+BLOCKED（后续鉴权验收）：用户名/API Token 未填写。NOT_RUN：真实 Jenkins 构建及线上可用性验收，本轮纯规则配置不触发业务部署。无业务实现/数据库变更，业务测试、双端构建和 DEV 联调不适用，无需执行 SQL。详见[本轮迭代](../10-iterations/2026/10/jenkins-auto-release/README.md)。

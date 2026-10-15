@@ -1,0 +1,10 @@
+{
+  "base_url": "https://hahaen.xyz/jenkins/",
+  "folder": "哈记账",
+  "username": "",
+  "api_token": "",
+  "jobs": {
+    "server": "haji-server",
+    "h5": "haji-h5"
+  }
+}

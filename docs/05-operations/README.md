@@ -40,6 +40,24 @@ pnpm run build:mp-weixin
 
 每次运行验收记录真实命令、退出码、环境前提、实际输出和未覆盖范围。缺少 MySQL、Redis、MinIO、微信开发者工具或真实凭证时，分别记录 `BLOCKED` 或 `NOT_RUN`；不得使用“端口监听”替代数据库 Schema、事务和对象上传证据。
 
+## Jenkins 自动发布
+
+用户长期授权的执行规则见 [AGENTS.md](../../AGENTS.md#jenkins-自动发布长期授权)。本规则由执行项目任务的代理在交付时遵循，未安装 Git hook 或后台触发器。Review、测试、同步、复审复验、提交及推送通过后，后端改动发布 `haji-server`，任何前端修改均发布 `haji-h5`（包括微信专属改动）；两端同时改先后端，健康检查通过再 H5。纯文档及凭证规则配置不发布。微信小程序上传/提审/发布由用户自行处理，受影响的微信构建验证仍需执行。
+
+### 本地凭证
+
+从根目录 `jenkins.example.json` 复制为 `.local/jenkins.json`，目录权限 700、文件权限 600；`.local/` 整体已加入 `.gitignore`。`base_url` 为 `https://hahaen.xyz/jenkins/`，`folder` 为“哈记账”，`jobs.server` / `jobs.h5` 对应上述任务。在本机编辑器填写 `username` 与 `api_token`，不使用账号密码或任务远程触发 Token 代替用户 API Token；获取入口见 [Jenkins 官方认证说明](https://www.jenkins.io/doc/book/system-administration/authenticating-scripted-clients/)。示例中的凭证始终为空。凭证丢失、空白或权限不足时，报告 BLOCKED，不尝试匿名发布。
+
+禁止输出本地凭证文件、拼接认证命令行、把 Key 放入 URL 或关闭 TLS 校验。经进程内读取构造 Basic 认证头；若使用系统 curl，通过标准输入传配置并使用 `--globoff` 访问带 `tree=...` 的 API 查询，禁止打印配置或响应中的敏感内容。返回的内网/HTTP URL 只取已核验的队列 ID/构建号，用配置的公网 HTTPS 入口重建路径后请求，禁止携带凭证跳转到其他地址。
+
+### 发布与验收
+
+1. 只读查询文件夹及任务 JSON，确认任务、参数、启用状态和部署源。2026-10-15 已通过系统 curl 匿名查询确认文件夹下有两个 WorkflowJob：`haji-server`、`haji-h5`，不代表鉴权或发布验证完成。两个任务当前均为可构建、未排队，并有 `BRANCH` 类型为 `GitParameterDefinition` 的参数；实际发布须用 `buildWithParameters` 并核实所选分支，不依赖上次选值。
+2. 当前 `server/Jenkinsfile` / `app/Jenkinsfile` 在远端主机拉取 Gitee `main`，本地 upstream 为 GitHub `origin/main`；必须核实实际 Jenkins 配置和部署源包含目标提交。未同步时报告 BLOCKED，禁止发布旧源码或擅自改远端。注意 Jenkins Pipeline 的 SCM 修订不一定等于 SSH 部署目录的实际修订，需分别核对。
+3. 按 [Jenkins Remote API](https://www.jenkins.io/doc/book/using/remote-access-api/) 对无参数任务 POST `build`，参数任务 POST `buildWithParameters`。从响应 Location 提取队列 ID；若触发响应不明先核查，禁止重试造成重复发布。轮询队列对应的 executable，再等待对应构建终态；排队返回 201 不能作为 SUCCESS。不要使用可能属于他人的 `lastBuild` 作为本次结果。
+4. 构建 SUCCESS 后核对实际部署提交。后端检查服务健康/启动与必要接口，H5 检查线上 HTML 及资源可访问；如果任务缺少修订或健康证据，明确记录 PARTIAL，不宣称闭环。前后端同时改时，后端发布和健康检查失败/不明必须停止后续 H5 发布。
+5. 记录任务、构建号、目标/实际提交、构建结果和线上验收。失败/超时保留已推送代码，按事实报告并查明原因。数据库只按正式 Migration 随后端启动执行，本轮配置规则接入无数据库修改，无需执行 SQL。回滚使用经验证的旧版本，不能假设 Schema 可自动降级。
+
 
 ## 固定分享欢迎图（2026-10-03）
 
