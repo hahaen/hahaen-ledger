@@ -843,3 +843,8 @@ PARTIAL：Android 行为为隔离模拟，未取得手机新包画面。NOT_RUN�
 ## 2026-10-15｜代码 Review 前置规则
 
 PASS：已审阅 AGENTS.md、项目 README 和测试规范的本次差异，确认顺序为代码 Review、问题修复与复审通过后再测试，最终验证通过后提交推送；测试修复及远端同步产生的代码变化需重新 Review。内容一致性、本地链接检查和 `git diff --check` 通过。纯文档修改，业务测试、构建和 DEV 运行不适用；无本轮 PARTIAL、FAIL 或 BLOCKED。记录见[第三轮追加](../10-iterations/2026/09/third-round/README.md)。
+
+
+## 2026-10-15｜Review 仅限本次任务改动
+
+PASS：本次差异已审阅，AGENTS.md、项目 README 与测试规范统一限定仅 Review 本次任务新增或修改的代码及相关冲突解决差异；可读取上下文，不扩大到无关历史代码、他人已有改动或无关远端提交。Python 内容与本地链接检查、`git diff --check` 通过。纯文档修改，业务测试、构建和 DEV 运行不适用；无本轮 PARTIAL、FAIL 或 BLOCKED。

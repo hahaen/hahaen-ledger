@@ -457,3 +457,12 @@ PARTIAL：运行证据为H5合成接口夹具；NOT_RUN（补充）：微信工�
 - testing/commands：已执行 `git diff -- AGENTS.md README.md docs/07-testing/README.md` 审阅，本次差异符合需求，无未解决问题；Python 检查三个当前规范文件的本地 Markdown 链接及流程顺序断言通过，`git diff --check` 退出 0。
 - verification：上述文档审阅、内容与链接检查 PASS；业务测试、构建和 DEV 运行因纯文档修改不适用，无本轮 PARTIAL、FAIL 或 BLOCKED。
 - rollback：回退本次文档提交，恢复原工作流表述。
+
+
+## 2026-10-15 追加｜Review 仅限本次任务改动
+
+- requirement/design：按用户补充，Review 及后续复审仅针对本次任务新增或修改的代码、相关冲突解决差异；允许读取上下文判断影响，不扩大到无关代码。
+- database/api/backend/frontend：无业务变更；同步 AGENTS.md、项目 README、测试规范和审计记录。
+- testing/commands：审阅 `git diff -- AGENTS.md README.md docs/07-testing/README.md`，修正文档语句后确认无未解决问题；Python 范围断言及当前规范本地链接检查通过，`git diff --check` 退出 0。
+- verification：文档审阅、内容及链接检查 PASS；业务测试、构建与 DEV 运行不适用，无本轮 PARTIAL、FAIL 或 BLOCKED。
+- rollback：回退本次文档提交。
