@@ -468,7 +468,7 @@ PARTIAL：运行证据为H5合成接口夹具；NOT_RUN（补充）：微信工�
 - rollback：回退本次文档提交。
 
 
-## 2026-10-15 追加｜Jenkins 凭证与自动发布规则
+## 2026-10-15 追加｜Jenkins 凭证与自动发布规则（历史授权已撤销）
 
 - requirement/design：长期授权 Review、测试、同步、提交与推送通过后按改动发布后端 `haji-server` / 每次前端 `haji-h5`，两端同时改先后端再 H5；微信上传/提审/发布由用户处理。凭证仅存本地忽略文件。
 - database/api/backend/frontend：无业务、数据库或 Pipeline 修改；更新 AGENTS.md、README、运维/测试规范、示例及忽略规则，无需执行 SQL。
@@ -477,10 +477,19 @@ PARTIAL：运行证据为H5合成接口夹具；NOT_RUN（补充）：微信工�
 - rollback：回退本轮文档及示例提交；真实 Token 在 Jenkins 撤销后再删除本地文件。详见[本轮档案](../../10/jenkins-auto-release/README.md)。
 
 
-## 2026-10-15 追加｜Jenkins 真实发布验收
+## 2026-10-15 追加｜Jenkins 真实发布验收（历史记录）
 
 - requirement/design：用户本地填写 Key 后授权实测发布；进程内读取凭证，以 `BRANCH=main` 顺序发布后端、检查公开接口，再发布 H5。
 - database/api/backend/frontend：无实现、Schema、Pipeline 或配置修改；目标 `9c58af6` 与上次构建的后端/前端业务内容一致，无新增迁移，无需手工执行 SQL。
 - testing/commands：身份认证成功，GitHub/Gitee/本地 main 一致。队列 113 → haji-server #34 SUCCESS、部署目录更新到目标修订、容器运行，公开接口 HTTP 200/code=0；队列 115 → haji-h5 #28 SUCCESS，类型/编译/Nginx 配置检查和线上 HTML/JS/CSS 探针通过；凭证仍受 Git 忽略且权限 700/600。
 - verification：上述真实发布与公开探针 PASS，原鉴权 BLOCKED 已解除，本轮无 FAIL/BLOCKED。PARTIAL：未做真实账号业务、数据库/MinIO 全链路与浏览器视觉验收；小程序工具/真机和发布 NOT_RUN。
 - rollback：采用已验证版本重新构建，不自动回滚 Schema。完整构建链接见[本轮档案](../../10/jenkins-auto-release/README.md#2026-10-15-追加真实凭证与发布验收)。本轮后续仅提交证据文档，不再次发布。
+
+
+## 2026-10-15 追加｜撤销自动发布与清理凭证
+
+- requirement/design：按用户最新决定撤销代理的 Jenkins 后端/H5 自动发布及主动 Gitee 同步；后续所有平台发版均由用户操作，保留原有 Review、测试与 GitHub 提交推送规则。
+- database/api/backend/frontend：无业务、数据库或生产配置变更，无需执行 SQL；原有 Jenkinsfile 与线上任务保持不变。
+- testing/commands：仅审阅本次撤销/删除及记录差异，按纯文档范围验证内容、本地链接、删除状态与 Git 空白；结果在[本轮档案](../../10/manual-release-only/README.md)记录。
+- verification：本地凭证/模板与暂停的同步草稿已删除，旧发布授权明确失效；本轮不触发发布或主动同步镜像，不改远端账户令牌。
+- rollback：后续若再次需要代理发版，须重新明确授权并配置凭证；不恢复被删除的真实 Key。

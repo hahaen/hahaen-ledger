@@ -1259,15 +1259,22 @@ PASS：已审阅 AGENTS.md、项目 README 和测试规范的本次差异，确�
 PASS：本次差异已审阅，AGENTS.md、项目 README 与测试规范统一限定仅 Review 本次任务新增或修改的代码及相关冲突解决差异；可读取上下文，不扩大到无关历史代码、他人已有改动或无关远端提交。Python 内容与本地链接检查、`git diff --check` 通过。纯文档修改，业务测试、构建和 DEV 运行不适用；无本轮 PARTIAL、FAIL 或 BLOCKED。
 
 
-## 2026-10-15｜Jenkins 本地凭证与自动发布
+## 2026-10-15｜Jenkins 本地凭证与自动发布（历史授权已撤销）
 
 PASS：本次差异 Review、文档内容/本地链接及锚点、JSON 示例、Git 忽略、目录 700/文件 600、无凭证跟踪和 `git diff --check` 通过。已创建本地 `.local/jenkins.json`，空凭证示例可提交；后端 `haji-server` / 每次前端 `haji-h5` 的长期授权、测试提交推送前置条件、两端发布顺序、源码提交和构建结果核对已写入 AGENTS.md 并同步当前规范。系统 curl 的线上文件夹只读 API 返回 HTTP 200，确认两个任务存在。
 
 BLOCKED（后续鉴权验收）：用户名/API Token 未填写。NOT_RUN：真实 Jenkins 构建及线上可用性验收，本轮纯规则配置不触发业务部署。无业务实现/数据库变更，业务测试、双端构建和 DEV 联调不适用，无需执行 SQL。详见[本轮迭代](../10-iterations/2026/10/jenkins-auto-release/README.md)。
 
 
-## 2026-10-15｜Jenkins 真实凭证及发布验证
+## 2026-10-15｜Jenkins 真实凭证及发布验证（历史记录）
 
 PASS：用户填入本地凭证后，真实身份认证通过；GitHub/Gitee/本地 `main` 同为 `9c58af6`。使用 `BRANCH=main`，后端队列 113 → haji-server #34 SUCCESS，远端目录更新到目标提交、容器运行，公开接口 HTTP 200/code=0；随后 H5 队列 115 → haji-h5 #28 SUCCESS，类型检查、H5 编译和 Nginx 配置检查通过，线上 HTML/入口 JS/两份 CSS 全部 HTTP 200、类型正确。凭证未输出/跟踪，目录 700、文件 600。此前凭证缺失的 BLOCKED 已解除，真实发布已执行；本轮无 FAIL/BLOCKED。
 
 PARTIAL：公开接口及页面资源探针未替代真实账号业务、数据库/MinIO 全链路和浏览器视觉验收。微信工具/真机及小程序发布 NOT_RUN。无新增业务、Schema、Pipeline 或生产配置变化，无需手工执行 SQL。构建链接和命令证据见[本轮验收追加](../10-iterations/2026/10/jenkins-auto-release/README.md#2026-10-15-追加真实凭证与发布验收)。
+
+
+## 2026-10-15｜撤销自动发布与清理本地凭证
+
+用户最新决定：后端、H5 与微信小程序后续均自行发版，撤销先前 Jenkins 自动发布授权，也不再要求代理主动触发 Gitee 同步。当前工程规则、README、运维/测试规范已按此收口；原有 Review、测试及 GitHub 提交推送规则继续生效。旧自动发布档案标为“历史，已撤销”，既往 #34/#28 实测仅作历史证据。
+
+已删除本机 Jenkins 凭证、版本化空模板、未完成的 Gitee 同步迭代草稿，以及本会话创建的临时发布/验证程序和相关临时记录；未读取或输出密钥。此前 Gitee 新令牌停在账号验证，未由代理生成/保存，本轮不操作远端账户令牌。原有 Jenkinsfile、线上任务、Gitee 镜像与 GitHub Webhook未修改，无业务/数据库变更，无需执行 SQL。PASS：本次差异 Review、删除状态、当前规范一致性、本地链接/锚点和 Git 空白检查通过；业务代码/Pipeline 无差异。纯文档/清理范围无 PARTIAL/FAIL/BLOCKED，业务测试/构建/运行不适用。检查结果见[本轮记录](../10-iterations/2026/10/manual-release-only/README.md)。

@@ -1,6 +1,8 @@
 # 2026 年 10 月迭代
 
-- [Jenkins 本地凭证与自动发布规则](jenkins-auto-release/README.md)。
+- [撤销自动发布并清理凭证](manual-release-only/README.md)。
+
+- [Jenkins 本地凭证与自动发布规则（历史，已撤销）](jenkins-auto-release/README.md)。
 
 - [待办修改规则后详情失效修复](todo-edit-return/README.md)。
 
