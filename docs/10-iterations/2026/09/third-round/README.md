@@ -493,3 +493,11 @@ PARTIAL：运行证据为H5合成接口夹具；NOT_RUN（补充）：微信工�
 - testing/commands：仅审阅本次撤销/删除及记录差异，按纯文档范围验证内容、本地链接、删除状态与 Git 空白；结果在[本轮档案](../../10/manual-release-only/README.md)记录。
 - verification：本地凭证/模板与暂停的同步草稿已删除，旧发布授权明确失效；本轮不触发发布或主动同步镜像，不改远端账户令牌。
 - rollback：后续若再次需要代理发版，须重新明确授权并配置凭证；不恢复被删除的真实 Key。
+
+
+## 2026-10-17 追加｜Gitee 本机直推
+
+- requirement/design：取消 GitHub → Gitee Pull 镜像；保留 GitHub 拉取，本机 origin 配置双端直接推送，gitee remote 用于核对。
+- database/api/backend/frontend：无实现或数据库变化，无需 SQL，发版仍由用户处理。
+- testing/commands/verification：Gitee 镜像空列表、GitHub 对应 Webhook Active=0、Gitee 无 Webhook、本机 remote/pushurl 和远端祖先关系已核对；本机双推成功且两端 main 与本地 d97e218 一致，文档链接/锚点、配置与空白检查 PASS；最终复验见[本轮档案](../../10/gitee-direct-push/README.md)。业务测试/构建/DEV 不适用。
+- rollback：移除本机新增的 origin pushurl 及 gitee remote 可恢复 GitHub 单推；恢复镜像前需重新确认意图与两端提交。

@@ -38,7 +38,7 @@ pnpm run build:mp-weixin
 
 ## 发布方式
 
-后端、H5 和微信小程序均由用户自行发版。代理完成 Review、测试及 Git 提交推送后，不自动触发 Jenkins，也不主动调用 Gitee 镜像同步。原有 Jenkinsfile、线上任务、Gitee 镜像与 GitHub Webhook 保持现有配置；本项目不再保存本次新增的发布凭证或凭证模板。代理若需操作同步或发布，必须取得当次明确授权。
+后端、H5 和微信小程序均由用户自行发版。代理完成 Review、测试及 Git 提交推送后，不自动触发 Jenkins，也不主动调用 Gitee 镜像同步。原有 Jenkinsfile 与线上任务保持现有配置；Gitee Pull 镜像已取消，对应 GitHub 同步 Webhook 已停用，代码由本机直接推送两端；本项目不再保存本次新增的发布凭证或凭证模板。代理若需操作同步或发布，必须取得当次明确授权。
 
 ## 证据要求
 
@@ -48,3 +48,20 @@ pnpm run build:mp-weixin
 ## 固定分享欢迎图（2026-10-03）
 
 微信分享图与品牌图片共用 `staticResource.ts` 公网根地址，对象为 `haji/wx/share-welcome.png`。公开HTTPS地址应返回HTTP200、image/png；本轮远端文件17580字节、500×400且与备份相同。备份位于 `app/offloaded-static-assets/wx/share-welcome.png`，渲染脚本输出也位于该目录。修改对象内容由用户部署维护，代码地址变更须重新构建和上传小程序。验证与回退见[本轮档案](../10-iterations/2026/10/wechat-share-remote-image/README.md)。
+
+
+## 本机直接双推
+
+2026-10-17 起，本机直接推送 GitHub 与 Gitee。`main` 继续跟踪 GitHub `origin/main`；`origin` 设置两个 pushurl，`gitee` 用于独立 fetch/核对。Gitee 不再从 GitHub 拉取镜像，对应 GitHub Webhook 已停用；仓库导入产生的手动强制同步入口可能仍显示，不再使用。
+
+以下配置保存在本机 `.git/config`，不会随源码克隆。新克隆、确认 `origin` 尚无自定义 pushurl 且没有 `gitee` remote 后执行一次；已有配置先用 `git remote -v` 检查，避免重复追加：
+
+```sh
+git remote add gitee git@gitee.com:ihahaen/hahaen-ledger.git
+git remote set-url --add --push origin ssh://git@ssh.github.com:443/hahaen/hahaen-ledger.git
+git remote set-url --add --push origin git@gitee.com:ihahaen/hahaen-ledger.git
+```
+
+完成项目规定的 Review、验证和 upstream 拉取后，先 `git fetch gitee main` 并审查 `git log --oneline HEAD..gitee/main` 与 `git log --oneline gitee/main..HEAD`；若有远端独有提交，先完成语义同步及复验，再执行 `git push origin main`。两个 pushurl 的推送分别执行，不能保证跨平台原子成功；发生一端失败时如实报告，处理后普通推送失败的一端，不强推。
+
+推送后分别执行 `git ls-remote ssh://git@ssh.github.com:443/hahaen/hahaen-ledger.git refs/heads/main`、`git ls-remote git@gitee.com:ihahaen/hahaen-ledger.git refs/heads/main`，与 `git rev-parse HEAD` 对照。双端一致才算交付完成。此流程只传递源码，不触发代理发布。

@@ -1278,3 +1278,10 @@ PARTIAL：公开接口及页面资源探针未替代真实账号业务、数据�
 用户最新决定：后端、H5 与微信小程序后续均自行发版，撤销先前 Jenkins 自动发布授权，也不再要求代理主动触发 Gitee 同步。当前工程规则、README、运维/测试规范已按此收口；原有 Review、测试及 GitHub 提交推送规则继续生效。旧自动发布档案标为“历史，已撤销”，既往 #34/#28 实测仅作历史证据。
 
 已删除本机 Jenkins 凭证、版本化空模板、未完成的 Gitee 同步迭代草稿，以及本会话创建的临时发布/验证程序和相关临时记录；未读取或输出密钥。此前 Gitee 新令牌停在账号验证，未由代理生成/保存，本轮不操作远端账户令牌。原有 Jenkinsfile、线上任务、Gitee 镜像与 GitHub Webhook未修改，无业务/数据库变更，无需执行 SQL。PASS：本次差异 Review、删除状态、当前规范一致性、本地链接/锚点和 Git 空白检查通过；业务代码/Pipeline 无差异。纯文档/清理范围无 PARTIAL/FAIL/BLOCKED，业务测试/构建/运行不适用。检查结果见[本轮记录](../10-iterations/2026/10/manual-release-only/README.md)。
+
+
+## 2026-10-17｜取消 Gitee 镜像并改为本机直接双推
+
+PASS：Gitee Pull 镜像已取消（管理页空列表），GitHub 对应同步 Webhook 已停用（Active=0）。Gitee Webhooks 页面显示当前仓库没有使用 Webhook。本机 origin 保留 GitHub 拉取，两个 pushurl 分别直接推送 GitHub 和 Gitee；gitee remote 用于独立核对。初始 Gitee main 落后本地一个已有提交 d97e218，没有独有提交，无需强推。
+
+本轮只修改 Git 本机配置和工程文档，无业务、数据库、SQL 或发布操作。PASS：本机 `git push origin main` 已将 Gitee 快进到 d97e218，随后两端 ls-remote 与本地一致；文档链接/锚点、remote 配置断言和 Git 空白检查通过。同步复验和最终交付证据见[本轮档案](../10-iterations/2026/10/gitee-direct-push/README.md)；业务测试、构建及 DEV 联调不适用。

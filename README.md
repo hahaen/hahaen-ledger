@@ -75,3 +75,8 @@ pnpm run build:mp-weixin
 ## 开发完成后的自动提交
 
 每次修改完成后，按 [AGENTS.md](AGENTS.md) 的“验证、同步与自动提交”规则执行：仅针对本次任务新增或修改的代码做 Review 并修复问题、复审通过 → 测试及必要构建通过 → 拉取当前分支 upstream 并解决冲突 → 重新 Review 本次任务改动及相关冲突解决差异并复验 → 自动提交并推送到当前分支 upstream，无需再次确认。提交信息使用中文 Conventional Commit，例如 `feat(todo): 新增独立待办清单与周期提醒`。仅提交并推送本次任务内容；后端、H5 和微信小程序均由用户自行发版，代理不自动触发 Jenkins 或主动同步 Gitee。原有 Jenkinsfile 供用户手动发版使用。如需代理操作同步或发布，须有当次明确授权。当次明确要求不提交或不推送时，以当次指令为准。
+
+
+## 本机直接推送 GitHub 与 Gitee
+
+本机 `git push origin main` 会分别直接推送 GitHub 与 Gitee；拉取仍使用 GitHub `origin/main`。Gitee Pull 镜像已取消，对应 GitHub 同步 Webhook 已停用。配置与新克隆恢复步骤见 [运维文档](docs/05-operations/README.md#本机直接双推)。
