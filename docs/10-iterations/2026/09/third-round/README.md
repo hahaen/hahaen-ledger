@@ -501,3 +501,13 @@ PARTIAL：运行证据为H5合成接口夹具；NOT_RUN（补充）：微信工�
 - database/api/backend/frontend：无实现或数据库变化，无需 SQL，发版仍由用户处理。
 - testing/commands/verification：Gitee 镜像空列表、GitHub 对应 Webhook Active=0、Gitee 无 Webhook、本机 remote/pushurl 和远端祖先关系已核对；本机双推成功且两端 main 与本地 d97e218 一致，文档链接/锚点、配置与空白检查 PASS；最终复验见[本轮档案](../../10/gitee-direct-push/README.md)。业务测试/构建/DEV 不适用。
 - rollback：移除本机新增的 origin pushurl 及 gitee remote 可恢复 GitHub 单推；恢复镜像前需重新确认意图与两端提交。
+
+
+## 2026-10-18｜每次修改后说明更新范围
+
+- requirement/design：AGENTS.md 新增最终汇报要求，逐项说明后端、H5、微信小程序及其他受影响服务是否需要更新和原因；涉及 Migration、SQL、配置或静态资源时说明操作、实际执行状态与必要顺序。无需部署时明确告知，无自动发布授权变化。
+- database/api/backend/frontend：纯文档修改，无业务、数据库或配置变化；本次无需更新任何服务或客户端，无需执行 SQL。
+- testing/commands：Review 仅覆盖本次新增规则与本条审计记录，核对需求和用户自行发版边界，无未解决问题；Python 内容断言通过，新增文本无 Markdown 链接，`git diff --check` 退出 0。
+- verification：规则内容与 Git 空白检查 PASS；业务测试、构建及 DEV 运行因纯文档修改不适用，无本轮 PARTIAL、FAIL 或 BLOCKED。
+- rollback：回退本次文档提交。
+- 同步：`git pull --ff-only` 返回 Already up to date；抓取并核对 GitHub/Gitee main 均与本地 HEAD 一致。stash 恢复后四份文档 SHA-256 一致，确认后删除备份；同步后复审仍无未解决问题。

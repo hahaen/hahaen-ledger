@@ -1285,3 +1285,13 @@ PARTIAL：公开接口及页面资源探针未替代真实账号业务、数据�
 PASS：Gitee Pull 镜像已取消（管理页空列表），GitHub 对应同步 Webhook 已停用（Active=0）。Gitee Webhooks 页面显示当前仓库没有使用 Webhook。本机 origin 保留 GitHub 拉取，两个 pushurl 分别直接推送 GitHub 和 Gitee；gitee remote 用于独立核对。初始 Gitee main 落后本地一个已有提交 d97e218，没有独有提交，无需强推。
 
 本轮只修改 Git 本机配置和工程文档，无业务、数据库、SQL 或发布操作。PASS：本机 `git push origin main` 已将 Gitee 快进到 d97e218，随后两端 ls-remote 与本地一致；文档链接/锚点、remote 配置断言和 Git 空白检查通过。同步复验和最终交付证据见[本轮档案](../10-iterations/2026/10/gitee-direct-push/README.md)；业务测试、构建及 DEV 联调不适用。
+
+
+## 2026-10-18｜每次修改后说明更新范围
+
+- requirement/design：AGENTS.md 新增最终汇报要求，逐项说明后端、H5、微信小程序及其他受影响服务是否需要更新和原因；涉及 Migration、SQL、配置或静态资源时说明操作、实际执行状态与必要顺序。无需部署时明确告知，无自动发布授权变化。
+- database/api/backend/frontend：纯文档修改，无业务、数据库或配置变化；本次无需更新任何服务或客户端，无需执行 SQL。
+- testing/commands：Review 仅覆盖本次新增规则与本条审计记录，核对需求和用户自行发版边界，无未解决问题；Python 内容断言通过，新增文本无 Markdown 链接，`git diff --check` 退出 0。
+- verification：规则内容与 Git 空白检查 PASS；业务测试、构建及 DEV 运行因纯文档修改不适用，无本轮 PARTIAL、FAIL 或 BLOCKED。
+- rollback：回退本次文档提交。
+- 同步：`git pull --ff-only` 返回 Already up to date；抓取并核对 GitHub/Gitee main 均与本地 HEAD 一致。stash 恢复后四份文档 SHA-256 一致，确认后删除备份；同步后复审仍无未解决问题。
