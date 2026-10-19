@@ -35,3 +35,15 @@ test('关闭及禁止背景滑动仅绑定在独立遮罩，内容点击不会�
   assert.deepEqual(on(mask, 'touchmove').modifiers, ['stop', 'prevent'])
   assert.match(on(mask, 'click').exp.loc.source, /repayAccountOpen = false/)
 })
+
+test('还款金额输入框祖先不绑定关闭，关闭事件只属于同级遮罩', () => {
+  const { node: modal, parents } = find(ast, 'repay-modal')
+  for (const ancestor of [modal, ...parents]) {
+    assert.ok(!on(ancestor, 'click'), '小程序不能依赖祖先 click.self 区分输入框与背景')
+  }
+  const backdrop = parents.at(-1)
+  const mask = backdrop.children.find(child => classes(child).includes('picker-touch-mask'))
+  assert.ok(mask, '遮罩必须与表单面板同级')
+  assert.deepEqual(on(mask, 'click').modifiers, ['stop'])
+  assert.match(on(mask, 'click').exp.loc.source, /!saving && \(repayOpen = false\)/)
+})

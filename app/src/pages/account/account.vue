@@ -181,7 +181,7 @@ function returnToRepay() {
   repayAccountOpen.value = false
   repayOpen.value = true
 }
-function onRepayPickerTouchMove(event: Event) {
+function onRepayModalTouchMove(event: Event) {
   // H5 保留列表默认滚动；微信祖先不能使用 catchtouchmove。
   // #ifdef H5
   event.stopPropagation()
@@ -256,8 +256,9 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
         <view class="account-delete-actions"><button class="account-delete-cancel" :disabled="deleting" @click="deleteOpen = false">取消</button><button class="account-delete-confirm" :disabled="deleting" @click="confirmRemove">{{ deleting ? '删除中…' : '确认删除' }}</button></view>
       </view>
     </view>
-    <view v-if="repayOpen" class="asset-create-backdrop" @click.self="!saving && (repayOpen = false)" @touchmove.stop.prevent>
-      <view class="repay-modal" role="dialog" aria-modal="true" aria-label="还款">
+    <view v-if="repayOpen" class="asset-create-backdrop repay-form-backdrop">
+      <view class="picker-touch-mask" @click.stop="!saving && (repayOpen = false)" @touchmove.stop.prevent />
+      <view class="repay-modal" role="dialog" aria-modal="true" aria-label="还款" @touchmove="onRepayModalTouchMove">
         <view class="asset-create-handle" />
         <text class="repay-title">还款 · {{ account?.name }}</text>
         <view class="repay-copy">当前欠款 <MoneyDisplay :value="account?.balanceCents" />，还款后恢复相应可用额度。</view>
@@ -268,7 +269,7 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
     </view>
     <view v-if="repayAccountOpen" class="asset-create-backdrop repay-picker-backdrop">
       <view class="picker-touch-mask" @click.stop="!saving && (repayAccountOpen = false)" @touchmove.stop.prevent />
-      <view class="repay-account-modal" role="dialog" aria-modal="true" aria-label="选择还款账户" @touchmove="onRepayPickerTouchMove">
+      <view class="repay-account-modal" role="dialog" aria-modal="true" aria-label="选择还款账户" @touchmove="onRepayModalTouchMove">
         <view class="asset-create-handle" />
         <text class="repay-title">选择还款账户</text>
         <scroll-view scroll-y class="repay-choice-list"><view class="repay-choice-content"><button v-for="fund in fundAccounts" :key="fund.id" :class="['repay-choice-item', { selected: repayFundId === fund.id }]" :disabled="saving" @click="selectRepayAccount(fund.id)"><image class="repay-account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="repay-account-copy"><text class="repay-account-name">{{ fund.name }}</text><view class="repay-choice-balance"><text>账户余额</text><MoneyDisplay :value="fund.balanceCents" /></view></view><text class="repay-choice-check">{{ repayFundId === fund.id ? '✓' : '' }}</text></button></view></scroll-view>
