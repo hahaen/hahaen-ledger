@@ -77,6 +77,12 @@ function openRefund() {
   refundError.value = ''
   refundOpen.value = true
 }
+function onRefundTouchMove(event: Event) {
+  // H5 保留表单默认触摸行为；小程序面板祖先不能拦截触摸。
+  // #ifdef H5
+  event.stopPropagation()
+  // #endif
+}
 async function refund() {
   if (!detail.value || !detail.value.effectiveCents || saving.value) return
   saving.value = true
@@ -172,8 +178,9 @@ function remove() { openDelete({ type: 'transaction' }) }
       <view v-if="detail.refunds.length" class="detail-section refund-section"><view class="detail-section-heading"><view class="refund-section-heading"><text class="section-kicker">REFUND RECORD</text><text class="section-title">退款记录</text></view><text class="section-meta">{{ detail.refunds.length }} 笔</text></view><view class="refund-record-card"><view class="refund-total-row"><text>累计退款</text><MoneyDisplay class="liability" :value="detail.refundedCents" /></view><view v-for="(record, index) in detail.refunds" :key="record.id" class="refund-record-item"><text class="field-icon">↩</text><view class="account-main"><text class="account-name">第 {{ index + 1 }} 笔退款</text><text class="account-desc">{{ record.createdAt.replace('T', ' ').slice(0, 16) }}</text></view><MoneyDisplay class="liability" :value="record.amountCents" /><button class="refund-delete" :disabled="saving || loading" @click="removeRefund(record.id)">删除</button></view></view></view>
       <view class="detail-actions"><button class="detail-action" :disabled="saving || loading" @click="edit">编辑</button><button v-if="['EXPENSE', 'INCOME'].includes(detail.transaction.type)" class="detail-action refund" :disabled="!detail.effectiveCents || saving || loading" @click="openRefund">{{ detail.effectiveCents ? '退款' : '已退款' }}</button><button class="detail-action delete" :disabled="saving || loading" @click="remove">删除</button></view>
     </template>
-    <view v-if="refundOpen && detail" class="refund-backdrop" @click.self="!saving && (refundOpen = false)" @touchmove.stop.prevent>
-      <view class="refund-modal" role="dialog" aria-modal="true" aria-label="填写退款金额">
+    <view v-if="refundOpen && detail" class="refund-backdrop">
+      <view class="picker-touch-mask" @click.stop="!saving && (refundOpen = false)" @touchmove.stop.prevent />
+      <view class="refund-modal" role="dialog" aria-modal="true" aria-label="填写退款金额" @touchmove="onRefundTouchMove">
         <view class="refund-handle" />
         <text class="refund-title">填写退款金额</text>
         <view class="refund-copy">退回这笔{{ detail.transaction.type === 'EXPENSE' ? '支出' : '收入' }}，原账单金额为 <MoneyDisplay :value="detail.transaction.originalAmountCents" />，本次最多可退款 <MoneyDisplay :value="detail.effectiveCents" />。</view>
