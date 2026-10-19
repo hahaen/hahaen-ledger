@@ -65,3 +65,5 @@
 - 2026-10-12：[Android 微信全局金额格式化](2026/10/android-number-format/README.md)；173项回归、类型、双端构建和微信产物模拟渲染 PASS，手机新包待验。
 
 - [2026-10-17 取消 Gitee 镜像并改为本机直接双推](2026/10/gitee-direct-push/README.md)。
+
+- [2026-10-19 手机还款账户列表滚动修复](2026/10/repayment-picker-scroll/README.md)：独立遮罩、原生列表及横屏按钮；175 项回归、双端构建、生产 H5 触摸和微信模拟器滚轮选择通过，手机触摸待验。

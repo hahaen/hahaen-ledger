@@ -886,3 +886,9 @@ PASS：Gitee Pull 镜像已取消（管理页空列表），GitHub 对应同步 
 - verification：规则内容与 Git 空白检查 PASS；业务测试、构建及 DEV 运行因纯文档修改不适用，无本轮 PARTIAL、FAIL 或 BLOCKED。
 - rollback：回退本次文档提交。
 - 同步：`git pull --ff-only` 返回 Already up to date；抓取并核对 GitHub/Gitee main 均与本地 HEAD 一致。stash 恢复后四份文档 SHA-256 一致，确认后删除备份；同步后复审仍无未解决问题。
+
+## 2026-10-19｜手机还款账户列表滚动
+
+独立遮罩替代滚动祖先的触摸取消，账户选择使用原生 scroll-view；面板高度限制让横屏返回按钮保持可见。Review 仅覆盖本轮页面、样式、两个测试文件及文档，无未解决问题。PASS：175/175 前端回归、TypeScript、H5/微信构建、四手机视口生产 H5 上下触摸滑动/末项选择/金额保留/背景关闭及微信 WXML。微信开发者工具已有项目通过 UI 验证滚轮滚至末项、选择并取消表单，未提交还款；CLI 服务端口关闭，采用 UI 替代验证，未改安全设置。
+
+PARTIAL：H5 为合成接口，工具滚轮不等于手机手势；NOT_RUN（补充）：手机微信、Safari/Chrome 真机触摸和发布。无未解决必需 FAIL/BLOCKED。后端无需更新；H5 静态产物及微信小程序新包需由用户发布，无先后依赖；无数据库、SQL、配置或额外图片资源操作。详细命令、Review 和边界见[本轮档案](../10-iterations/2026/10/repayment-picker-scroll/README.md)。

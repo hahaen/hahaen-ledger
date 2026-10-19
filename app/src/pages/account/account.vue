@@ -181,6 +181,12 @@ function returnToRepay() {
   repayAccountOpen.value = false
   repayOpen.value = true
 }
+function onRepayPickerTouchMove(event: Event) {
+  // H5 保留列表默认滚动；微信祖先不能使用 catchtouchmove。
+  // #ifdef H5
+  event.stopPropagation()
+  // #endif
+}
 async function repay() {
   if (!account.value || formKind.value !== 'CREDIT' || saving.value) return
   const fund = selectedRepayFund.value
@@ -260,11 +266,12 @@ function openTransaction(transactionId: string) { uni.navigateTo({ url: `/pages/
         <view class="repay-actions"><button class="repay-cancel" :disabled="saving" @click="repayOpen = false">取消</button><button class="repay-confirm" :disabled="saving" @click="repay">{{ saving ? '还款中…' : '确认还款' }}</button></view>
       </view>
     </view>
-    <view v-if="repayAccountOpen" class="asset-create-backdrop repay-picker-backdrop" @click.self="!saving && (repayAccountOpen = false)" @touchmove.stop.prevent>
-      <view class="repay-account-modal" role="dialog" aria-modal="true" aria-label="选择还款账户">
+    <view v-if="repayAccountOpen" class="asset-create-backdrop repay-picker-backdrop">
+      <view class="picker-touch-mask" @click.stop="!saving && (repayAccountOpen = false)" @touchmove.stop.prevent />
+      <view class="repay-account-modal" role="dialog" aria-modal="true" aria-label="选择还款账户" @touchmove="onRepayPickerTouchMove">
         <view class="asset-create-handle" />
         <text class="repay-title">选择还款账户</text>
-        <view class="repay-choice-list"><button v-for="fund in fundAccounts" :key="fund.id" :class="['repay-choice-item', { selected: repayFundId === fund.id }]" :disabled="saving" @click="selectRepayAccount(fund.id)"><image class="repay-account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="repay-account-copy"><text class="repay-account-name">{{ fund.name }}</text><view class="repay-choice-balance"><text>账户余额</text><MoneyDisplay :value="fund.balanceCents" /></view></view><text class="repay-choice-check">{{ repayFundId === fund.id ? '✓' : '' }}</text></button></view>
+        <scroll-view scroll-y class="repay-choice-list"><view class="repay-choice-content"><button v-for="fund in fundAccounts" :key="fund.id" :class="['repay-choice-item', { selected: repayFundId === fund.id }]" :disabled="saving" @click="selectRepayAccount(fund.id)"><image class="repay-account-icon" :src="staticResource('prototype/funds-account.png')" mode="aspectFit" /><view class="repay-account-copy"><text class="repay-account-name">{{ fund.name }}</text><view class="repay-choice-balance"><text>账户余额</text><MoneyDisplay :value="fund.balanceCents" /></view></view><text class="repay-choice-check">{{ repayFundId === fund.id ? '✓' : '' }}</text></button></view></scroll-view>
         <button class="repay-return" :disabled="saving" @click="returnToRepay">返回还款</button>
       </view>
     </view>
