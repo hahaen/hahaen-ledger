@@ -38,7 +38,7 @@
 
 生产构建不允许通过大面积 `any`、关闭 strict、`eslint-disable` 或 `@ts-ignore` 掩盖类型问题。视觉截图或浏览器运行证据必须实际存在；没有截图文件时不能把设计验收写成 PASS。
 
-H5 浏览器入口统一在 `app/index.html` 声明 `/static/brand.png` 为 PNG favicon，复用主应用图标；不在页面组件中各自维护浏览器图标资源。
+H5 浏览器入口统一在 `app/index.html` 声明 `/static/brand.png` 为 PNG favicon，主屏幕 `apple-touch-icon` 复用 `/offloaded-static-assets/wx/brand-white.png` 白底品牌源图。两者均由 Vite 解析存在的源文件并生成带 `/haji/` base 与内容哈希的资源，禁止引用已删除的 `/static/brand-white.png`；不在页面组件中各自维护图标。H5 构建后执行 `node app/tests/h5-icons-build.check.mjs`（仓库根目录），验证实际生产 HTML、图标 HTTP 状态、PNG 类型及与源图一致。白底图不重新放入小程序 static 目录，修复仅需发布完整 H5 静态产物。真机主屏幕图标须在发布后重新添加验收，详见[本轮档案](../10-iterations/2026/10/h5-home-screen-icon/README.md)。
 
 ## 个人中心（2026-09-11）
 
