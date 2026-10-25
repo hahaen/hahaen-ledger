@@ -42,8 +42,21 @@ H5 直接替换产物；微信小程序继续由用户独立上传、提审和�
 
 ## verification
 
-PASS：首轮 Review、10 项部署/安全回归、Java 25 验证构建、H5 类型检查/构建、Bash 语法和文档检查。PASS：本轮 stash `fc0e8a0cd067f9ce028a7bb09c219ae94b100af2` 保存；`git pull --ff-only` 返回 Already up to date，恢复后 11 文件 SHA-256 与暂存状态完整核对才删除备份，无冲突；同步后差异复审及 10 项回归、Bash 语法、Java 25 verify（90 执行通过/6 默认跳过）、H5 类型检查/构建再次通过。NOT_RUN：正式发布及线上版本核对（提交推送后执行）。微信工具/客户端验证不适用，本轮不修改客户端业务。
+PASS：首轮 Review、10 项部署/安全回归、Java 25 验证构建、H5 类型检查/构建、Bash 语法和文档检查。PASS：本轮 stash `fc0e8a0cd067f9ce028a7bb09c219ae94b100af2` 保存；`git pull --ff-only` 返回 Already up to date，恢复后 11 文件 SHA-256 与暂存状态完整核对才删除备份，无冲突；同步后差异复审及 10 项回归、Bash 语法、Java 25 verify（90 执行通过/6 默认跳过）、H5 类型检查/构建再次通过。PASS：正式发布及线上版本核对，见下方实际记录。微信工具/客户端验证不适用，本轮不修改客户端业务。
 
 ## rollback
 
 无旧版本备份或自动回滚。需要恢复时从 Git 选择兼容提交重新编译上传，不自动降级数据库。
+
+
+## 正式发布及分组件结果
+
+- 实现提交 `84bf371 feat(deploy): 修改完成后自动发布并取消旧版本备份` 已普通推送 GitHub `origin/main`；`git ls-remote origin refs/heads/main` 与本地完整 HEAD 一致，工作区干净后执行发布。
+- `python3 -B deploy/local/release.py all`：退出 0。本机再次执行 Java 25 verify（90 执行通过/6 默认跳过）、H5 类型检查/生产构建，上传校验、服务器 Docker 构建与替换成功。2026-10-25 20:29:20（北京时间）两个组件记录及整体记录均为 `84bf371cc7b40719d7a93d78f87df1728b26e497`。
+- 后端 **PASS / 发布成功**：`haji-server` 为 running、重启数 0，容器 revision 与发布提交一致；服务器 Nginx 检查通过，公网 `/haji-api/api/app/accounts` 返回预期 HTTP 401 / code=1。
+- H5 **PASS / 发布成功**：公网 HTML 与本机产物字节一致；两张品牌 PNG、入口 JS、两份 CSS 共 5 个入口资源 HTTP 200、MIME 正确且 SHA-256 与构建产物一致。
+- 旧版本清理 **PASS**：发布日志确认删除 `30ebe59` 旧镜像；`docker image ls hahaen/haji-server` 仅当前 `84bf371` 标签；运行目录无 previous 快照，网页无待替换目录，上传临时目录已清理。无旧版本复制或自动回滚。
+- 初次补充公网探针使用本机 Python urllib 时缺少本地 CA 链而失败；改用系统 `/usr/bin/curl` 保持 HTTPS 证书校验后全部成功，未关闭 TLS 校验，未更改线上配置。
+- PARTIAL：未登录接口和静态资源探针不等于真实账号记账、MinIO 或数据库业务全链路验收；本次未改业务实现/Schema，不要求额外业务写入。无未解决必需 FAIL/BLOCKED。
+- 微信小程序 **无需更新 / 未发布**：无客户端源码变化，未上传、提审或发布。数据库无 Migration/SQL 操作；Redis、MinIO、业务文件、日志和密钥保留。Nginx 仅语法检查/reload，其他服务无需更新且未发布。
+- 本段及审计摘要为发布后纯文档证据，不再次触发部署；服务器业务版本保持 `84bf371`。
