@@ -1,9 +1,6 @@
 services:
   haji-server:
-    build:
-      context: .
-      dockerfile: server/Dockerfile
-    image: hahaen/haji-server:prod
+    image: ${HAJI_IMAGE:?Set runtime image}
     container_name: haji-server
     restart: unless-stopped
     env_file:
@@ -16,12 +13,17 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
       - /home/hahaen/log/haji:/home/hahaen/log/haji
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
     expose:
       - "8080"
     networks:
-      - jenkins_default
+      - haen_application
 
 networks:
-  jenkins_default:
-    name: jenkins_default
+  haen_application:
+    name: haen_application
     external: true

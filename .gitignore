@@ -8,3 +8,6 @@ logs/
 *.log
 data/
 *.iml
+
+# Local Python deployment checks
+deploy/local/__pycache__/

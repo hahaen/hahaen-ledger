@@ -914,3 +914,8 @@ PARTIAL：H5 为合成接口，工具滚轮不等于手机手势；NOT_RUN（补
 ## 2026-10-25｜iPhone Safari 金额键盘轻触反馈
 
 requirement/design/frontend：仅 H5 金额键盘增加直接触摸原生 switch 的系统短触感适配；保留原按钮可访问语义与单次保存入口，微信按键条件编译不变。database/api/backend 无变化，不涉及 SQL、认证、事务或幂等修改。testing/commands/verification：本轮差异 Review 及修正复审、180/180 前端回归、TypeScript、H5/微信构建、Chromium/WebKit 6 个手机视口与 2 个回退场景、原有 16 组滚动回归、DEV WebKit 触摸与空格输入、微信排除适配检查 PASS。PARTIAL：桌面引擎/只读夹具不能证明实际震感；NOT_RUN（发布后补充）：iPhone Safari 物理触感与 VoiceOver 真机验收，无未解决必需 FAIL/BLOCKED；详见[本轮档案](../10-iterations/2026/10/ios-calculator-haptics/README.md)。rollback：回退本轮接线、组件、回归与文档后重建 H5。仅 H5 需用户更新静态产物，后端/微信无需更新，本轮不发布。
+
+
+## 2026-10-25 本机部署与 Jenkins 退役
+
+本轮变更及实际验证状态见[任务记录](../10-iterations/2026/10/local-docker-deploy/README.md)；取代 Jenkins 和 Gitee 双推规则，历史记录不再作为当前操作指令。

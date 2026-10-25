@@ -72,11 +72,8 @@ pnpm run build:mp-weixin
 
 资产右侧新增“物品”，支持添加、在役/退役筛选、详情、退役出售与逻辑删除。物品按用户独立归属，不影响记账和账户余额。购入当天计第1天，在役日均成本=购入价/服役天数；退役后天数冻结，最终日均成本=(购入价-二手售价)/服役天数。正式迁移新增V6，已有V1–V5保持不变。详见 [物品契约](docs/03-api/items.md) 和 [本轮验收](docs/10-iterations/2026/09/item-lifecycle/09-verification.md)。
 
-## 开发完成后的自动提交
+## 开发完成后的自动提交与部署
 
-每次修改完成后，按 [AGENTS.md](AGENTS.md) 的“验证、同步与自动提交”规则执行：仅针对本次任务新增或修改的代码做 Review 并修复问题、复审通过 → 测试及必要构建通过 → 拉取当前分支 upstream 并解决冲突 → 重新 Review 本次任务改动及相关冲突解决差异并复验 → 自动提交并推送到当前分支 upstream，无需再次确认。提交信息使用中文 Conventional Commit，例如 `feat(todo): 新增独立待办清单与周期提醒`。仅提交并推送本次任务内容；后端、H5 和微信小程序均由用户自行发版，代理不自动触发 Jenkins 或主动同步 Gitee。原有 Jenkinsfile 供用户手动发版使用。如需代理操作同步或发布，须有当次明确授权。当次明确要求不提交或不推送时，以当次指令为准。
+按 [AGENTS.md](AGENTS.md) 完成本轮 Review、验证、安全保存、upstream 同步、复审复验、逐文件暂存、提交与普通推送；只推送 GitHub，不再推送 Gitee。
 
-
-## 本机直接推送 GitHub 与 Gitee
-
-本机 `git push origin main` 会分别直接推送 GitHub 与 Gitee；拉取仍使用 GitHub `origin/main`。Gitee Pull 镜像已取消，对应 GitHub 同步 Webhook 已停用。配置与新克隆恢复步骤见 [运维文档](docs/05-operations/README.md#本机直接双推)。
+本机执行 `python3 deploy/local/release.py all` 验证、编译并上传 JAR/H5；也可选择 `backend` 或 `h5`。服务器由 Docker 打包与更新服务，成功后只保留最新产物，不拉取源码。微信小程序仍独立发布。详细配置、清理边界和失败处理见[运维文档](docs/05-operations/README.md)。

@@ -41,3 +41,8 @@
 - [物品与账户详情修复](item-account-detail-fixes/README.md)。
 
 - [iPhone Safari 金额键盘轻触反馈](ios-calculator-haptics/README.md)。
+
+
+## 2026-10-25 本机部署与 Jenkins 退役
+
+本轮变更及实际验证状态见[任务记录](local-docker-deploy/README.md)；取代 Jenkins 和 Gitee 双推规则，历史记录不再作为当前操作指令。

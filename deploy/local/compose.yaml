@@ -1,0 +1,29 @@
+services:
+  haji-server:
+    image: ${HAJI_IMAGE:?Set runtime image}
+    container_name: haji-server
+    restart: unless-stopped
+    env_file:
+      - /home/hahaen/haji-prod.env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Shanghai
+      JAVA_TOOL_OPTIONS: "-Dio.netty.noUnsafe=true -Duser.timezone=Asia/Shanghai"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /home/hahaen/log/haji:/home/hahaen/log/haji
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+    expose:
+      - "8080"
+    networks:
+      - haen_application
+
+networks:
+  haen_application:
+    name: haen_application
+    external: true

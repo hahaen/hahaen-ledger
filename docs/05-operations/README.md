@@ -15,7 +15,7 @@ Flyway 由应用启动执行，位置为 `classpath:db/migration`，当前仓库
 
 dev 环境可在 `server/application-dev.local.yml` 配置数据库 URL/账号/密码、Redis、MinIO、CORS、微信和 H5 RSA 私钥；该文件受 `.gitignore` 保护，提交前仍需检查 Git 状态。生产环境必须通过环境变量提供同类配置；生产配置中的 `GENERATE` 仅是兜底值，不能作为生产密钥策略。真实凭证不能进入被跟踪文件、文档、命令和日志。
 
-生产后端文件日志配置为 `/home/hahaen/log/haji`。Docker Compose 将该宿主机目录 bind mount 到容器内同一路径；通过 Jenkins 使用仓库中的 `docker-compose.prod.yml` 部署后，可直接在宿主机查看该目录。首次启用挂载前，先备份需要保留的旧容器内日志，因为挂载会遮住容器原目录内容。应用控制台日志也可通过 `docker logs haji-server` 查看。
+生产后端文件日志配置为 `/home/hahaen/log/haji`。Docker Compose 将该宿主机目录 bind mount 到容器内同一路径；通过本机上传入口使用运行 Compose 部署后，可直接在宿主机查看该目录。首次启用挂载前，先备份需要保留的旧容器内日志，因为挂载会遮住容器原目录内容。应用控制台日志也可通过 `docker logs haji-server` 查看。
 
 MinIO 的 `MINIO_ENDPOINT` 是应用服务器访问 MinIO 的内网 API 地址。若该地址不能被浏览器/微信客户端访问，生产环境还须在部署环境配置 `MINIO_PUBLIC_URL_PREFIX`。后端仍以 `MINIO_ENDPOINT` 生成签名，仅替换返回 URL 的外部前缀；Nginx 必须将公网前缀去前缀代理至同一内网 Endpoint，并让上游收到与签名一致的 Host（使用该 Endpoint 作为 `proxy_pass` 时保留 Nginx 默认 `$proxy_host`）。生产 Profile 要求提供非空 `MINIO_PUBLIC_URL_PREFIX`，缺少时应用启动失败；不要把 MinIO Console 地址 `9001` 配成对象 API 地址。
 
@@ -38,7 +38,13 @@ pnpm run build:mp-weixin
 
 ## 发布方式
 
-后端、H5 和微信小程序均由用户自行发版。代理完成 Review、测试及 Git 提交推送后，不自动触发 Jenkins，也不主动调用 Gitee 镜像同步。原有 Jenkinsfile 与线上任务保持现有配置；Gitee Pull 镜像已取消，对应 GitHub 同步 Webhook 已停用，代码由本机直接推送两端；本项目不再保存本次新增的发布凭证或凭证模板。代理若需操作同步或发布，必须取得当次明确授权。
+从仓库根执行 `python3 deploy/local/release.py all`，可选 `backend`、`h5`。本机需 Java 25、Maven、Node/pnpm、生产 H5 环境配置，以及可严格验证主机密钥的 SSH 别名 `hahaen-server`。`--host` 可选择其他已配置目标，`--build-only` 只验证编译，不连接服务器。必须先提交跟踪文件改动，产物绑定提交号。
+
+后端先 `mvn clean verify`，H5 先类型检查/生产构建；仅上传 JAR/H5、运行 Dockerfile、Compose 与发布脚本。服务器不安装 Maven、pnpm 或应用源码。Docker 在 `linux/amd64` 下仅复制产物打包镜像，不编译源码。本机不需要安装 Docker。
+
+服务器运行配置在 `/home/hahaen/ledger-runtime/{compose.yaml,release.env}`，其中 `HAJI_IMAGE` 指向当前不可变标签；私有配置仍为 `/home/hahaen/haji-prod.env`，JAR 不进入 Git。Nginx 与后端共用外部网络 `haen_application`；H5 目录为 `/home/hahaen/nginx/html/haji`。发布加排他锁，后端以未登录 API 的 HTTP 401 检查真实 HTTP 服务，经过 Nginx 验证后再提交配置和删除旧镜像/临时文件；失败恢复原运行镜像及网页，迁移材料变化时拒绝普通更新，必须先完成审核、备份与正式迁移，再记录实际摘要；数据库保持 Flyway 正向规则，不反向迁移。
+
+成功后只留当前版本；需要回退时从 Git 选择兼容版本重新编译。保留生产 MySQL/Redis/MinIO、密钥、证书、业务文件和日志，不执行全局镜像或卷清理。Git 提交推送与生产上线是独立授权；微信小程序不经此入口发布。
 
 ## 证据要求
 
@@ -50,18 +56,6 @@ pnpm run build:mp-weixin
 微信分享图与品牌图片共用 `staticResource.ts` 公网根地址，对象为 `haji/wx/share-welcome.png`。公开HTTPS地址应返回HTTP200、image/png；本轮远端文件17580字节、500×400且与备份相同。备份位于 `app/offloaded-static-assets/wx/share-welcome.png`，渲染脚本输出也位于该目录。修改对象内容由用户部署维护，代码地址变更须重新构建和上传小程序。验证与回退见[本轮档案](../10-iterations/2026/10/wechat-share-remote-image/README.md)。
 
 
-## 本机直接双推
+## GitHub 单端推送
 
-2026-10-17 起，本机直接推送 GitHub 与 Gitee。`main` 继续跟踪 GitHub `origin/main`；`origin` 设置两个 pushurl，`gitee` 用于独立 fetch/核对。Gitee 不再从 GitHub 拉取镜像，对应 GitHub Webhook 已停用；仓库导入产生的手动强制同步入口可能仍显示，不再使用。
-
-以下配置保存在本机 `.git/config`，不会随源码克隆。新克隆、确认 `origin` 尚无自定义 pushurl 且没有 `gitee` remote 后执行一次；已有配置先用 `git remote -v` 检查，避免重复追加：
-
-```sh
-git remote add gitee git@gitee.com:ihahaen/hahaen-ledger.git
-git remote set-url --add --push origin ssh://git@ssh.github.com:443/hahaen/hahaen-ledger.git
-git remote set-url --add --push origin git@gitee.com:ihahaen/hahaen-ledger.git
-```
-
-完成项目规定的 Review、验证和 upstream 拉取后，先 `git fetch gitee main` 并审查 `git log --oneline HEAD..gitee/main` 与 `git log --oneline gitee/main..HEAD`；若有远端独有提交，先完成语义同步及复验，再执行 `git push origin main`。两个 pushurl 的推送分别执行，不能保证跨平台原子成功；发生一端失败时如实报告，处理后普通推送失败的一端，不强推。
-
-推送后分别执行 `git ls-remote ssh://git@ssh.github.com:443/hahaen/hahaen-ledger.git refs/heads/main`、`git ls-remote git@gitee.com:ihahaen/hahaen-ledger.git refs/heads/main`，与 `git rev-parse HEAD` 对照。双端一致才算交付完成。此流程只传递源码，不触发代理发布。
+`main` 跟踪 GitHub `origin/main`，`origin` 只有 GitHub 推送地址。已移除 Gitee remote 与双推；不再新增镜像同步或 Webhook。按全局顺序安全保存、拉取 upstream、恢复、复审复验、逐文件暂存，提交后普通推送并核对远端 HEAD。
