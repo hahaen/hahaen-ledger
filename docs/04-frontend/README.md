@@ -24,7 +24,7 @@
 
 ## 交互约束
 
-按钮及明确可点击控件通过 prototype.scss 提供两端一致的微小按压缩放，不触发系统振动。金额键盘按键单独保留轻振动：H5 在支持且未启用减少动态效果时调用 navigator.vibrate(8)，微信小程序调用 uni.vibrateShort({ type: 'light' })；禁用按键不触发。真实设备振动仍需在 H5 移动浏览器和微信开发者工具/真机分别验收。
+按钮及明确可点击控件通过 prototype.scss 提供两端一致的微小按压缩放，不触发系统振动。金额键盘按键单独保留轻振动：支持标准 API 的 H5 浏览器调用 navigator.vibrate(15)，微信小程序调用 uni.vibrateShort({ type: 'light' })；禁用按键不触发。iPhone Safari 原生 switch 适配与验收限制见下文，不启用全局振动。
 
 金额格式统一使用 app/src/utils/money.ts：formatYuan() 接收整数分并返回不带货币符号的文本。运行时页面的可视金额统一使用 app/src/components/MoneyDisplay.vue，组件只展示金额数值和必要的正负/文字前缀，不渲染钱币图标；金额输入框同样不附加 ¥。整数金额不展示 .00，有效小数保留两位，数字/字符串/null/undefined 输入必须得到一致且安全的结果。页面禁止自行调用 toFixed、判断 .00 或通过 /100 拼接展示金额。
 
@@ -178,3 +178,9 @@ App 在异步会话恢复前注册单例更新管理器。微信报告 hasUpdate
 还款主表单也必须将关闭与触摸拦截放在同级独立遮罩；禁止依赖祖先 `click.self` 保护微信输入框。面板相对定位，金额点击、输入和选账户往返必须保留弹窗及金额草稿。验收需明确执行输入框点击和编辑，不能只用列表选择代替。证据见[金额输入修复](../10-iterations/2026/10/repayment-amount-input/README.md)。
 
 账单详情退款表单采用同级独立遮罩，关闭保留提交中保护；金额框及内容祖先不绑定关闭或 catchtouchmove。验收须覆盖金额编辑、提交禁用、超额错误、失败草稿和幂等重试。证据见[退款输入修复](../10-iterations/2026/10/refund-amount-input/README.md)。
+
+## 2026-10-25 iPhone Safari 金额键盘触感
+
+仅 H5 记账金额键盘使用 CalculatorKey；检测 iPhone Safari 和原生 switch 支持后，以真正 HTML checkbox switch 的透明覆盖层接收手指点击。原生 input 由 Vue h 创建，避免 uni-input 转换；与可读屏/键盘操作的原按钮同级，覆盖层 aria-hidden 且不进入 Tab 顺序。所有路径仍只调用一次 pressCalculatorKey，加载/保存/错误禁用时覆盖层也 disabled；减少动态效果时覆盖层不捕获点击。微信条件编译完全排除组件与 DOM 探测，保留原按钮和反馈。
+
+Safari 系统短触感不能自定义强度/时长，也不能由 switch 能力检测保证物理震感；不支持时回退原按钮视觉反馈。当前规范中的真实设备结论以[本轮证据](../10-iterations/2026/10/ios-calculator-haptics/README.md)为准。仅 H5 需要用户发布完整静态产物，无后端、SQL、配置或小程序发版要求。

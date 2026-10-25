@@ -16,6 +16,9 @@ import { onLoad, onBackPress } from '@dcloudio/uni-app'
 import EntryDateTimePicker from '../../components/EntryDateTimePicker.vue'
 import NativeNavigation from '../../components/NativeNavigation.vue'
 import MoneyDisplay from '../../components/MoneyDisplay.vue'
+// #ifdef H5
+import CalculatorKey from '../../components/CalculatorKey.vue'
+// #endif
 import { useLedger, TransactionPayload } from '../../stores/ledger'
 import { request } from '../../utils/api'
 import { cents, formatYuan, inputYuan, localDateTime } from '../../utils/money'
@@ -279,9 +282,16 @@ async function save(afterSave: 'home' | 'again') {
     </scroll-view>
     <view class="keypad" aria-label="金额键盘">
       <view v-for="key in ['1', '2', '3', '⌫', '4', '5', '6', '+−', '7', '8', '9', '×÷', 'C', '0', '.', 'confirm']" :key="key" :class="['keypad-cell', { 'keypad-pair': key === '+−' || key === '×÷' }]">
+        <!-- #ifdef H5 -->
+        <template v-if="key === '+−' || key === '×÷'"><CalculatorKey v-for="operator in key.split('')" :key="operator" class="key" :aria-label="operator" :disabled="locked" @click="pressCalculatorKey(operator)">{{ operator }}</CalculatorKey></template>
+        <CalculatorKey v-else-if="key === 'confirm'" class="key key-confirm" aria-label="确定保存记账" :disabled="locked" @click="pressCalculatorKey('confirm')">{{ saving ? '保存中' : '确定' }}</CalculatorKey>
+        <CalculatorKey v-else :class="['key', { 'key-text': key === 'C', 'key-backspace': key === '⌫' }]" :aria-label="key === 'C' ? '保存并重新记账' : key === '⌫' ? '退格' : key" :disabled="locked" @click="pressCalculatorKey(key)">{{ key === 'C' ? '再记' : key }}</CalculatorKey>
+        <!-- #endif -->
+        <!-- #ifndef H5 -->
         <template v-if="key === '+−' || key === '×÷'"><button v-for="operator in key.split('')" :key="operator" class="key" :disabled="locked" @click="pressCalculatorKey(operator)">{{ operator }}</button></template>
         <button v-else-if="key === 'confirm'" class="key key-confirm" :disabled="locked" @click="pressCalculatorKey('confirm')">{{ saving ? '保存中' : '确定' }}</button>
         <button v-else :class="['key', { 'key-text': key === 'C', 'key-backspace': key === '⌫' }]" :aria-label="key === 'C' ? '保存并重新记账' : key === '⌫' ? '退格' : key" :disabled="locked" @click="pressCalculatorKey(key)">{{ key === 'C' ? '再记' : key }}</button>
+        <!-- #endif -->
       </view>
     </view>
     <view v-if="successVisible" class="entry-success-toast" role="status" aria-live="polite"><view class="entry-success-icon">✓</view><text>记账成功</text></view>

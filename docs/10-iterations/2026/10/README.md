@@ -39,3 +39,5 @@
 - [日历月度汇总与当天收支](calendar-month-summary/README.md)。
 
 - [物品与账户详情修复](item-account-detail-fixes/README.md)。
+
+- [iPhone Safari 金额键盘轻触反馈](ios-calculator-haptics/README.md)。

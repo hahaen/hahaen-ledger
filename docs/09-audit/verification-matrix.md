@@ -1319,3 +1319,7 @@ PARTIAL：H5 为合成接口，工具滚轮不等于手机手势；NOT_RUN（补
 线上主屏幕图标旧路径 HTTP 404，H5 入口改为引用仓库已有白底品牌图，由 Vite 生成带 /haji/ 前缀和内容哈希的 PNG，避免重新打入微信 static。仅 Review 本轮 HTML、生产产物回归脚本和必要文档，无未解决新增问题。PASS：旧产物回归先失败、修复后 favicon/主屏幕图 HTTP 200 image/png 且与源图一致；全量前端回归、类型检查、H5/微信构建、DEV 实际页面/图片 HTTP 探针、小程序未包含白底图检查。PARTIAL：资源链路验证不替代 iPhone 系统 UI；NOT_RUN（补充）：发布后手机 Safari 删除旧入口并重新添加验收。本轮无未解决必需 FAIL/BLOCKED。
 
 仅 H5 需要由用户发布完整静态产物（含新哈希 PNG），后端和微信小程序无需更新，无数据库/SQL/环境配置操作，无发布顺序依赖；本轮未发布。命令、Review 与回滚见[本轮档案](../10-iterations/2026/10/h5-home-screen-icon/README.md)。
+
+## 2026-10-25｜iPhone Safari 金额键盘轻触反馈
+
+requirement/design/frontend：仅 H5 金额键盘增加直接触摸原生 switch 的系统短触感适配；保留原按钮可访问语义与单次保存入口，微信按键条件编译不变。database/api/backend 无变化，不涉及 SQL、认证、事务或幂等修改。testing/commands/verification：本轮差异 Review 及修正复审、180/180 前端回归、TypeScript、H5/微信构建、Chromium/WebKit 6 个手机视口与 2 个回退场景、原有 16 组滚动回归、DEV WebKit 触摸与空格输入、微信排除适配检查 PASS。PARTIAL：桌面引擎/只读夹具不能证明实际震感；NOT_RUN（发布后补充）：iPhone Safari 物理触感与 VoiceOver 真机验收，无未解决必需 FAIL/BLOCKED；详见[本轮档案](../10-iterations/2026/10/ios-calculator-haptics/README.md)。rollback：回退本轮接线、组件、回归与文档后重建 H5。仅 H5 需用户更新静态产物，后端/微信无需更新，本轮不发布。
