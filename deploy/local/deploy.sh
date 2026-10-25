@@ -18,8 +18,10 @@ mkdir -p "$base"
 exec 9>"$base/release.lock"
 flock -n 9 || { echo 'Another release is running' >&2; exit 1; }
 [[ -s $base/compose.yaml && -s $base/release.env ]] || { echo 'Initialize stable runtime configuration first' >&2; exit 1; }
-cp "$base/release.env" "$incoming/previous.env"
-cp "$base/compose.yaml" "$incoming/previous-compose.yaml"
+if [[ $project == radio ]]; then
+  cp "$base/release.env" "$incoming/previous.env"
+  cp "$base/compose.yaml" "$incoming/previous-compose.yaml"
+fi
 cp "$base/release.env" "$incoming/next.env"
 compose() { docker compose --project-name "$name" --env-file "$1" -f "$2" "${@:3}"; }
 set_image() {
@@ -42,23 +44,37 @@ changed=0
 web_changed=0
 success=0
 web_root=
+web_stage=
 rollback() {
   local status=$?
   trap - EXIT
-  if [[ $success == 0 && $changed == 1 ]]; then
+  if [[ $project == ledger && $success == 0 ]]; then
+    echo 'Release failed; no previous version was backed up or restored' >&2
+  fi
+  if [[ $project == radio && $success == 0 && $changed == 1 ]]; then
     echo 'Release failed; restoring previous containers' >&2
     # Schema migrations are blocked by this entry point for Radio. Ledger uses
     # forward-only Flyway: never attempt a database downgrade here.
     compose "$incoming/previous.env" "$incoming/previous-compose.yaml" up -d --no-build --pull never "${services[@]}" || status=1
     docker exec nginx nginx -t && docker exec nginx nginx -s reload || status=1
   fi
-  if [[ $success == 0 && $web_changed == 1 ]]; then
+  if [[ $project == radio && $success == 0 && $web_changed == 1 ]]; then
     rm -rf -- "$web_root"
     mv "$incoming/previous-web" "$web_root"
   fi
+  if [[ -n $web_stage && -d $web_stage ]]; then rm -rf -- "$web_stage"; fi
   exit "$status"
 }
 trap rollback EXIT
+cleanup_old_images() {
+  # Only remove images of replaced services that no container still references.
+  local image
+  for image in "${old_images[@]}"; do
+    if [[ -z $(docker ps -aq --filter "ancestor=$image") ]]; then
+      if [[ $project == ledger ]]; then docker image rm "$image"; else docker image rm "$image" || true; fi
+    fi
+  done
+}
 if [[ $project == radio && $scope != frontend ]]; then
   cmp -s "$incoming/migrations.sha256" "$base/migrations.sha256" || { echo 'Database migrations changed: run the reviewed backup/migration workflow before release' >&2; exit 1; }
   [[ $scope == all || $scope == api ]] && services+=(api)
@@ -84,6 +100,12 @@ if ((${#services[@]})); then
     set_image HAJI_IMAGE "$new_image"
   fi
   compose "$incoming/next.env" "$incoming/compose.yaml" config --quiet
+  if [[ $project == ledger ]]; then
+    # Keep the desired runtime configuration available even if replacement fails.
+    # Do not copy old configuration or automatically restore the old container.
+    install -m 600 "$incoming/next.env" "$base/release.env"
+    install -m 600 "$incoming/compose.yaml" "$base/compose.yaml"
+  fi
   changed=1
   compose "$incoming/next.env" "$incoming/compose.yaml" up -d --no-build --pull never "${services[@]}"
   if [[ $project == radio ]]; then
@@ -110,25 +132,42 @@ if ((${#services[@]})); then
   fi
   docker exec nginx nginx -t
   docker exec nginx nginx -s reload
+  if [[ $project == ledger ]]; then
+    [[ $(docker inspect -f '{{ index .Config.Labels "org.opencontainers.image.revision" }}' haji-server) == "$revision" ]]
+    [[ $(curl --silent --show-error --resolve hahaen.xyz:443:127.0.0.1 -o "$incoming/api-check.json" -w '%{http_code}' https://hahaen.xyz/haji-api/api/app/accounts) == 401 ]]
+    grep -q '"code":1,' "$incoming/api-check.json"
+    cleanup_old_images
+    printf '%s %s\n' "$revision" "$(date -Is)" > "$base/backend-release.txt"
+    printf 'Published ledger/backend %s; HTTPS check passed, old image removed\n' "$revision"
+  fi
 fi
 if [[ -d $incoming/web ]]; then
   if [[ $project == radio ]]; then web_root="$base/web/current"; else web_root=/home/hahaen/nginx/html/haji; fi
   [[ -s $incoming/web/index.html && -e $web_root ]]
-  # Copy the prior public files during this transaction only, including symlink targets.
-  cp -RL "$web_root" "$incoming/previous-web"
-  web_changed=1
-  rm -rf -- "$web_root"
-  cp -R "$incoming/web" "$web_root"
-  chmod -R a+rX "$web_root"
+  if [[ $project == radio ]]; then
+    cp -RL "$web_root" "$incoming/previous-web"
+    web_changed=1
+    rm -rf -- "$web_root"
+    cp -R "$incoming/web" "$web_root"
+    chmod -R a+rX "$web_root"
+  else
+    # Prepare only the NEW files on the same filesystem before replacing the site.
+    web_stage=$(mktemp -d "${web_root}.incoming.XXXXXXXX")
+    cp -R "$incoming/web/." "$web_stage/"
+    chmod -R a+rX "$web_stage"
+    rm -rf -- "$web_root"
+    mv "$web_stage" "$web_root"
+    web_stage=
+    curl --fail --silent --show-error --resolve hahaen.xyz:443:127.0.0.1 -o "$incoming/h5-check.html" https://hahaen.xyz/haji/
+    cmp -s "$incoming/web/index.html" "$incoming/h5-check.html"
+    printf '%s %s\n' "$revision" "$(date -Is)" > "$base/h5-release.txt"
+    printf 'Published ledger/h5 %s; HTTPS check passed, old site removed\n' "$revision"
+  fi
 fi
 # Validate through the public HTTPS virtual host before committing runtime metadata.
 if [[ $project == radio ]]; then
   curl --fail --silent --show-error --resolve hahaen.xyz:443:127.0.0.1 https://hahaen.xyz/radio/api/v1/health/ready >/dev/null
   curl --fail --silent --show-error --resolve hahaen.xyz:443:127.0.0.1 https://hahaen.xyz/radio/ | grep -q '/radio/assets/'
-else
-  [[ $(curl --silent --show-error --resolve hahaen.xyz:443:127.0.0.1 -o "$incoming/api-check.json" -w '%{http_code}' https://hahaen.xyz/haji-api/api/app/accounts) == 401 ]]
-  grep -q '"code":1,' "$incoming/api-check.json"
-  curl --fail --silent --show-error --resolve hahaen.xyz:443:127.0.0.1 https://hahaen.xyz/haji/ | grep -q '<html'
 fi
 install -m 600 "$incoming/next.env" "$base/release.env"
 install -m 600 "$incoming/compose.yaml" "$base/compose.yaml"
@@ -140,9 +179,7 @@ if [[ $project == radio && ( $scope == api || $scope == all ) && -f $base/backup
 fi
 # Remove only old images from the selected services, after success. Shared images
 # still used by another container remain. Never prune volumes or unrelated images.
-for image in "${old_images[@]}"; do
-  if [[ -z $(docker ps -aq --filter "ancestor=$image") ]]; then docker image rm "$image" || true; fi
-done
+if [[ $project == radio ]]; then cleanup_old_images; fi
 if [[ $project == radio && -d $incoming/web ]]; then
   rm -rf -- "$base/web/releases"
 fi

@@ -76,4 +76,6 @@ pnpm run build:mp-weixin
 
 按 [AGENTS.md](AGENTS.md) 完成本轮 Review、验证、安全保存、upstream 同步、复审复验、逐文件暂存、提交与普通推送；只推送 GitHub，不再推送 Gitee。
 
-本机执行 `python3 deploy/local/release.py all` 验证、编译并上传 JAR/H5；也可选择 `backend` 或 `h5`。服务器由 Docker 打包与更新服务，成功后只保留最新产物，不拉取源码。微信小程序仍独立发布。详细配置、清理边界和失败处理见[运维文档](docs/05-operations/README.md)。
+2026-10-25 起，代理在修改完成并通过上述 Review、验证、提交推送及远端核对后，自动发布受影响的后端/H5；纯文档或仅微信专用修改不发布。此流程不依赖 Jenkins，单独手工 push 不会触发上线。
+
+本机执行 `python3 deploy/local/release.py all` 验证、编译并上传 JAR/H5；也可选择 `backend` 或 `h5`。服务器由 Docker 打包与更新服务，不备份旧应用版本，不自动回滚，成功后只保留最新产物，不拉取源码。数据库、业务文件、日志及密钥保留。微信小程序仍独立发布。详细配置、清理边界和失败处理见[运维文档](docs/05-operations/README.md)。

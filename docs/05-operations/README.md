@@ -38,13 +38,15 @@ pnpm run build:mp-weixin
 
 ## 发布方式
 
+代理完成代码修改、Review、必需验证、upstream 同步、复审复验、提交推送并核对远端后，自动执行受影响的 `backend` 或 `h5` 发布；两端或部署工具变化执行 `all`，先后端后 H5。纯文档/仅微信专用变更不发布。长期授权和范围见 [AGENTS.md](../../AGENTS.md)。此流程由代理在任务内执行，不安装 Jenkins、Git hook、GitHub Actions 或后台监听，单独手工 push 不会触发发布。
+
 从仓库根执行 `python3 deploy/local/release.py all`，可选 `backend`、`h5`。本机需 Java 25、Maven、Node/pnpm、生产 H5 环境配置，以及可严格验证主机密钥的 SSH 别名 `hahaen-server`。`--host` 可选择其他已配置目标，`--build-only` 只验证编译，不连接服务器。必须先提交跟踪文件改动，产物绑定提交号。
 
 后端先 `mvn clean verify`，H5 先类型检查/生产构建；仅上传 JAR/H5、运行 Dockerfile、Compose 与发布脚本。服务器不安装 Maven、pnpm 或应用源码。Docker 在 `linux/amd64` 下仅复制产物打包镜像，不编译源码。本机不需要安装 Docker。
 
-服务器运行配置在 `/home/hahaen/ledger-runtime/{compose.yaml,release.env}`，其中 `HAJI_IMAGE` 指向当前不可变标签；私有配置仍为 `/home/hahaen/haji-prod.env`，JAR 不进入 Git。Nginx 与后端共用外部网络 `haen_application`；H5 目录为 `/home/hahaen/nginx/html/haji`。发布加排他锁，后端以未登录 API 的 HTTP 401 检查真实 HTTP 服务，经过 Nginx 验证后再提交配置和删除旧镜像/临时文件；失败恢复原运行镜像及网页，迁移材料变化时拒绝普通更新，必须先完成审核、备份与正式迁移，再记录实际摘要；数据库保持 Flyway 正向规则，不反向迁移。
+服务器运行配置在 `/home/hahaen/ledger-runtime/{compose.yaml,release.env}`，其中 `HAJI_IMAGE` 指向当前不可变标签；私有配置仍为 `/home/hahaen/haji-prod.env`，JAR 不进入 Git。Nginx 与后端共用外部网络 `haen_application`；H5 目录为 `/home/hahaen/nginx/html/haji`。发布加排他锁，后端以未登录 API 的 HTTP 401 检查真实 HTTP 服务，新运行配置在替换容器前写入稳定目录，经过 Nginx 验证后记录成功并删除旧镜像/临时文件；不复制旧配置或网页，不创建旧应用版本备份，不自动恢复旧容器或网页，失败返回非零并保留实际目标状态供修复重发；迁移材料变化时拒绝普通更新，必须先完成审核、备份与正式迁移，再记录实际摘要；数据库保持 Flyway 正向规则，不反向迁移。
 
-成功后只留当前版本；需要回退时从 Git 选择兼容版本重新编译。保留生产 MySQL/Redis/MinIO、密钥、证书、业务文件和日志，不执行全局镜像或卷清理。Git 提交推送与生产上线是独立授权；微信小程序不经此入口发布。
+成功后只留当前版本；需要回退时从 Git 选择兼容版本重新编译。保留生产 MySQL/Redis/MinIO、密钥、证书、业务文件和日志，不执行全局镜像或卷清理。用户已另行长期授权代理按上述门槛自动发布后端/H5；微信小程序不经此入口发布。
 
 ## 证据要求
 

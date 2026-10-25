@@ -1328,3 +1328,8 @@ requirement/design/frontend：仅 H5 金额键盘增加直接触摸原生 switch
 ## 2026-10-25 本机部署与 Jenkins 退役
 
 本轮变更及实际验证状态见[任务记录](../10-iterations/2026/10/local-docker-deploy/README.md)；取代 Jenkins 和 Gitee 双推规则，历史记录不再作为当前操作指令。
+
+
+## 2026-10-25 修改后自动发布且不备份旧版本
+
+当前规则及本轮验证证据见[任务记录](../10-iterations/2026/10/auto-release-no-backup/README.md)；取代先前后端/H5 由用户自行发版规则。微信小程序仍独立发布，旧迭代仅作历史追溯。
