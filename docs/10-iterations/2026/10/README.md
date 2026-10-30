@@ -57,3 +57,5 @@
 - [彩票首页精简与默认定投](lottery-default-plan/README.md)。
 
 - [定投卡片进度与预计提醒](lottery-plan-progress/README.md)。
+
+- [彩票表单统一提示](lottery-feedback/README.md)。

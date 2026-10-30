@@ -56,7 +56,7 @@ async function save() {
     initial = signature(); uni.showToast({ title: '已保存', icon: 'none' })
     if (id.value) goBack()
     else uni.redirectTo({ url: `/pages/lottery-detail/lottery-detail?kind=${mode.value === 'plan' ? 'plan' : 'entry'}&id=${encodeURIComponent(result)}` })
-  } catch (e) { error.value = e instanceof Error ? e.message : '保存失败，请重试' }
+  } catch (e) { uni.showToast({ title: e instanceof Error ? e.message : '保存失败，请重试', icon: 'none' }) }
   finally { saving.value = false }
 }
 </script>
@@ -79,7 +79,6 @@ async function save() {
         <view class="field"><label>备注（选填）</label><textarea v-model="form.note" maxlength="500" :disabled="saving" placeholder="最多500字" /></view>
       </view>
       <view v-if="mode !== 'plan'" class="lottery-card"><view class="lottery-row"><text>本次成本</text><MoneyDisplay v-if="cost != null" :value="cost" /><text v-else>待填写</text></view><view v-if="mode === 'single' || mode === 'purchase'" class="lottery-row field"><text>我已实际购买以上彩票</text><switch :checked="form.confirmedPurchase" color="#49ad9c" :disabled="saving" @change="form.confirmedPurchase = checked($event)" /></view><text class="lottery-hint">{{ mode === 'purchase' ? '逐期自动核对，只在本批到期时提醒续买。' : '开奖后中奖与未中奖都会提醒；渠道受理后不可修改，仍可删除。' }}</text></view>
-      <text v-if="error" class="lottery-error" role="alert">{{ error }}</text>
     </template>
     <view v-if="!loading" class="lottery-actions"><button class="primary-btn" :disabled="saving" :loading="saving" @click="save">{{ saving ? '保存中…' : mode === 'purchase' ? '确认已购买并保存' : '保存' }}</button></view>
     <EntryDateTimePicker v-if="dateOpen" mode="date" :value="form.purchasedOn" min-date="2000-01-01" :max-date="today()" title="购买日期" @close="dateOpen = false" @select="form.purchasedOn = $event; dateOpen = false" />

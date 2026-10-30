@@ -33,21 +33,42 @@ test('计划提醒展示区分预估、过期同步、已受理和不发送状�
 async function editor(api) {
   const source = await readFile(new URL('../src/pages/lottery-editor/lottery-editor.vue', import.meta.url), 'utf8')
   const script = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
-  const exposed = {}, hooks = {}, navigations = []
+  const exposed = {}, hooks = {}, navigations = [], toasts = []
   const dependencies = { vue: require('vue'), '@dcloudio/uni-app': { onLoad: cb => { hooks.load = cb } }, '../../utils/api': { lotteryApi: api, request: async () => ({ lotteryEnabled: true }) }, '../../utils/lottery': helpers }
-  new Function('require', 'exports', 'uni', 'getCurrentPages', transpile(script + '\nexport { initialize, form, save, error, loading, cost, leave, discard }'))(name => dependencies[name] || {}, exposed, { showToast() {}, redirectTo: o => navigations.push(o.url), navigateBack: () => navigations.push('back') }, () => ['page'])
+  new Function('require', 'exports', 'uni', 'getCurrentPages', transpile(script + '\nexport { initialize, form, save, error, loading, cost, leave, discard }'))(name => dependencies[name] || {}, exposed, { showToast: options => toasts.push(options), redirectTo: o => navigations.push(o.url), navigateBack: () => navigations.push('back') }, () => ['page'])
   await exposed.initialize({ mode: 'single', game: 'DLT' })
-  return { ...exposed, navigations }
+  return { ...exposed, navigations, toasts }
 }
 test('保存失败保留输入与幂等键，改动请求使用新键，成功进入详情', async () => {
   const calls = []; let fail = true
   const page = await editor({ create: async (kind, body) => { calls.push({ ...body }); if (fail) throw new Error('暂时失败'); return '1234567890123456789' } })
   Object.assign(page.form, { red: '1 2 3 4 5', blue: '1 2', issue: '26124', confirmedPurchase: true })
-  await page.save(); await page.save(); assert.equal(calls.length, 2); assert.equal(calls[0].idempotencyKey, calls[1].idempotencyKey); assert.equal(page.form.red, '1 2 3 4 5')
+  await page.save(); await page.save(); assert.deepEqual(page.toasts.at(-1), { title: '暂时失败', icon: 'none' }); assert.equal(calls.length, 2); assert.equal(calls[0].idempotencyKey, calls[1].idempotencyKey); assert.equal(page.form.red, '1 2 3 4 5')
   page.form.multiple = '2'; fail = false; await page.save(); assert.notEqual(calls[2].idempotencyKey, calls[1].idempotencyKey); assert.equal(page.cost.value, 400); assert.match(page.navigations[0], /kind=entry&id=1234567890123456789/)
 })
 test('保存前确认实际购买，离开有未保存内容确认', async () => {
   const calls = []; const page = await editor({ create: async () => calls.push('create') })
   page.form.red = '1 2 3 4 5'; page.form.blue = '1 2'; page.form.issue = '26124'; await page.save(); assert.equal(calls.length, 0)
   page.leave(); assert.equal(page.discard.value, true)
+})
+
+test('彩票表单校验使用默认Toast，错误期号不请求接口且保留输入供修正', async () => {
+  const calls = []
+  const page = await editor({ create: async (kind, payload) => { calls.push(payload); return '123' } })
+  Object.assign(page.form, { red: '1 2 3 4 5', blue: '1 2', issue: '', confirmedPurchase: true })
+  for (const game of ['DLT', 'SSQ']) {
+    Object.assign(page.form, { game, red: game === 'DLT' ? '1 2 3 4 5' : '1 2 3 4 5 6', blue: game === 'DLT' ? '1 2' : '1' })
+    await page.save()
+    assert.deepEqual(page.toasts.at(-1), { title: game === 'DLT' ? '大乐透期号须为5位' : '双色球期号须为7位', icon: 'none' })
+    assert.equal(calls.length, 0)
+    assert.equal(page.form.issue, '')
+    assert.equal(page.loading.value, false)
+  }
+  Object.assign(page.form, { game: 'DLT', red: '1 2 3 4 5', blue: '1 2', issue: '26124', confirmedPurchase: false })
+  await page.save()
+  assert.equal(page.toasts.at(-1).title, '请确认已经实际购买')
+  page.form.confirmedPurchase = true
+  await page.save()
+  assert.equal(calls.length, 1)
+  assert.equal(page.toasts.at(-1).title, '已保存')
 })
