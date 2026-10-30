@@ -1,6 +1,6 @@
 # 哈记账
 
-哈记账是面向微信小程序、同时保留 H5 扩展能力的单体全栈记账项目。首版实现单用户、单账本、人民币场景，覆盖支出、收入、转账、退款、信贷还款、账户资产和按月/按日查看。
+哈记账是现阶段以 H5 为主要开发、运行验收与交付目标，同时同步开发微信小程序并保持兼容的单体全栈记账项目。首版实现单用户、单账本、人民币场景，覆盖支出、收入、转账、退款、信贷还款、账户资产和按月/按日查看。
 
 ## 目录
 
@@ -14,7 +14,7 @@
 - Java 25、Maven 3.9+（本机 Maven 3.6.3 也可构建）
 - Node.js 22、pnpm 11
 - MySQL 8、Redis 7.4、MinIO
-- 微信开发者工具（小程序构建产物导入 `app/dist/build/mp-weixin`）
+- 微信开发者工具现阶段不作为必需环境，代理不启动或操作本机工具进行测试与发布。
 
 当前仓库使用 `server/src/main/resources/application-dev.yml` 作为 `dev` Profile 的安全默认配置，并从运行目录可选加载被 Git 忽略的 `server/application-dev.local.yml`。首次使用时，在仓库根目录执行 `cp server/application-dev.local.example.yml server/application-dev.local.yml`，再只在本地文件填写数据库、Redis、MinIO 等连接和账号密码；也可通过环境变量覆盖。禁止将本地文件或真实凭证提交到 Git。H5 使用账号/密码/验证码认证；微信小程序使用后端 code2Session 自动登录。
 
@@ -54,7 +54,9 @@ pnpm run build:h5
 pnpm run build:mp-weixin
 ```
 
-微信小程序构建结果位于 `app/dist/build/mp-weixin`，用微信开发者工具导入即可。H5 构建结果位于 `app/dist/build/h5`。可通过 `VITE_API_BASE_URL` 指向后端地址。
+微信小程序构建结果位于 `app/dist/build/mp-weixin`，H5 构建结果位于 `app/dist/build/h5`。可通过 `VITE_API_BASE_URL` 指向后端地址。
+
+现阶段功能与修复必须兼顾 H5 和微信小程序，相关回归、类型检查和双端命令行构建按影响范围执行；代理不启动或操作用户本机微信开发者工具，不执行小程序导入、运行测试、调试、预览、上传、提审或发布，也不将这些操作作为 H5 交付门槛。未执行项如实记录为按阶段规则排除的 `NOT_RUN`，构建通过不等于微信运行验收通过。详见 [当前平台操作边界](AGENTS.md#当前阶段的平台操作边界2026-10-30)。
 
 前端环境变量统一放在 `app/env/`：复制 `.env.example` 为 `.env` 管理通用变量，复制 `.env.development.example` 为 `.env.development` 管理 dev 配置，复制 `.env.production.example` 为 `.env.production` 管理 prod 配置并填写实际 HTTPS API 地址。生产构建未配置 `VITE_API_BASE_URL` 会主动失败，避免产物误连接本机开发服务。详见 [app/env/README.md](app/env/README.md)。
 

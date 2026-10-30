@@ -4,12 +4,19 @@
 
 ## 项目边界与技术栈
 
-哈记账是单用户、单账本、人民币记账应用，当前主要目标是微信小程序，同时保留 H5 构建能力。后端使用 Java 25、Spring Boot 3.5、MyBatis-Plus、Sa-Token、Flyway、MySQL 8、Spring Data Redis 和 MinIO；前端使用 Vue 3、TypeScript、uni-app、Vite、pnpm。
+哈记账是单用户、单账本、人民币记账应用，现阶段以 H5 为主要开发、运行验收与交付目标，微信小程序同步开发并保持兼容。后端使用 Java 25、Spring Boot 3.5、MyBatis-Plus、Sa-Token、Flyway、MySQL 8、Spring Data Redis 和 MinIO；前端使用 Vue 3、TypeScript、uni-app、Vite、pnpm。
 
 - `server/src/main/java` 按 auth、user、book、account、transaction、asset、home、calendar、file、item 分域；Controller 只做协议适配，Service 承担业务与事务，Mapper 负责数据访问。
 - `server/src/main/resources/db/migration/` 是正式 Schema 的唯一来源；`sql/` 只放人工审计 SQL。
 - `app/src/pages` 是页面，`components` 是复用组件，`stores` 是跨页状态，`utils/api.ts` 是唯一 API 入口。
 - 底部导航为：首页、日历、资产、物品、我的。物品为按用户归属的独立功能，不关联账本、账户余额或记账。统计、分类、凭证/OCR、预算、多人账本等首版能力必须明确显示未开放。
+
+### 当前阶段的平台操作边界（2026-10-30）
+
+- 功能和修复涉及微信小程序时必须同步修改对应代码、条件编译与平台适配，不能因以 H5 为主而遗漏小程序。相关代码回归、TypeScript 检查及受影响的 H5/微信小程序命令行构建照常执行。
+- 现阶段不启动或操作用户本机微信开发者工具，不通过 UI、CLI、自动化或其他方式执行小程序导入、编译运行、模拟器/真机测试、调试、预览、上传、提审或发布；命令行构建仅指项目自身的构建脚本，不包括调用微信开发者工具。
+- 微信工具/真机运行验收与发布不作为现阶段必需交付门槛，不因未执行而阻塞 H5 交付，也不为此要求用户打开工具或补充凭证。记录为 `NOT_RUN（按用户阶段规则排除，非必需）`，不得将代码或构建通过宣称为微信运行验收通过。后续用户明确要求恢复相关操作时再执行。
+- 后端/H5 的既有 Review、验证、提交推送和自动发布规则继续执行。
 
 ## 需求与修改流程
 
@@ -72,7 +79,7 @@ Redis Key 统一以 `haji:` 开头，不得含 `dev` 或 `prod`；临时 Key 必
 
 `docs/00-08` 只放当前权威规范；`docs/09-audit` 只放阶段审计、矩阵和验收证据；`docs/10-iterations` 只放历史变更档案。iteration 必须记录 requirement、design、database、api、backend、frontend、testing、commands、verification、rollback；commands 只能记录真实执行结果且不得泄漏 Secret。重大修改先建 iteration，再开发，完成后同步当前规范和索引。
 
-统一状态：PASS=已执行且符合预期；PARTIAL=部分完成；FAIL=已执行但不符合；BLOCKED=真实外部条件不可得；NOT_RUN=尚未执行。没有证据不得宣称 PASS，不能把 NOT_RUN 写成 PASS。缺少 MySQL、Redis、MinIO、微信开发者工具或真实凭证时如实记录 BLOCKED。
+统一状态：PASS=已执行且符合预期；PARTIAL=部分完成；FAIL=已执行但不符合；BLOCKED=真实外部条件不可得；NOT_RUN=尚未执行。没有证据不得宣称 PASS，不能把 NOT_RUN 写成 PASS。必需验证缺少 MySQL、Redis、MinIO 或真实凭证时如实记录 BLOCKED；微信工具/真机运行验收按上述阶段规则排除，不作为依赖缺失阻塞。
 
 ## Definition of Done
 
