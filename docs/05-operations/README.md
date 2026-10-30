@@ -61,3 +61,8 @@ pnpm run build:mp-weixin
 ## GitHub 单端推送
 
 `main` 跟踪 GitHub `origin/main`，`origin` 只有 GitHub 推送地址。已移除 Gitee remote 与双推；不再新增镜像同步或 Webhook。按全局顺序安全保存、拉取 upstream、恢复、复审复验、逐文件暂存，提交后普通推送并核对远端 HEAD。
+
+
+## 独立彩票（V12）
+
+见[彩票功能规范](lottery.md)，默认无权限，独立于账本，官方结果本地持久化。

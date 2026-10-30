@@ -127,7 +127,8 @@ public class ProfileService {
                 createdAt,
                 calculateCumulativeDays(earliestOccurredAt == null ? null : earliestOccurredAt.toLocalDate(), LocalDate.now()),
                 hasText(user.getAvatarFileUrl()),
-                user.getAvatarFileUrl());
+                user.getAvatarFileUrl(),
+                Integer.valueOf(1).equals(user.getLotteryEnabled()));
     }
 
     private void assertAccountAvailable(String account, long currentUserId) {

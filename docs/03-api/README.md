@@ -117,3 +117,8 @@ PUT transactions/{id} 不覆盖原创建 idempotencyKey；还款编辑在事务�
 账单、账户删除使用限定 ID、当前用户、`deleted=0` 的显式 UPDATE，同时写入删除和更新审计并校验影响行数；不能用 `updateById` 写 `@TableLogic` 字段。账单删除与有效金额的余额撤销、关联退款删除保持同一事务。已删除/他人记录返回不存在，重复删除不再撤销余额；账户删除保留历史账单。接口路径和响应结构不变。
 
 历史版本可能出现 `deleted_at IS NOT NULL AND deleted=0` 的记录，须用 [只读审计 SQL](../../sql/audit-logical-delete.sql) 定位并结合实际账务逐笔核对，不能据删除时间推算次数或批量修正余额。详见 [整改迭代](../10-iterations/2026/10/logical-delete-fix/README.md)。
+
+
+## 独立彩票（V12）
+
+见[彩票功能规范](lottery.md)，默认无权限，独立于账本，官方结果本地持久化。

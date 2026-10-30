@@ -550,3 +550,34 @@ requirement/design/frontend：仅 H5 金额键盘增加直接触摸原生 switch
 
 
 发布实测：PASS：实现 `84bf371` 已推送核对，`release.py all` 退出 0，后端/H5 均发布成功（2026-10-25 20:29:20 北京时间）；容器 running/0 重启且 revision 一致，公网 API 401，H5 HTML 及 5 个入口资源内容一致。旧后端镜像已删除，无旧版本备份/网页暂存/上传残留。10 项部署安全回归、Java 25 verify（90 执行通过、6 默认跳过）、H5 类型检查/构建 PASS。PARTIAL：公开探针不替代真实账号业务全链路；无未解决必需 FAIL/BLOCKED。微信无源码变化，无需更新且未发布；无 Migration/SQL 操作，其他服务未发布。发布后纯文档证据不再次部署。
+
+
+## 2026-10-30｜独立彩票功能
+
+实现：用户表lottery_enabled默认0，不设角色；我的页待办下方按权限显示入口。DLT/SSQ官方数据本地持久化，个人单次/计划/批次/逐期快照独立于账本；即时本地兑奖、单次结果/批次到期及官方更正事件，复用Bark/pushplus。界面沿用现有薄荷绿组件。
+
+|验收项|状态|证据与边界|
+|---|---|---|
+|任务新增/修改代码两轴Review及问题复审|PASS|仅本次改动；修复编辑结算、分页链路、UNKNOWN锁、事务、同步/投递旧租约与更正去重|
+|Java25完整verify|PASS|107项：100执行通过，7条件跳过，JAR生成成功|
+|真实DEV/Flyway/字段与Entity/权限/官方接口/兑奖/提醒状态机|PASS|V12；合成账号，官方真实数据；投递发送使用替身，仅证明状态机|
+|前端回归/类型/H5及微信构建|PASS|相关24项回归；类型及两端构建退出0|
+|真实H5页面和320/375/414px|PASS|入口、保存即时结算、删除弹层、20期批次、SSQ本地历史与奖金；截图见彩票iteration/evidence|
+|微信开发者工具模拟器|BLOCKED|应用已启动，但原生自动控制两次30秒超时；等待工具窗口/授权状态确认|
+|真实通知渠道受理|BLOCKED|尚缺用户指定的测试接收账号；不使用替身冒充真实受理|
+|微信真机|NOT_RUN|补充平台验收，不等同于构建或模拟器|
+|Git提交/推送/自动发布|BLOCKED|用户附件明确必需验收BLOCKED时不能跳过门槛；代码保留工作区|
+|生产V12迁移|NOT_RUN|待验收后先审核/备份/正式Flyway，核对摘要再发布|
+
+后端、H5及微信小程序均需要更新；当前均未发布，生产原版本保留。微信由用户上传发布。未给真实账号开通权限。原有业务数据、密钥、配置及备份不变。新需求和当前证据详见[彩票迭代](../../10/lottery/README.md)。
+
+
+## 2026-10-30｜用户验收范围更新及真实推送
+
+用户本轮明确“微信小程序不验证，只验证h5”，因此微信模拟器/真机运行验证从本轮必需门槛排除，历史两次连接超时记录保留，不再阻塞交付；已完成的小程序构建不等同运行验证，上传发布仍由用户负责。
+
+PASS：DEV仅admin账号配置了Bark/pushplus。按用户“现在”的回复及已告知的接收对象，显式运行LotteryLiveNotificationDevTest（lottery.live.verify=true、lottery.live.account=admin）；两渠道各发送一条“彩票功能验收”并均返回ACCEPTED，前后lottery_enabled未变。测试隔离TodoReminderWorker，LotteryWorker关闭，未触发无关提醒。仅证明渠道受理，不宣称设备送达。
+
+新增实际命令：Java25 mvn -f server/pom.xml -Dtest=LotteryLiveNotificationDevTest -Dlottery.live.verify=true -Dlottery.live.account=admin test，退出0。测试Key仅在内存解密，不进入命令或文档。
+
+本轮必需功能验证与H5验收已通过，无剩余必需FAIL/BLOCKED。后续按既定流程安全保存、pull --ff-only、恢复核对、同步后复审复验，再提交推送，先正式生产V12迁移，再发布后端/H5。此处尚不宣称提交/发布已完成。

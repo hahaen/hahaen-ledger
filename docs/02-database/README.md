@@ -45,3 +45,8 @@ V10 新增独立 [待办清单表](ha-todo.md)。2026-09-30 DEV Flyway 已执行
 ## 逻辑删除 SQL 约束（2026-10-04）
 
 `@TableLogic` 字段会被 MyBatis-Plus 普通 `updateById` 排除；设置 Entity.deleted=1 后普通更新不会落库该标记。账单与账户使用显式条件逻辑删除，同写删除/更新审计，Service 检查影响行数并保证事务回滚。无 Schema 或 Flyway 变化，历史审计疑点通过 [只读 SQL](../../sql/audit-logical-delete.sql) 人工核对，不自动更改既有记录。
+
+
+## 独立彩票（V12）
+
+见[彩票功能规范](lottery.md)，默认无权限，独立于账本，官方结果本地持久化。

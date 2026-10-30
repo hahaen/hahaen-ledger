@@ -24,6 +24,8 @@ public class AppUser extends BaseAuditEntity {
      */
     private String avatarFileUrl;
     private String status;
+    /** 默认关闭；只允许维护者配置，不接受用户资料写入。 */
+    private Integer lotteryEnabled = 0;
     private LocalDateTime lastLoginAt;
     private String lastLoginIp;
 }

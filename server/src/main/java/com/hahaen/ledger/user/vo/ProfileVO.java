@@ -10,6 +10,7 @@ public record ProfileVO(
         LocalDateTime createdAt,
         long cumulativeDays,
         boolean avatarAuthorized,
-        String avatarFileUrl
+        String avatarFileUrl,
+        boolean lotteryEnabled
 ) {
 }

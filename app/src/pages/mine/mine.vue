@@ -24,6 +24,7 @@ type Profile = {
   userId: string
   nickname: string
   createdAt?: string
+  lotteryEnabled?: boolean
   cumulativeDays: number
   avatarAuthorized: boolean
   avatarFileUrl?: string
@@ -90,6 +91,7 @@ async function loadProfile() {
       }
     }
   } catch {
+    if (isCurrent() && profile.value) profile.value.lotteryEnabled = false
     if (isCurrent() && !uni.getStorageSync('auth-token')) {
       ledger.state.token = ''
       clearProfile()
@@ -124,6 +126,7 @@ function openNotifications() {
   uni.navigateTo({ url: '/pages/notification-center/notification-center' })
 }
 
+function openLottery() { uni.navigateTo({ url: '/pages/lottery/lottery' }) }
 function openTodos() {
   if (!loggedIn.value) { openLogin(); return }
   uni.navigateTo({ url: '/pages/ha-todo/ha-todo' })
@@ -206,6 +209,10 @@ onShow(() => {
           <view class="setting-icon" aria-hidden="true"><view class="setting-todo-check" /></view>
           <text class="setting-text">待办清单</text>
           <text class="setting-arrow">›</text>
+        </button>
+        <button v-if="profile?.lotteryEnabled" class="setting-item" aria-label="彩票" @click="openLottery">
+          <view class="setting-icon" aria-hidden="true"><view class="setting-lottery-ticket" /></view>
+          <text class="setting-text">彩票</text><text class="setting-arrow">›</text>
         </button>
             <button class="setting-item" @click="openHelp">
           <text class="setting-icon setting-icon-help">?</text>

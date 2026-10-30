@@ -17,10 +17,13 @@ public class TodoNotificationSender {
         client = RestClient.builder().requestFactory(factory).build();
     }
     public boolean send(String channel, String key, String title, String body) {
+        return send(channel,key,title,body,"待办清单");
+    }
+    public boolean send(String channel, String key, String title, String body, String group) {
         JsonNode response;
         if ("BARK".equals(channel)) {
             response = client.post().uri("https://api.day.app/push")
-                    .body(Map.of("device_key",key,"title",title,"body",body,"group","待办清单"))
+                    .body(Map.of("device_key",key,"title",title,"body",body,"group",group))
                     .retrieve().body(JsonNode.class);
         } else if ("PUSHPLUS".equals(channel)) {
             response = client.post().uri("https://www.pushplus.plus/send")

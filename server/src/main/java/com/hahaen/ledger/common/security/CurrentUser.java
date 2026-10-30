@@ -1,6 +1,7 @@
 package com.hahaen.ledger.common.security;
 
 import cn.dev33.satoken.stp.StpUtil;
+import cn.dev33.satoken.exception.SaTokenContextException;
 import com.hahaen.ledger.common.exception.BusinessException;
 
 public final class CurrentUser {
@@ -12,10 +13,12 @@ public final class CurrentUser {
     }
 
     public static Long optionalId() {
-        return StpUtil.isLogin() ? StpUtil.getLoginIdAsLong() : null;
+        try { return StpUtil.isLogin() ? StpUtil.getLoginIdAsLong() : null; }
+        catch (SaTokenContextException ex) { return null; } // 调度线程没有HTTP上下文，不代表存在用户身份。
     }
 
     public static String optionalName() {
-        return StpUtil.isLogin() ? StpUtil.getSession().getString("auditName") : null;
+        try { return StpUtil.isLogin() ? StpUtil.getSession().getString("auditName") : null; }
+        catch (SaTokenContextException ex) { return null; }
     }
 }

@@ -90,3 +90,15 @@ export const todoApi = {
   complete: (id: string, idempotencyKey: string) => request<void>(`/api/app/todos/${encodeURIComponent(id)}/complete`, { method: 'POST', data: { idempotencyKey } }),
   remove: (id: string, idempotencyKey: string) => request<void>(`/api/app/todos/${encodeURIComponent(id)}/delete`, { method: 'POST', data: { idempotencyKey } }),
 }
+
+// 彩票独立域；官方数据由后端同步，页面只访问本地业务API。
+import type { LotteryGame, LotteryKind, LotteryDetailKind, LotteryPage, LotteryPayload, LotteryRecord } from './lottery'
+export const lotteryApi = {
+  list: (game: LotteryGame, kind: LotteryKind, page = 1) => request<LotteryPage>(`/api/app/lottery?game=${game}&kind=${kind}&page=${page}`),
+  draws: (game: LotteryGame, page = 1) => request<LotteryPage>(`/api/app/lottery/draws?game=${game}&page=${page}`),
+  detail: (kind: LotteryDetailKind, id: string, page = 1) => request<LotteryRecord>(`/api/app/lottery/${kind}/${encodeURIComponent(id)}?page=${page}`),
+  create: (kind: LotteryKind, data: LotteryPayload) => request<string>(`/api/app/lottery/${kind}`, { method: 'POST', data }),
+  edit: (kind: 'entry' | 'plan', id: string, data: LotteryPayload) => request<string>(`/api/app/lottery/${kind}/${encodeURIComponent(id)}`, { method: 'PUT', data }),
+  purchase: (id: string, data: LotteryPayload) => request<string>(`/api/app/lottery/plan/${encodeURIComponent(id)}/purchase`, { method: 'POST', data }),
+  action: (kind: 'entry' | 'plan' | 'delivery', id: string, action: 'delete' | 'status' | 'retry', idempotencyKey: string, status?: string) => request<string>(`/api/app/lottery/${kind}/${encodeURIComponent(id)}/${action}`, { method: 'POST', data: { idempotencyKey, status } }),
+}

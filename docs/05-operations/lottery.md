@@ -1,0 +1,15 @@
+# 彩票同步与运行
+
+任务默认启用；lottery.worker.enabled=false可停所有彩票任务。同步默认每300000ms；lottery.sync.delay-ms及lottery.sync.initial-delay-ms可配置。结算及投递每分钟。
+
+数据来源为体彩webapi.sporttery.cn及福彩www.cwl.gov.cn固定HTTPS JSON接口，无登录/API Key。页面只读取本地数据库。SSQ历史回填不传issueCount=30限制总范围。初次历史分页渐进回填，完成后循环低频复查更早数据；官方数据修订按版本重算。
+
+观察lottery_sync_state最近成功时间、last_error类别、history_page及history_done。异常保留本地缓存，不删除记录。同步随机租约避免并发重复拉取；过期持有者不释放其他实例租约。
+
+用户开通只由维护者按真实用户ID手工配置app_user.lottery_enabled=1；关闭设0。须遵循数据库操作审计规范，不能批量默认开通。本次迁移/发布不会给任何实际账号开通。
+
+通知复用通知中心Bark/pushplus配置。ACCEPTED只表示渠道受理，UNKNOWN表示结果不确定，人工重试可能重复推送；禁止把设备送达作为自动可验证事实。没有通知配置时事件保留，补配置后恢复；暂停/结束抑制续买提醒但继续兑奖。
+
+DLT早于19019期的早期规则暂待核实；官方派奖资格/特别规则无法确认时REVIEW，不输出伪精确总额。SSQ福运奖不按单个当前奖池猜测，依赖官方明确信息或连续状态。
+
+Schema变化必须先完成迁移审核、数据库备份及正式Flyway，再核对摘要，最后按AGENTS发布。不得直接修改摘要跳过迁移。
