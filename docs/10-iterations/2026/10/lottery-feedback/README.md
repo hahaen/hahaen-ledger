@@ -46,3 +46,14 @@ PASS：Chrome 本地 H5 只读夹具在 375×667 看到居中“大乐透期号�
 ## upstream 同步与复审
 
 安全保存本轮改动后执行 `git pull --ff-only`，从 37c04d2 快进到 6a06264；远端仅增加定投进度及其验收记录。`git stash apply` 恢复成功，前端/设计规范追加段落冲突按语义保留双方有效内容，彩票测试自动合并。对本轮编辑页、测试与文档恢复差异复审 PASS，无未解决问题；接口与编辑页依赖签名未改变。同步后彩票回归5/5、TypeScript和H5/微信命令行构建均退出0；原编辑页代码和截图完整恢复，恢复确认后删除stash备份。
+
+
+## 发布闭环
+
+PASS：`4a2222a fix(lottery): 统一表单校验与保存失败提示` 普通推送至 GitHub origin/main，`git ls-remote` 与本地 HEAD 一致。`python3 deploy/local/release.py h5` 退出0，服务器 H5 发布记录为 4a2222ae3d2fa1e7cbb78c57138978e14b27bdfa，时间 2026-10-30T23:14:21+08:00；发布构建的类型检查与 H5 构建通过。
+
+PASS：公开 HTML、6 个静态资源（含 `pages-lottery-editor-lottery-editor.y4KEn60t.js`）和版本文件逐字节等于发布产物；版本为 `97884df9-84d5-4f55-a6c3-49c6247970d2`。独立 Chrome 线上登录页在375×667空期号提交后立即显示居中“大乐透期号须为5位”，没有写入业务记录；用户原编辑页未操作，临时页面与视口覆写已清理。公开未登录彩票 API 返回401/code1。
+
+后端无需更新，仍为23da1b9，容器running/0重启；数据库无SQL/Migration/配置操作。H5已实际发布成功，旧站点与上传/站点暂存目录已清理。微信共享代码及命令行构建已同步，使用新提示需用户自行上传发布；微信工具/真机及发布 NOT_RUN（按用户阶段规则排除，非必需）。无未解决必需FAIL/BLOCKED。后续仅上线记录文档提交，无需重复更新服务或客户端。
+
+实际命令补充：`git pull --ff-only` / 普通 `git push origin HEAD:main` / `git ls-remote origin refs/heads/main` 均成功；`python3 deploy/local/release.py h5` 退出0；SSH只读核对分组件记录、后端状态、临时目录通过。首次Python urllib探测因本机Python CA缺失失败，随后使用系统curl保持证书校验逐项核对通过，不存在未解决的线上TLS问题。
