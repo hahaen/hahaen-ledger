@@ -1,0 +1,54 @@
+[
+  {
+    "buttonVisible": true,
+    "dialog": {
+      "height": 364.8984375,
+      "width": 288,
+      "x": 16,
+      "y": 101.546875
+    },
+    "height": 568,
+    "modal": true,
+    "overflow": false,
+    "width": 320
+  },
+  {
+    "buttonVisible": true,
+    "dialog": {
+      "height": 319.3984375,
+      "width": 343,
+      "x": 16,
+      "y": 246.296875
+    },
+    "height": 812,
+    "modal": true,
+    "overflow": false,
+    "width": 375
+  },
+  {
+    "buttonVisible": true,
+    "dialog": {
+      "height": 319.3984375,
+      "width": 365,
+      "x": 24.5,
+      "y": 288.296875
+    },
+    "height": 896,
+    "modal": true,
+    "overflow": false,
+    "width": 414
+  },
+  {
+    "buttonVisible": true,
+    "dialog": {
+      "height": 319.3984375,
+      "width": 365,
+      "x": 223.5,
+      "y": 27.796875
+    },
+    "height": 375,
+    "modal": true,
+    "overflow": false,
+    "width": 812
+  }
+]

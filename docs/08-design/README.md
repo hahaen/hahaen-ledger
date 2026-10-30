@@ -86,3 +86,7 @@
 ## 彩票子功能（2026-10-30）
 
 “我的”待办下方按lotteryEnabled显示彩票，沿用setting-item和细线票券图标。4个子页面复用NativeNavigation、MoneyDisplay、EntryDateTimePicker及系统确认弹层；薄荷渐变引导卡、17px白色卡片、细边框和轻阴影，红蓝只用于号码球，不改五项导航。批次统计明确已购、已结算与未知奖金。真实页面/尺寸验收见[彩票迭代](../10-iterations/2026/10/lottery/09-verification.md)，未验收部分不得据此标PASS。
+
+## H5 新版本提示（2026-10-30）
+
+全局弹层沿用薄荷绿令牌、白色30px圆角卡片、顶部短条和17px圆角主按钮，标题“新版本已就绪”。不提供关闭/取消入口，遮罩和Escape不能关闭；焦点留在模态内，键盘焦点可见。确认前说明刷新将丢弃未保存输入，失败显示重试。窄屏及横屏允许卡片内部滚动，不遮挡主操作。见[迭代](../10-iterations/2026/10/h5-required-refresh/README.md)。

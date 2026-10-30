@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
+import { randomUUID } from 'node:crypto'
 import uni from '@dcloudio/vite-plugin-uni'
 
 function forgeWechatGlobalScope(): Plugin {
@@ -18,6 +19,7 @@ function forgeWechatGlobalScope(): Plugin {
 export default defineConfig(({ mode }) => {
   const envDir = fileURLToPath(new URL('./env', import.meta.url))
   const env = loadEnv(mode, envDir, 'VITE_')
+  const h5Version = mode === 'production' && process.env.UNI_PLATFORM === 'h5' ? randomUUID() : ''
   if (mode === 'production' && !env.VITE_API_BASE_URL?.trim()) {
     throw new Error('生产构建缺少 VITE_API_BASE_URL，请配置 app/env/.env.production 或构建环境变量')
   }
@@ -25,7 +27,13 @@ export default defineConfig(({ mode }) => {
   return {
     envDir,
     base: '/haji/',
-    plugins: [forgeWechatGlobalScope(), uni()],
+    define: { __H5_BUILD_VERSION__: JSON.stringify(h5Version) },
+    plugins: [forgeWechatGlobalScope(), uni(), {
+      name: 'h5-release-version',
+      generateBundle() {
+        if (h5Version) this.emitFile({ type: 'asset', fileName: 'haji-version.json', source: JSON.stringify({ version: h5Version }) })
+      },
+    }],
     server: {
       port: 5180,
       strictPort: true,
