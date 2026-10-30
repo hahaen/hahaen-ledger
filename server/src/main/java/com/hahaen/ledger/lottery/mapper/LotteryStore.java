@@ -85,6 +85,23 @@ public class LotteryStore {
         Object[] args=plan==null?new Object[]{user,game}:new Object[]{user,game,plan};
         return jdbc.queryForMap("SELECT COALESCE(SUM(cost_cents),0) AS costCents,COALESCE(SUM(IF(result='SETTLED',cost_cents,0)),0) AS settledCostCents,COALESCE(SUM(IF(result='WAITING',cost_cents,0)),0) AS waitingCostCents,COALESCE(SUM(IF(result='SETTLED',prize_cents,0)),0) AS prizeCents,COALESCE(SUM(IF(result='SETTLED',prize_cents-cost_cents,0)),0) AS profitCents,COALESCE(SUM(result<>'SETTLED'),0) AS pendingCount,COUNT(*) AS entryCount FROM lottery_entry WHERE user_id=? AND game=? AND deleted=0"+suffix,args);
     }
+    public record DrawSummary(String costCents, String prizeCents, long entryCount, long pendingCount) {}
+
+    /** 当前页个人购买汇总；未核实或官方修订尚未重算时不输出不完整奖金。 */
+    public Map<String,DrawSummary> drawSummaries(long user,String game,List<String> issues) {
+        if(issues.isEmpty()) return Map.of();
+        String settled="e.result='SETTLED' AND e.prize_cents IS NOT NULL AND e.draw_id=d.id AND e.draw_version=d.version";
+        String placeholders=String.join(",",Collections.nCopies(issues.size(),"?"));
+        List<Object> args=new ArrayList<>();args.add(user);args.add(game);args.addAll(issues);
+        return jdbc.query("SELECT e.issue,SUM(e.cost_cents) AS cost_cents,SUM(IF("+settled+",e.prize_cents,0)) AS prize_cents,COUNT(*) AS entry_count,SUM(IF("+settled+",0,1)) AS pending_count FROM lottery_entry e LEFT JOIN lottery_draw d ON d.game=e.game AND d.issue=e.issue AND d.deleted=0 WHERE e.user_id=? AND e.game=? AND e.deleted=0 AND e.issue IN ("+placeholders+") GROUP BY e.issue",rs->{
+            Map<String,DrawSummary> summaries=new HashMap<>();
+            while(rs.next()) {
+                long pending=rs.getLong("pending_count");
+                summaries.put(rs.getString("issue"),new DrawSummary(rs.getString("cost_cents"),pending==0?rs.getString("prize_cents"):null,rs.getLong("entry_count"),pending));
+            }
+            return summaries;
+        },args.toArray());
+    }
     public List<LotteryEntry> unsettled(long user) {
         return jdbc.query("SELECT e.* FROM lottery_entry e JOIN lottery_draw d ON d.game=e.game AND d.issue=e.issue AND d.deleted=0 WHERE e.user_id=? AND e.deleted=0 AND (e.draw_version IS NULL OR e.draw_version<>d.version) ORDER BY e.id LIMIT 500",new org.springframework.jdbc.core.BeanPropertyRowMapper<>(LotteryEntry.class),user);
     }

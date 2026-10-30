@@ -13,6 +13,7 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import NativeNavigation from '../../components/NativeNavigation.vue'
 import LotteryNumbers from '../../components/LotteryNumbers.vue'
+import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import { lotteryApi } from '../../utils/api'
 import { gameName, type LotteryGame, type LotteryRecord, type LotterySync } from '../../utils/lottery'
 const game = ref<LotteryGame>('DLT'), items = ref<LotteryRecord[]>([]), page = ref(1), hasMore = ref(false), loading = ref(false), error = ref(''), sync = ref<LotterySync>({})
@@ -34,7 +35,17 @@ function open(item: LotteryRecord) { uni.navigateTo({ url: `/pages/lottery-detai
     <text v-if="loading && !items.length" class="profile-loading">正在读取本地开奖…</text>
     <view v-if="error" class="lottery-notice"><text>{{ error }}</text><button class="text-button" @click="load()">重新加载</button></view>
     <text v-if="!loading && !error && !items.length" class="lottery-empty">暂无本地开奖记录，后台正在同步。</text>
-    <button v-for="item in items" :key="item.id" class="lottery-card lottery-record" @click="open(item)"><view class="lottery-row"><text class="lottery-title">第{{ item.issue }}期</text><text class="lottery-muted">{{ item.drawDate }}</text></view><LotteryNumbers :red="item.red" :blue="item.blue" /><text class="lottery-muted">查看当期奖金与官方依据 ›</text></button>
+    <button v-for="item in items" :key="item.id" class="lottery-card lottery-record" @click="open(item)">
+      <view class="lottery-row"><text class="lottery-title">第{{ item.issue }}期</text><text class="lottery-muted">{{ item.drawDate }}</text></view>
+      <LotteryNumbers :red="item.red" :blue="item.blue" />
+      <view class="lottery-draw-footer">
+        <text class="lottery-muted">查看奖金与官方依据 ›</text>
+        <view class="lottery-draw-summary">
+          <view class="lottery-inline"><text class="lottery-muted">成本</text><MoneyDisplay v-if="item.personalSummary" :value="item.personalSummary.costCents" /><text v-else class="lottery-muted">暂不可用</text></view>
+          <view class="lottery-inline"><text class="lottery-muted">奖金</text><MoneyDisplay v-if="item.personalSummary?.prizeCents != null" :value="item.personalSummary.prizeCents" /><text v-else class="lottery-muted">{{ item.personalSummary ? '待确认' : '暂不可用' }}</text></view>
+        </view>
+      </view>
+    </button>
     <button v-if="hasMore" class="secondary-btn" :disabled="loading" @click="load(false)">{{ loading ? '加载中…' : '加载更多' }}</button>
   </view>
 </template>

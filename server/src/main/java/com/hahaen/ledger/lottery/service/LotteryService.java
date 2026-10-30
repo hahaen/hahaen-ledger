@@ -55,8 +55,16 @@ public class LotteryService {
         result.set("items",items);result.put("hasMore",values.size()>20);result.set("sync",syncInfo(game));return result;
     }
     public ObjectNode draws(String game,int page) {
-        owner();game(game);page(page);List<LotteryDraw> values=db.list(LotteryDraw.class,q->q.eq("game",game).orderByDesc("issue").last(paging(page)));
-        ObjectNode result=json.createObjectNode();result.set("items",view(values.stream().limit(20).toList()));result.put("hasMore",values.size()>20);result.set("sync",syncInfo(game));return result;
+        long user=owner();game(game);page(page);List<LotteryDraw> values=db.list(LotteryDraw.class,q->q.eq("game",game).orderByDesc("issue").last(paging(page)));
+        List<LotteryDraw> visible=values.stream().limit(20).toList();
+        var summaries=db.drawSummaries(user,game,visible.stream().map(LotteryDraw::getIssue).toList());
+        ArrayNode items=json.createArrayNode();
+        for(var draw:visible) {
+            ObjectNode item=(ObjectNode)view(draw);
+            item.set("personalSummary",view(summaries.getOrDefault(draw.getIssue(),new LotteryStore.DrawSummary("0","0",0,0))));
+            items.add(item);
+        }
+        ObjectNode result=json.createObjectNode();result.set("items",items);result.put("hasMore",values.size()>20);result.set("sync",syncInfo(game));return result;
     }
     private JsonNode syncInfo(String game) {
         LotterySyncState s=db.one(LotterySyncState.class,q->q.eq("game",game));

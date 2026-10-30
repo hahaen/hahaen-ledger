@@ -1056,3 +1056,7 @@ PASS：按用户反馈将首页星期拆为独立 text，12px 常规字重、较
 
 
 发布闭环PASS：`4a2222a fix(lottery): 统一表单校验与保存失败提示` 已推送origin/main并核对一致；`python3 deploy/local/release.py h5` 退出0，2026-10-30 23:14:21+08:00发布。公开HTML、6个静态资源（含彩票编辑页JS）及版本JSON逐字节匹配产物，版本97884df9-84d5-4f55-a6c3-49c6247970d2；线上独立Chrome页面375×667空期号提交显示居中Toast，未写入业务记录或操作用户原表单。服务器H5记录匹配4a2222a，无上传/站点暂存目录；公开未登录彩票API401/code1。后端无需更新，保持23da1b9、running/0重启，数据库无操作。微信代码及构建同步，需用户自行发布新版；工具/真机及发布NOT_RUN（按用户阶段规则排除，非必需）。无未解决必需FAIL/BLOCKED；仅文档归档无需重复发布。
+
+## 2026-10-30 开奖卡片个人成本与奖金
+
+requirement/design/frontend：两彩种开奖卡片右下两行显示个人当期成本/税前奖金，复用金额格式，未知奖金待确认、无购买0。database/api/backend：无Migration/持久化写入，当前用户/彩种/期号批量汇总，排除逻辑删除及未核实/旧版本奖金。Review已修正长金额nowrap后PASS；前端200项、类型、双端构建、25页分享产物及Chrome四尺寸只读示例验证PASS。Java25 clean verify含真实DEV：116总/108执行通过/8条件跳过，0失败错误；远端Already up to date后17文件逐字节恢复，复审及真实DEV新场景/前端200项/类型复验PASS。提交推送后待自动发布后端/H5，见[本轮迭代](../10-iterations/2026/10/lottery-draw-summary/README.md)。微信工具/真机及发布NOT_RUN（按用户阶段规则排除，非必需）。testing/commands/verification/rollback详见迭代。

@@ -3,6 +3,7 @@ export type LotteryKind = 'single' | 'plan'
 export type LotteryDetailKind = 'entry' | 'plan' | 'batch' | 'draw'
 export type LotterySummary = { costCents: string | number; settledCostCents: string | number; waitingCostCents: string | number; prizeCents: string | number; profitCents: string | number; pendingCount: number; entryCount: number; drawnCount?: number; remainingCount?: number }
 export type LotterySync = { lastSuccessAt?: string; lastError?: string; historyComplete?: boolean; historyPage?: number }
+export type LotteryDrawSummary = { costCents: string; prizeCents: string | null; entryCount: number; pendingCount: number }
 export type LotteryDelivery = { id: string; channel: string; status: string; attempts: number; acceptedAt?: string }
 export type LotteryEvent = { id: string; kind: string; title: string; body: string; deliveries: LotteryDelivery[] }
 export type LotteryPlanProgress = {
@@ -17,6 +18,7 @@ export type LotteryRecord = {
   result?: string; grade?: string; acceptedAt?: string; editable?: boolean; awaitingRenewal?: boolean
   summary?: LotterySummary; draw?: LotteryRecord; drawDate?: string; source?: string; syncedAt?: string
   progress?: LotteryPlanProgress
+  personalSummary?: LotteryDrawSummary
   ruleVersion?: string; version?: number; prizes?: string; specialState?: string; promotion?: number
   items?: LotteryRecord[]; hasMore?: boolean; notificationConfigured?: boolean; notifications?: LotteryEvent[]
 }

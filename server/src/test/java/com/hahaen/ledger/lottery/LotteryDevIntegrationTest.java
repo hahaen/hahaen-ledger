@@ -162,6 +162,49 @@ class LotteryDevIntegrationTest {
             assertNotNull(db.get(LotteryDraw.class,draw.getId()));
         }finally {cleanup(user,other);}
     }
+    @Test void drawHistorySummarizesOnlyCurrentUsersLivePurchasesAndConfirmedPrizes() throws Exception {
+        long user=IdWorker.getId(),other=IdWorker.getId();String password=UUID.randomUUID().toString();
+        for(long uid:new long[]{user,other})jdbc.update("INSERT INTO app_user(id,login_account,password_hash,nickname,status,lottery_enabled) VALUES(?,?,?,?,'ACTIVE',1)",uid,"lotteryqa"+uid,encoder.encode(password),"开奖汇总验收");
+        try {
+            String token=login(user,password),otherToken=login(other,password);
+            for(String game:List.of("DLT","SSQ")) {
+                LotteryDraw draw=db.one(LotteryDraw.class,q->q.eq("game",game).orderByDesc("issue"));
+                if(draw==null){sync.sync(game);draw=db.one(LotteryDraw.class,q->q.eq("game",game).orderByDesc("issue"));}
+                assertNotNull(draw);
+                LotteryPlan plan=new LotteryPlan();plan.setUserId(user);plan.setGame(game);plan.setName("汇总定投");plan.setRed(draw.getRed());plan.setBlue(draw.getBlue());plan.setMultiple(1);plan.setAdditional(0);plan.setStatus("ACTIVE");db.insert(plan);
+                LotteryEntry single=summaryEntry(user,draw,200,500);
+                LotteryEntry planned=summaryEntry(user,draw,600,1200);planned.setPlanId(plan.getId());db.update(planned);
+                summaryEntry(other,draw,9800,9900);
+                LotteryEntry removed=summaryEntry(user,draw,50000,90000);db.softDelete(LotteryEntry.class,removed.getId(),user,"验收");
+                LotteryEntry nullDeleted=summaryEntry(user,draw,70000,80000);jdbc.update("UPDATE lottery_entry SET deleted=NULL WHERE id=?",nullDeleted.getId());
+                LotteryEntry differentGame=summaryEntry(user,draw,30000,40000);jdbc.update("UPDATE lottery_entry SET game=? WHERE id=?",game.equals("DLT")?"SSQ":"DLT",differentGame.getId());
+                JsonNode summary=historySummary(token,game,draw.getIssue());
+                assertTrue(summary.path("costCents").isTextual());assertEquals("800",summary.path("costCents").asText());assertEquals("1700",summary.path("prizeCents").asText());assertEquals(2,summary.path("entryCount").asInt());assertEquals(0,summary.path("pendingCount").asInt());
+                assertEquals("9800",historySummary(otherToken,game,draw.getIssue()).path("costCents").asText());
+                for(JsonNode item:ok(call("GET","/api/app/lottery/draws?game="+game,null,token)).path("items"))if(!draw.getIssue().equals(item.path("issue").asText())) {
+                    assertEquals("0",item.path("personalSummary").path("costCents").asText());assertEquals("0",item.path("personalSummary").path("prizeCents").asText());
+                }
+                jdbc.update("UPDATE lottery_entry SET result='REVIEW',prize_cents=NULL WHERE id=?",planned.getId());
+                summary=historySummary(token,game,draw.getIssue());assertEquals("800",summary.path("costCents").asText());assertTrue(summary.path("prizeCents").isNull());assertEquals(1,summary.path("pendingCount").asInt());
+                jdbc.update("UPDATE lottery_entry SET result='SETTLED',prize_cents=1200,draw_version=? WHERE id=?",draw.getVersion()-1,planned.getId());
+                assertTrue(historySummary(token,game,draw.getIssue()).path("prizeCents").isNull(),"官方修订待重算不显示旧奖金");
+                jdbc.update("UPDATE lottery_entry SET draw_version=?,prize_cents=0 WHERE id=?",draw.getVersion(),planned.getId());
+                jdbc.update("UPDATE lottery_entry SET prize_cents=0 WHERE id=?",single.getId());
+                assertEquals("0",historySummary(token,game,draw.getIssue()).path("prizeCents").asText(),"已核实未中奖为0");
+                db.softDelete(LotteryEntry.class,single.getId(),user,"验收");db.softDelete(LotteryEntry.class,planned.getId(),user,"验收");
+                assertEquals("0",historySummary(token,game,draw.getIssue()).path("costCents").asText());
+            }
+            jdbc.update("UPDATE app_user SET lottery_enabled=0 WHERE id=?",other);
+            assertNotEquals(0,call("GET","/api/app/lottery/draws",null,otherToken).path("code").asInt());
+        } finally {cleanup(user,other);}
+    }
+    private LotteryEntry summaryEntry(long user,LotteryDraw draw,long cost,long prize) {
+        LotteryEntry e=new LotteryEntry();e.setUserId(user);e.setGame(draw.getGame());e.setIssue(draw.getIssue());e.setRed(draw.getRed());e.setBlue(draw.getBlue());e.setMultiple(1);e.setAdditional(0);e.setPurchasedOn(draw.getDrawDate());e.setCostCents(cost);e.setPrizeCents(prize);e.setResult("SETTLED");e.setDrawId(draw.getId());e.setDrawVersion(draw.getVersion());e.setRevision(1);e.setPosition(1);db.insert(e);return e;
+    }
+    private JsonNode historySummary(String token,String game,String issue) throws Exception {
+        for(JsonNode item:ok(call("GET","/api/app/lottery/draws?game="+game,null,token)).path("items"))if(issue.equals(item.path("issue").asText()))return item.path("personalSummary");
+        throw new AssertionError("当前页缺少验收期号");
+    }
     @Test void unknownRetryDoesNotUnlockAndOfficialCorrectionsStillSettle() throws Exception {
         long user=IdWorker.getId(),fixture=IdWorker.getId();String password=UUID.randomUUID().toString();
         jdbc.update("INSERT INTO app_user(id,login_account,password_hash,nickname,status,lottery_enabled) VALUES(?,?,?,?,'ACTIVE',1)",user,"lotteryqa"+user,encoder.encode(password),"彩票状态机合成验收");

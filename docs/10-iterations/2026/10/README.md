@@ -59,3 +59,5 @@
 - [定投卡片进度与预计提醒](lottery-plan-progress/README.md)。
 
 - [彩票表单统一提示](lottery-feedback/README.md)。
+
+- [开奖卡片个人成本与奖金](lottery-draw-summary/README.md)。

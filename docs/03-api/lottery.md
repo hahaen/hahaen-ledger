@@ -23,3 +23,7 @@
 kind=plan列表和计划详情新增progress：batchId（字符串/空）、startIssue、periods、drawnCount、remainingCount、estimatedReminderDate（北京时间日期/空）、reminderState。仅最新实际购买批次，不混入历史批次；累计summary含义保持。drawnCount按已有draw_id统计，与奖金是否核实无关。
 
 reminderState为NO_PURCHASE/PAUSED/ENDED/NO_CHANNEL/ACCEPTED/DUE/FAILED/UNKNOWN/UNCONFIRMED/WAITING_SYNC/WAITING。ACCEPTED只代表至少一个配置渠道受理；预计日期不构成新的调度时间，实际仍按末期官方开奖同步后的既有任务发送。未知起始期/跨年无锚点不猜日期；预测按常规开奖日估算，休市、延期及同步延迟会调整。无数据库写入及Migration。
+
+## 开奖列表个人汇总
+
+GET /api/app/lottery/draws每条新增personalSummary：costCents（字符串分）、prizeCents（字符串分/NULL）、entryCount、pendingCount。按当前登录用户、彩种、期号汇总全部未删除单次与定投购买；不接受userId。无购买返回两个金额"0"及两个计数0。有任一记录未结算、奖金未知或开奖修订待重算时prizeCents=NULL，pendingCount为该类记录数，成本仍包含这些实际购买。不返回部分奖金作为总奖金。仅批量查询当前页最多20期，分页和官方详情不变。
