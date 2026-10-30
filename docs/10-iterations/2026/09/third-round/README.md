@@ -712,3 +712,7 @@ PASS：公开HTML、7个静态资源（含开奖页JS/CSS入口及共享lottery�
 首轮范围Review PASS：仅正文接线、日期辅助类及相关测试；未改变权限、金额、幂等或调度。Java25 clean verify与真实DEV验证PASS（详见迭代命令和计数）；待同步复审复验、提交推送并自动发布后端。H5/微信无需客户端更新；微信工具/真机NOT_RUN（按用户阶段规则排除，非必需）。完整requirement/design/database/api/backend/frontend/testing/commands/verification/rollback见[本轮迭代](../../10/lottery-renewal-deadline/README.md)。
 
 同步后复审复验PASS：10项文件stash/pull --ff-only/恢复且SHA256一致，远端无更新；本次范围复审无问题，7/7受影响单元及DEV综合HTTP通过，完整构建122总/114通过/8条件跳过、0失败错误。无必需FAIL/BLOCKED，待提交推送后自动发布后端。
+
+发布闭环PASS：`9127d66 feat(lottery): 在续买提醒中增加下期截止日期和星期`已普通推送GitHub origin/main并核对等于本地HEAD。`python3 deploy/local/release.py backend`退出0，2026-10-30 23:44:21+08:00发布；后端分组件记录与容器OCI revision均为9127d662da0ccb5572653ab69f913845580092a3，running/0重启。发布构建122总/107执行通过/15条件跳过，0失败错误；发布前完整DEV验证114通过。服务器/app/app.jar与本地产物SHA256均为008ec9ca35cf17af47cc1a23227d98c4924a54c13d84bc06c3ea29308b4123cf。公开彩票API未登录HTTP401/code1；DEV真实事件正文及渠道发送参数验证通过，不发送额外真实通知、不宣称设备送达。
+
+H5无需更新/未发布，保留314a217，公开静态版本5ed2d703-1045-4c59-b101-6ed1bc22b6a0；微信小程序无需更新/未发布，工具/真机NOT_RUN（按用户阶段规则排除，非必需）。数据库无SQL/Migration/配置操作，V12材料摘要保持2befcc2a90f9e19909e89f55cc1f54035c1726664ce810b7aec1cb5d38235980。服务器仅余本轮后端镜像，未遗留ledger-upload或haji.incoming目录，原数据、日志、密钥及备份保留，不备份旧应用、不自动回滚。无未解决必需FAIL/BLOCKED；后续仅文档归档无需再次发布服务或客户端。

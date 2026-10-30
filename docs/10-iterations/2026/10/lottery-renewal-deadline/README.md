@@ -37,3 +37,9 @@
 同步后Review PASS：10项任务文件安全stash（含新增文件），git pull --ff-only返回Already up to date；恢复后逐文件SHA256一致且无未合并文件，确认后删除stash备份。复审正文接线/辅助逻辑/测试：读取限定彩种和官方相邻期，金额与用户权限路径不变；日期按北京时间、不以当前日跳期、无官方未来日历则标预计，已受理事件不重发。无远端源码/依赖变化，无未解决问题；进入受影响单元及DEV HTTP复验。
 
 同步后复验PASS：Java25 `mvn -B -q -f server/pom.xml test -Dlottery.dev.verify=true -Dtest=LotteryRenewalDeadlineTest,LotteryDevIntegrationTest#actualHttpPermissionsPurchasesSettlementNotificationsAndDeletion`退出0，7/7通过（6单测+1真实DEV综合HTTP场景），0失败错误。日志/tmp/ledger-renewal-deadline-recheck.log。源码未变，前一完整clean verify构建仍对应本轮源码；发布入口再次执行clean verify。无未解决必需FAIL/BLOCKED。
+
+发布闭环PASS：`9127d66 feat(lottery): 在续买提醒中增加下期截止日期和星期`已普通推送GitHub origin/main并核对等于本地HEAD。`python3 deploy/local/release.py backend`退出0，2026-10-30 23:44:21+08:00发布；后端分组件记录与容器OCI revision均为9127d662da0ccb5572653ab69f913845580092a3，running/0重启。发布构建122总/107执行通过/15条件跳过，0失败错误；发布前完整DEV验证114通过。服务器/app/app.jar与本地产物SHA256均为008ec9ca35cf17af47cc1a23227d98c4924a54c13d84bc06c3ea29308b4123cf。公开彩票API未登录HTTP401/code1；DEV真实事件正文及渠道发送参数验证通过，不发送额外真实通知、不宣称设备送达。
+
+H5无需更新/未发布，保留314a217，公开静态版本5ed2d703-1045-4c59-b101-6ed1bc22b6a0；微信小程序无需更新/未发布，工具/真机NOT_RUN（按用户阶段规则排除，非必需）。数据库无SQL/Migration/配置操作，V12材料摘要保持2befcc2a90f9e19909e89f55cc1f54035c1726664ce810b7aec1cb5d38235980。服务器仅余本轮后端镜像，未遗留ledger-upload或haji.incoming目录，原数据、日志、密钥及备份保留，不备份旧应用、不自动回滚。无未解决必需FAIL/BLOCKED；后续仅文档归档无需再次发布服务或客户端。
+
+发布命令日志/tmp/ledger-renewal-deadline-release.log。上线检查使用SSH读取容器限定状态/版本/JAR摘要、分组件记录和残留目录；公开接口及版本文件用curl系统证书校验成功。本机Python urllib首次公开检查因本机CA链缺失失败，未关闭TLS校验，改curl后复验通过；不将该失败宣称为站点故障。文档归档Review仅本次新增证据，无凭证或真实用户数据；内容/链接/差异检查后同步提交。
