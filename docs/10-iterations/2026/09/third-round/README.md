@@ -654,3 +654,9 @@ PASS：按用户反馈将首页星期拆为独立 text，12px 常规字重、较
 本轮requirement/design/frontend：H5静态版本与全局弹层；database/api/backend：无变更；testing/commands/verification：见本轮01–09记录；rollback：兼容Git版本重新构建发布，不创建旧版本备份或自动回滚。
 
 发布闭环：`9309fd6 feat(app): 新增H5发版强制刷新弹窗` 已推送GitHub origin/main并核对一致，`python3 deploy/local/release.py h5`退出0，2026-10-30 22:13:57+08:00发布成功。公开HTML、5个静态资源及版本文件与产物逐字节一致，版本标识存在于JS；服务器H5记录一致，无残留上传/站点暂存目录。后端无需更新，仍为6980b29、running/0重启，公开未登录API401。数据库无需操作；微信客户端无需更新，工具/真机仍按阶段规则NOT_RUN，Safari/iOS真机未验收。无未解决必需FAIL/BLOCKED。上线证据后续仅文档提交，无需重复发布任何服务或客户端。
+
+## 2026-10-30 关于与帮助手动强制刷新
+
+根据用户圈图移除两端帮助页“数据”整节及反馈卡，H5在FAQ下方新增薄荷刷新图标/白色圆角设置按钮，点击复用全局强制刷新弹窗；同版本也能强制重载，自动/手动并发只保留一个弹窗，重试及存储/路由保留沿用既有机制。Review修复原生按钮默认边框后PASS；196项回归、TypeScript、双端构建、微信25页产物检查及Chrome实际鼠标点击/同版本刷新/503重试/四尺寸视觉PASS。浏览器验收为隔离业务API的本地生产包与非真实身份标记，不声称后端真实登录验收。H5发布待执行；后端/数据库无需更新，微信共享移除占位区需用户自行发版，工具/真机NOT_RUN（按阶段规则排除，非必需）。见[本轮迭代](../../10/help-force-refresh/README.md)。
+
+requirement/design/frontend：删除圈出区、H5手动刷新入口及弹层文案；database/api/backend：无业务变更；testing/commands/verification/rollback：详见本轮07–10，重新构建发布恢复，不备份旧应用或自动回滚。

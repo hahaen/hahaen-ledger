@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-const props = defineProps<{ refresh: () => Promise<void> }>()
+const props = defineProps<{ refresh: () => Promise<void>; manual?: boolean }>()
 const dialog = ref<HTMLDialogElement>()
 const busy = ref(false)
 const error = ref('')
@@ -31,12 +31,12 @@ async function refresh() {
     <div class="h5-refresh-icon" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7v5h-5M4 17v-5h5" /><path d="M6.1 7a7 7 0 0 1 11.5-1L20 9M4 15l2.4 3A7 7 0 0 0 17.9 17" /></svg>
     </div>
-    <h2 id="h5-refresh-title">新版本已就绪</h2>
-    <p id="h5-refresh-copy">哈记账已更新，刷新后即可继续使用。</p>
+    <h2 id="h5-refresh-title">{{ manual ? '强制刷新' : '新版本已就绪' }}</h2>
+    <p id="h5-refresh-copy">{{ manual ? '重新获取最新页面代码，刷新后继续使用。' : '哈记账已更新，刷新后即可继续使用。' }}</p>
     <p id="h5-refresh-note">刷新将重新加载页面，未保存的内容会丢失。</p>
     <p v-if="error" class="h5-refresh-error" role="alert">{{ error }}</p>
     <!-- 动态原生标签避免 uni-app 将 button 转为无原生键盘行为的 uni-button。 -->
-    <component :is="'button'" type="button" class="h5-refresh-button" :disabled="busy" :aria-busy="busy" autofocus @click="refresh">{{ busy ? '正在获取最新版本…' : error ? '重试刷新' : '刷新到最新版本' }}</component>
+    <component :is="'button'" type="button" class="h5-refresh-button" :disabled="busy" :aria-busy="busy" autofocus @click="refresh">{{ busy ? '正在获取最新版本…' : error ? '重试刷新' : manual ? '确认刷新' : '刷新到最新版本' }}</component>
   </dialog>
 </template>
 

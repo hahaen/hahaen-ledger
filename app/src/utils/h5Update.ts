@@ -2,7 +2,7 @@ interface H5UpdatePlatform {
   currentVersion: string
   readVersion(): Promise<unknown>
   isVisible(): boolean
-  onRequired(): void
+  onRequired(source: 'update' | 'manual'): void
   navigate(version: string): void
 }
 
@@ -19,6 +19,12 @@ export function createH5UpdateGuard(platform: H5UpdatePlatform, now = Date.now) 
   let required = false
   let refreshing = false
 
+  function requireRefresh(source: 'update' | 'manual' = 'manual') {
+    if (required) return
+    required = true
+    platform.onRequired(source)
+  }
+
   async function check() {
     if (required || !platform.isVisible()) return
     if (checking) return checking
@@ -28,8 +34,7 @@ export function createH5UpdateGuard(platform: H5UpdatePlatform, now = Date.now) 
       try {
         const version = parseH5Version(await platform.readVersion())
         if (version && version !== platform.currentVersion) {
-          required = true
-          platform.onRequired()
+          requireRefresh('update')
         }
       } catch {
         // 探测失败不代表发布更新，下一次前台/联网/定时检测再试。
@@ -51,7 +56,7 @@ export function createH5UpdateGuard(platform: H5UpdatePlatform, now = Date.now) 
     }
   }
 
-  return { check, refresh }
+  return { check, refresh, requireRefresh }
 }
 
 export function h5RefreshUrl(href: string, version: string, timestamp: number): string {

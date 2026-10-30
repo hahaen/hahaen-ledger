@@ -11,6 +11,7 @@ function fixture() {
   let response = { version: 'v1' }
   let reads = 0
   let prompts = 0
+  const sources = []
   let visible = true
   let time = 0
   const navigations = []
@@ -18,11 +19,42 @@ function fixture() {
     currentVersion: 'v1',
     readVersion: async () => { reads++; if (response instanceof Error) throw response; return typeof response === 'function' ? response() : response },
     isVisible: () => visible,
-    onRequired: () => prompts++,
+    onRequired: source => { prompts++; sources.push(source) },
     navigate: version => navigations.push(version),
   }, () => time)
-  return { guard, navigations, reads: () => reads, prompts: () => prompts, respond: value => { response = value }, visible: value => { visible = value }, advance: () => { time += 5000 } }
+  return { guard, navigations, sources, reads: () => reads, prompts: () => prompts, respond: value => { response = value }, visible: value => { visible = value }, advance: () => { time += 5000 } }
 }
+
+test('手动入口同版本也能弹窗并刷新，重复触发不创建多个弹窗', async () => {
+  const f = fixture()
+  await f.guard.check()
+  f.guard.requireRefresh()
+  f.guard.requireRefresh()
+  assert.equal(f.prompts(), 1)
+  assert.deepEqual(f.sources, ['manual'])
+  await f.guard.refresh()
+  assert.deepEqual(f.navigations, ['v1'])
+})
+
+test('自动探测与手动入口交错时只保留一个弹窗和来源', async () => {
+  const f = fixture()
+  let resolve
+  f.respond(() => new Promise(done => { resolve = done }))
+  const checking = f.guard.check()
+  f.guard.requireRefresh()
+  resolve({ version: 'v2' })
+  await checking
+  assert.deepEqual(f.sources, ['manual'])
+  f.respond({ version: 'v3' })
+  await f.guard.refresh()
+  assert.deepEqual(f.navigations, ['v3'])
+
+  const automatic = fixture()
+  automatic.respond({ version: 'v2' })
+  await automatic.guard.check()
+  automatic.guard.requireRefresh()
+  assert.deepEqual(automatic.sources, ['update'])
+})
 
 test('一致版本不弹窗，无效响应/错误不锁定，后续可检测更新且仅弹一次', async () => {
   const f = fixture()

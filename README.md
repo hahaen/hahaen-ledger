@@ -62,7 +62,7 @@ pnpm run build:mp-weixin
 
 ## 首版边界
 
-统计、分类、凭证/OCR、预算、周期记账、多人账本、多币种、支付平台同步、导出/删除数据均未做成可用业务入口；帮助页会明确显示暂未开放。
+统计、分类、凭证/OCR、预算、周期记账、多人账本、多币种、支付平台同步、导出/删除数据均未做成可用业务入口；未开放功能不得呈现为可用操作；帮助页不再展示数据导入/导出及反馈占位区。
 
 更多约束见 [docs/README.md](docs/README.md)、[AGENTS.md](AGENTS.md)、[docs/09-audit/verification-matrix.md](docs/09-audit/verification-matrix.md) 和 [docs/10-iterations/README.md](docs/10-iterations/README.md)。
 

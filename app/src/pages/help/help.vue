@@ -15,6 +15,9 @@ import { ref } from 'vue'
 import NativeNavigation from '../../components/NativeNavigation.vue'
 import { backToLedger } from '../../utils/entry'
 import { staticResource } from '../../utils/staticResource'
+// #ifdef H5
+import { requestH5Refresh } from '../../utils/h5UpdateBrowser'
+// #endif
 
 const openFaq = ref('quick-start')
 
@@ -29,9 +32,6 @@ function toggleFaq(id: string) {
   openFaq.value = openFaq.value === id ? '' : id
 }
 
-function showReserved(message: string) {
-  uni.showToast({ title: message, icon: 'none' })
-}
 </script>
 
 <template>
@@ -66,16 +66,30 @@ function showReserved(message: string) {
         </view>
       </view>
 
+      <!-- #ifdef H5 -->
       <view class="about-section">
-        <view class="about-heading"><view><text class="section-kicker">YOUR DATA</text><text class="about-section-title">数据</text></view></view>
         <view class="about-settings">
-          <view class="about-setting"><text class="about-setting-icon">↗</text><view class="about-setting-copy"><text>数据导出</text><text>首版暂未开放，不会生成不可用操作</text></view><text class="about-status">暂未开放</text></view>
-          <view class="about-setting"><text class="about-setting-icon">↙</text><view class="about-setting-copy"><text>数据导入</text><text>首版暂未开放，不会生成不可用操作</text></view><text class="about-status">暂未开放</text></view>
+          <component :is="'button'" type="button" class="about-setting about-refresh" aria-label="强制刷新" @click="requestH5Refresh">
+            <view class="about-setting-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7v5h-5M4 17v-5h5" /><path d="M6.1 7a7 7 0 0 1 11.5-1L20 9M4 15l2.4 3A7 7 0 0 0 17.9 17" /></svg></view>
+            <view class="about-setting-copy"><text>强制刷新</text><text>重新加载，获取最新页面代码</text></view>
+            <text class="about-refresh-arrow" aria-hidden="true">›</text>
+          </component>
         </view>
       </view>
+      <!-- #endif -->
 
-      <view class="about-note"><text class="about-note-icon">✦</text><view class="about-note-copy"><text>需要反馈？</text><text>告诉我们哪里还可以更好，帮助哈记账变得更顺手。</text></view><button class="about-status" @click="showReserved('反馈暂未开放')">暂未开放</button></view>
       <view class="about-footer"><image :src="staticResource('brand.png')" mode="aspectFill" /><text>哈记账</text><text>简单记账，安心生活</text></view>
     </scroll-view>
   </view>
 </template>
+
+<style scoped>
+/* #ifdef H5 */
+.about-refresh { box-sizing:border-box; min-height:76px; margin:0; border:0; appearance:none; -webkit-appearance:none; font:inherit; cursor:pointer; }
+.about-refresh .about-setting-icon { width:38px; height:38px; border-radius:12px; }
+.about-refresh svg { width:22px; height:22px; }
+.about-refresh .about-setting-copy > text:last-child { white-space:normal; line-height:1.5; }
+.about-refresh-arrow { color:#8ea49e; font-size:24px; }
+.about-refresh:focus-visible { outline:2px solid var(--primary-dark); outline-offset:-4px; }
+/* #endif */
+</style>
