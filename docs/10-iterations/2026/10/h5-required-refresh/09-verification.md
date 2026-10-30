@@ -8,7 +8,7 @@
 | 平台产物 | PASS | H5版本JSON与入口JS一致；微信无H5更新代码/版本文件；25页微信分享产物检查通过。 |
 | Chrome交互 | PASS | 同版本不弹；更换本地同源版本后前台触发弹窗；Escape、遮罩不可关闭；原生按钮Enter触发503后显示重试，恢复版本后整页刷新，hash保留且无重复弹窗；临时非身份存储探针保留且已删除。 |
 | Chrome视觉 | PASS | [320](evidence/refresh-320x568.png)、[375](evidence/refresh-375x812.png)、[414](evidence/refresh-414x896.png)、[横屏](evidence/refresh-812x375.png)；按钮完整可见、无横向溢出，见[尺寸数据](evidence/layout.json)。[失败重试](evidence/refresh-retry.png)。 |
-| H5发布 | NOT_RUN | 待同步、复审、提交推送后按授权发布。 |
+| H5发布 | PASS | `9309fd6` 于2026-10-30 22:13:57+08:00上线；公开HTML、5个静态资源、版本JSON逐字节一致，JSON版本与入口匹配；服务器h5-release/latest-release均指向本次代码提交，旧站点及临时目录已清理。见[生产证据](evidence/production-check.json)。 |
 | 后端/数据库/外部依赖 | 不适用 | 无业务服务、金额、权限、Schema、Redis或MinIO变更。 |
 | 微信工具/真机 | NOT_RUN | 按用户阶段规则排除，非必需；未启动工具，构建不代表运行验收。 |
 | Safari/iOS真机 | NOT_RUN | 当前实际浏览器验证仅Chrome，未宣称其他浏览器真机通过。 |
