@@ -47,3 +47,24 @@ PASS：本次展示逻辑、相关回归、类型检查、双端构建及只读�
 - 上传临时目录与 H5 incoming 目录均为空，旧静态站点已按发布脚本移除；未备份旧应用，数据库、文件、日志和运行密钥保留。
 
 发布证据同步：远端新增 `1baf72d` 平台操作边界文档。安全 stash 后 ff-only 同步；三份审计文档尾部上下文冲突已按语义处理，保留远端完整平台规则记录，仅将本轮“待发布”改为实际成功结果。复审四份本次证据差异及冲突解决无未解决问题，文档检查 PASS；远端未改变业务源码，无需重复业务构建或发布。
+
+## 星期视觉层级调整（2026-10-30 追加）
+
+### requirement / design
+按用户反馈，星期比日期更小、颜色更浅，彼此区分。日期保持 15px/700；星期独立 text，12px/400、灰绿色 #6b7572，复用 date-week 的 8px 左间距。仅首页作用域覆盖，不改其他日期组件。
+
+### database / api / backend
+无变化，不需要 Migration、SQL、配置或后端发布。
+
+### frontend / Review
+仅修改首页 dateTitle/weekdayTitle 与模板，以及 prototype.scss 首页 date-week 规则。星期保留数值构造日期的算法。已 Review 本次代码：嵌套 text 两端兼容、样式作用域、字重与间距、日期来源和金额布局均符合需求，无未解决问题；之后执行验证。
+
+### testing / commands / verification
+PASS：`node --test tests/page-flows.test.mjs tests/tab-background-refresh.test.mjs tests/responsive-layout.test.mjs` 67/67；`pnpm run typecheck`、`pnpm run build:h5`、`pnpm run build:mp-weixin` 均退出 0（仅既有 Sass 提示）。`node /tmp/ledger-home-weekday-style-qa.cjs` 使用本机后台 Chrome 与只读夹具，320/375/414 竖屏及 812 横屏均验证星期 12px/400、颜色 #6b7572、8px 间距、15px/700 日期、无重叠/溢出/运行错误。微信产物实际包含独立 date-week text 与对应样式。人工查看[375px 样式截图](h5-weekday-style-375.png) PASS。
+
+H5 待发布；无必需 FAIL/BLOCKED。微信工具/真机及发布 NOT_RUN（按用户阶段规则排除，非必需），后端业务与数据库验证不适用。
+
+### rollback
+如需撤回，仅恢复本次模板/格式函数和首页样式覆盖，提交验证后重发 H5；不回退数据库、不自动回滚应用。
+
+同步复审：安全 stash 后 `git pull --ff-only` 返回 Already up to date；逐文件 SHA-256 核对恢复一致后删除 stash。本次代码和文档再次 Review 无未解决问题，远端未改变源码/依赖；文档链接和 Git 空白检查 PASS。

@@ -48,10 +48,11 @@ const monthTitle = computed(() => {
   return `${year} 年 ${Number(value)} 月`
 })
 const dayTotal = (rows: Transaction[], type: string) => rows.filter(row => row.type === type).reduce((total, row) => total + row.amountCents, 0)
-const dateTitle = (date: string) => {
+const dateTitle = (date: string) => date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日')
+const weekdayTitle = (date: string) => {
   const [year, month, day] = date.split('-').map(Number)
   const weekday = '日一二三四五六'[new Date(year, month - 1, day).getDay()]
-  return `${date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日')} 周${weekday}`
+  return `周${weekday}`
 }
 watch(() => state.token, () => {
   ++loadSequence
@@ -162,7 +163,7 @@ onPullDownRefresh(async () => { await load(true); uni.stopPullDownRefresh() })
       <template v-else>
         <view v-if="!groups.length" class="list-empty"><view class="empty-art" />暂无记账记录<button v-if="hasMore" class="text-button" @click="loadMore">加载更早账单</button></view>
         <view v-for="group in groups" :key="group[0]" class="date-group">
-          <view class="date-heading"><text class="date-title">{{ dateTitle(group[0]) }}</text><view class="date-flow"><MoneyDisplay class="income" prefix="收 " :value="dayTotal(group[1], 'INCOME')" /><MoneyDisplay class="expense" prefix="支 " :value="dayTotal(group[1], 'EXPENSE')" /></view></view>
+          <view class="date-heading"><text class="date-title">{{ dateTitle(group[0]) }}<text class="date-week">{{ weekdayTitle(group[0]) }}</text></text><view class="date-flow"><MoneyDisplay class="income" prefix="收 " :value="dayTotal(group[1], 'INCOME')" /><MoneyDisplay class="expense" prefix="支 " :value="dayTotal(group[1], 'EXPENSE')" /></view></view>
           <TransactionRow v-for="transaction in group[1]" :key="transaction.id" :transaction="transaction" @open="open" />
         </view>
         <view v-if="loadingMore" class="list-empty">正在加载更多账单…</view>
