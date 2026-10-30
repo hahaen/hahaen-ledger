@@ -184,3 +184,7 @@ App 在异步会话恢复前注册单例更新管理器。微信报告 hasUpdate
 仅 H5 记账金额键盘使用 CalculatorKey；检测 iPhone Safari 和原生 switch 支持后，以真正 HTML checkbox switch 的透明覆盖层接收手指点击。原生 input 由 Vue h 创建，避免 uni-input 转换；与可读屏/键盘操作的原按钮同级，覆盖层 aria-hidden 且不进入 Tab 顺序。所有路径仍只调用一次 pressCalculatorKey，加载/保存/错误禁用时覆盖层也 disabled；减少动态效果时覆盖层不捕获点击。微信条件编译完全排除组件与 DOM 探测，保留原按钮和反馈。
 
 Safari 系统短触感不能自定义强度/时长，也不能由 switch 能力检测保证物理震感；不支持时回退原按钮视觉反馈。当前规范中的真实设备结论以[本轮证据](../10-iterations/2026/10/ios-calculator-haptics/README.md)为准。仅 H5 需要用户发布完整静态产物，无后端、SQL、配置或小程序发版要求。
+
+## 首页日期星期（2026-10-30）
+
+最近记账的日期分组标题显示“YYYY年MM月DD日 周几”，星期取该分组日期；数值构造本地日期以兼容 H5/微信，不能将纯日期字符串作为 UTC 解析。见[本轮档案](../10-iterations/2026/10/home-date-weekday/README.md)。

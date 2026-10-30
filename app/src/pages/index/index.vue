@@ -48,7 +48,11 @@ const monthTitle = computed(() => {
   return `${year} 年 ${Number(value)} 月`
 })
 const dayTotal = (rows: Transaction[], type: string) => rows.filter(row => row.type === type).reduce((total, row) => total + row.amountCents, 0)
-const dateTitle = (date: string) => date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日')
+const dateTitle = (date: string) => {
+  const [year, month, day] = date.split('-').map(Number)
+  const weekday = '日一二三四五六'[new Date(year, month - 1, day).getDay()]
+  return `${date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日')} 周${weekday}`
+}
 watch(() => state.token, () => {
   ++loadSequence
   ++recentLoadSequence
