@@ -46,7 +46,11 @@ public class LotteryProcessor {
             long cost=entries.stream().mapToLong(LotteryEntry::getCostCents).sum();
             long prize=entries.stream().filter(e->e.getPrizeCents()!=null).mapToLong(LotteryEntry::getPrizeCents).sum();
             long pending=entries.stream().filter(e->e.getPrizeCents()==null).count();
-            String body="哈记账："+p.getName()+"\n号码："+entries.getFirst().getRed()+" + "+entries.getFirst().getBlue()+"\n本批"+batch.getPeriods()+"期已到期\n成本："+yuan(cost)+"元\n已确认税前奖金："+yuan(prize)+"元"+(pending>0?"\n另有"+pending+"期奖金待确认":"")+"\n如已实际续买，请进入彩票登记新批次。";
+            LotteryDraw last=db.get(LotteryDraw.class,entries.getLast().getDrawId());
+            LotteryDraw next=last==null||last.getNextIssue()==null?null:db.one(LotteryDraw.class,
+                    q->q.eq("game",batch.getGame()).eq("issue",last.getNextIssue()));
+            String body="哈记账："+p.getName()+"\n号码："+entries.getFirst().getRed()+" + "+entries.getFirst().getBlue()+"\n本批"+batch.getPeriods()+"期已到期\n成本："+yuan(cost)+"元\n已确认税前奖金："+yuan(prize)+"元"+(pending>0?"\n另有"+pending+"期奖金待确认":"")
+                    +"\n"+LotteryRenewalDeadline.describe(batch.getGame(),last,next,now())+"\n如已实际续买，请进入彩票登记新批次。";
             event(user,null,batch.getId(),"batch:"+batch.getId()+":expiry","EXPIRY","彩票续买提醒",body);
         }
         for(var event:db.list(LotteryEvent.class,q->q.eq("user_id",user).eq("cancelled",0))) {

@@ -63,3 +63,5 @@
 - [开奖卡片个人成本与奖金](lottery-draw-summary/README.md)。
 
 - [开奖成本与奖金同行](lottery-draw-summary-inline/README.md)。
+
+- [彩票续买截止日期与星期](lottery-renewal-deadline/README.md)。

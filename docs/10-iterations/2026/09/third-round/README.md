@@ -704,3 +704,11 @@ PASS：公开HTML、7个静态资源（含开奖页JS/CSS入口及共享lottery�
 发布闭环PASS：`314a217 fix(lottery): 将开奖成本和奖金同行靠右显示`已推送GitHub origin/main并核对一致；`python3 deploy/local/release.py h5`退出0，2026-10-30 23:37:02+08:00发布。公开HTML、7个静态资源（含开奖页JS及全局CSS）和版本JSON逐字节匹配本地产物，静态版本5ed2d703-1045-4c59-b101-6ed1bc22b6a0；公开未登录开奖API401。Chrome线上375px全部20张卡片成本/奖金标签同行，首卡为“成本2奖金0”，无横向溢出；独立页面和视口覆写已清理。线上截图只保留/tmp，未提交实际用户金额画面。
 
 后端无需更新，仍为b6106ed、running/0重启；数据库无SQL/Migration/配置操作。H5已实际更新成功，服务器h5-release匹配314a217，无上传/站点暂存目录。微信共享样式/类型/命令行构建已同步，需用户自行发布新版；工具/真机及发布NOT_RUN（按用户阶段规则排除，非必需）。本轮无未解决必需FAIL/BLOCKED；后续纯文档归档无需重复更新服务或客户端。
+
+## 2026-10-30 彩票续买提醒购买截止时间
+
+需求与实现：续买正文增加下期截止日期、中文星期及北京时间；DLT常规21:00、SSQ20:00。末期官方日期锚定下一期，已知官方相邻期优先，推算注明预计及休市/延期；历史批次不跳期，过截止标记，无日期待核实，已受理快照不改写。database/api/frontend无变化，无SQL/Migration/配置操作。
+
+首轮范围Review PASS：仅正文接线、日期辅助类及相关测试；未改变权限、金额、幂等或调度。Java25 clean verify与真实DEV验证PASS（详见迭代命令和计数）；待同步复审复验、提交推送并自动发布后端。H5/微信无需客户端更新；微信工具/真机NOT_RUN（按用户阶段规则排除，非必需）。完整requirement/design/database/api/backend/frontend/testing/commands/verification/rollback见[本轮迭代](../../10/lottery-renewal-deadline/README.md)。
+
+同步后复审复验PASS：10项文件stash/pull --ff-only/恢复且SHA256一致，远端无更新；本次范围复审无问题，7/7受影响单元及DEV综合HTTP通过，完整构建122总/114通过/8条件跳过、0失败错误。无必需FAIL/BLOCKED，待提交推送后自动发布后端。

@@ -146,12 +146,18 @@ class LotteryDevIntegrationTest {
             String expiryBatch=ok(call("POST","/api/app/lottery/plan/"+expiryPlanId+"/purchase",onePeriod,token)).asText();
             assertEquals(1,db.count(LotteryEvent.class,q->q.eq("batch_id",Long.parseLong(expiryBatch)).eq("kind","EXPIRY")));processor.process(user);
             assertEquals(1,db.count(LotteryEvent.class,q->q.eq("batch_id",Long.parseLong(expiryBatch)).eq("kind","EXPIRY")),"重复扫描不产生第二个到期事件");
+            LotteryEvent expiryEvent=db.one(LotteryEvent.class,q->q.eq("batch_id",Long.parseLong(expiryBatch)).eq("kind","EXPIRY"));
+            assertTrue(java.util.regex.Pattern.compile("下期购买截止(?:（预计）)?：[0-9]{4}-[0-9]{2}-[0-9]{2}（周[一二三四五六日]）21:00（北京时间）").matcher(expiryEvent.getBody()).find());
+            assertTrue(expiryEvent.getBody().contains("休市、延期以官方公告及网点实际销售为准。"));
             ok(call("POST","/api/app/lottery/plan/"+expiryPlanId+"/status",Map.of("status","PAUSED","idempotencyKey","expiry-pause-12345"),token));
             assertEquals("PAUSED",ok(call("GET","/api/app/lottery/plan/"+expiryPlanId,null,token)).path("progress").path("reminderState").asText());
             clearInvocations(sender);deliveries.tick();verifyNoInteractions(sender);
             ok(call("POST","/api/app/lottery/plan/"+expiryPlanId+"/status",Map.of("status","ACTIVE","idempotencyKey","expiry-resume-12345"),token));
             jdbc.update("UPDATE lottery_delivery d JOIN lottery_event e ON e.id=d.event_id SET d.next_attempt_at=? WHERE e.batch_id=?",LotteryRules.now(),Long.parseLong(expiryBatch));
             deliveries.tick();assertEquals(1,db.acceptedBatch(Long.parseLong(expiryBatch)));
+            verify(sender).send(eq("BARK"),anyString(),eq("彩票续买提醒"),eq(expiryEvent.getBody()),eq("彩票"));
+            processor.process(user);
+            assertEquals(expiryEvent.getBody(),db.get(LotteryEvent.class,expiryEvent.getId()).getBody(),"已受理消息不改写快照");
             assertTrue(ok(call("GET","/api/app/lottery/plan/"+expiryPlanId,null,token)).path("awaitingRenewal").asBoolean());
             assertEquals("ACCEPTED",ok(call("GET","/api/app/lottery/plan/"+expiryPlanId,null,token)).path("progress").path("reminderState").asText());
             ok(call("POST","/api/app/lottery/plan/"+expiryPlanId+"/delete",Map.of("idempotencyKey","expiry-delete-12345"),token));
