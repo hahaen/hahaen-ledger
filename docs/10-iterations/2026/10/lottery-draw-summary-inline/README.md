@@ -37,3 +37,8 @@ PASS：Chrome实际H5构建在只读示例、CSP同源限制下检查DLT/SSQ各3
 同步后Review PASS：任务文件stash→git pull --ff-only（Already up to date）→apply；逐文件SHA-256相同，恢复确认后删除备份。无冲突/远端上下文变化；复审本次3条样式和文档无问题，再执行回归/类型/产物检查。构建输入未变，既有双端构建仍对应当前源码。
 
 同步后复验PASS：彩票相关7/7、TypeScript及25页微信分享产物通过；文档链接及git diff --check通过，暂无必需FAIL/BLOCKED。H5待提交推送后执行release.py h5，后端及数据库无需更新。
+
+
+发布闭环PASS：`314a217 fix(lottery): 将开奖成本和奖金同行靠右显示`已推送GitHub origin/main并核对一致；`python3 deploy/local/release.py h5`退出0，2026-10-30 23:37:02+08:00发布。公开HTML、7个静态资源（含开奖页JS及全局CSS）和版本JSON逐字节匹配本地产物，静态版本5ed2d703-1045-4c59-b101-6ed1bc22b6a0；公开未登录开奖API401。Chrome线上375px全部20张卡片成本/奖金标签同行，首卡为“成本2奖金0”，无横向溢出；独立页面和视口覆写已清理。线上截图只保留/tmp，未提交实际用户金额画面。
+
+后端无需更新，仍为b6106ed、running/0重启；数据库无SQL/Migration/配置操作。H5已实际更新成功，服务器h5-release匹配314a217，无上传/站点暂存目录。微信共享样式/类型/命令行构建已同步，需用户自行发布新版；工具/真机及发布NOT_RUN（按用户阶段规则排除，非必需）。本轮无未解决必需FAIL/BLOCKED；后续纯文档归档无需重复更新服务或客户端。

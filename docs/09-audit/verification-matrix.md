@@ -1481,3 +1481,8 @@ PASS：公开HTML、7个静态资源（含开奖页JS/CSS入口及共享lottery�
 ## 2026-10-30 开奖成本与奖金同行
 
 按用户补充要求将成本/奖金改为同一行并靠右下角，仅3条共享样式及当前规范变化。Review PASS；200项前端回归、类型、H5/微信项目构建、25页分享检查及Chrome两彩种四尺寸/40张状态卡几何检查PASS（标签同行、右对齐、无横向溢出）。database/api/backend无变化，无SQL/Migration/配置操作，后端无需更新；H5待同步提交后自动发布，微信需用户自行发布新布局，工具/真机及发布NOT_RUN（按用户阶段规则排除，非必需）。requirement/design/frontend/testing/commands/verification/rollback详见[迭代](../10-iterations/2026/10/lottery-draw-summary-inline/README.md)。
+
+
+发布闭环PASS：`314a217 fix(lottery): 将开奖成本和奖金同行靠右显示`已推送GitHub origin/main并核对一致；`python3 deploy/local/release.py h5`退出0，2026-10-30 23:37:02+08:00发布。公开HTML、7个静态资源（含开奖页JS及全局CSS）和版本JSON逐字节匹配本地产物，静态版本5ed2d703-1045-4c59-b101-6ed1bc22b6a0；公开未登录开奖API401。Chrome线上375px全部20张卡片成本/奖金标签同行，首卡为“成本2奖金0”，无横向溢出；独立页面和视口覆写已清理。线上截图只保留/tmp，未提交实际用户金额画面。
+
+后端无需更新，仍为b6106ed、running/0重启；数据库无SQL/Migration/配置操作。H5已实际更新成功，服务器h5-release匹配314a217，无上传/站点暂存目录。微信共享样式/类型/命令行构建已同步，需用户自行发布新版；工具/真机及发布NOT_RUN（按用户阶段规则排除，非必需）。本轮无未解决必需FAIL/BLOCKED；后续纯文档归档无需重复更新服务或客户端。
