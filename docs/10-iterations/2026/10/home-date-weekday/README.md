@@ -62,9 +62,14 @@ PASS：本次展示逻辑、相关回归、类型检查、双端构建及只读�
 ### testing / commands / verification
 PASS：`node --test tests/page-flows.test.mjs tests/tab-background-refresh.test.mjs tests/responsive-layout.test.mjs` 67/67；`pnpm run typecheck`、`pnpm run build:h5`、`pnpm run build:mp-weixin` 均退出 0（仅既有 Sass 提示）。`node /tmp/ledger-home-weekday-style-qa.cjs` 使用本机后台 Chrome 与只读夹具，320/375/414 竖屏及 812 横屏均验证星期 12px/400、颜色 #6b7572、8px 间距、15px/700 日期、无重叠/溢出/运行错误。微信产物实际包含独立 date-week text 与对应样式。人工查看[375px 样式截图](h5-weekday-style-375.png) PASS。
 
-H5 待发布；无必需 FAIL/BLOCKED。微信工具/真机及发布 NOT_RUN（按用户阶段规则排除，非必需），后端业务与数据库验证不适用。
+H5 已发布成功（11e0e6a，2026-10-30 21:12:14+08:00）；无必需 FAIL/BLOCKED。微信工具/真机及发布 NOT_RUN（按用户阶段规则排除，非必需），后端业务与数据库验证不适用。
 
 ### rollback
 如需撤回，仅恢复本次模板/格式函数和首页样式覆盖，提交验证后重发 H5；不回退数据库、不自动回滚应用。
 
 同步复审：安全 stash 后 `git pull --ff-only` 返回 Already up to date；逐文件 SHA-256 核对恢复一致后删除 stash。本次代码和文档再次 Review 无未解决问题，远端未改变源码/依赖；文档链接和 Git 空白检查 PASS。
+
+### 星期样式发布结果
+`11e0e6a fix(app): 调整首页星期文字大小与颜色` 已普通推送 GitHub origin/main 并核对一致。`python3 deploy/local/release.py h5` 退出 0，重新类型检查/构建并发布成功；服务器 h5-release.txt 版本 11e0e6a，时间 2026-10-30 21:12:14+08:00。`python3 /tmp/ledger-weekday-style-release-check.py` 使用正常 TLS 校验核对公开 HTTPS HTML 与 6 个资源逐字节一致，首页独立星期文本及 12px/400 样式已上线。后端仍 6980b29、running/0 重启，无需更新；SQL/Migration/配置不涉及。临时上传与 H5 incoming 目录为空，旧站点已清理，无旧应用备份或自动回滚。微信仅命令行构建通过，运行/上传/发布 NOT_RUN（按用户阶段规则排除，非必需）；用户后续独立发版才获得新样式。
+
+仅 Review 本次四份发布证据差异，版本、时间、资源核对、组件更新范围及未执行项符合实际输出，无未解决问题；纯文档不重复业务测试/构建，内容/链接与 Git 空白检查 PASS。
