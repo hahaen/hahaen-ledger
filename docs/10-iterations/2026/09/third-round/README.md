@@ -662,3 +662,7 @@ PASS：按用户反馈将首页星期拆为独立 text，12px 常规字重、较
 requirement/design/frontend：删除圈出区、H5手动刷新入口及弹层文案；database/api/backend：无业务变更；testing/commands/verification/rollback：详见本轮07–10，重新构建发布恢复，不备份旧应用或自动回滚。
 
 上线闭环PASS：`e5405ec feat(app): 在帮助页新增手动强制刷新入口` 已普通推送GitHub origin/main并核对一致；`python3 deploy/local/release.py h5`退出0，2026-10-30 22:29:51+08:00发布成功。公开HTML、7个静态资源（含帮助页JS/CSS）及版本JSON与产物逐字节一致，版本标识存在于入口，服务器H5记录一致，旧站点及临时目录清理。后端/数据库无需更新，后端仍6980b29、running/0重启、未登录API401。微信仅代码/构建同步删除圈出区，需用户自行上传新版；工具/真机及发布NOT_RUN（按阶段规则排除，非必需）。无未解决必需FAIL/BLOCKED。后续纯上线证据文档提交无需重复发布。
+
+## 2026-10-30 彩票首页精简与默认定投
+
+按用户截图移除彩票首页顶部介绍卡，默认初始化为大乐透、定投计划；保留页内切换及子页返回选择。范围Review PASS；196项前端回归、TypeScript、H5/微信命令行构建与25页微信分享检查PASS。Chrome本地实际H5包隔离只读界面验收确认默认筛选、卡片移除、切换及四尺寸无横向溢出；未调用实际业务写入，原生鼠标超时后以CDP DOM click验证，不宣称鼠标验收通过。后端/数据库无需变更；H5待发布，微信工具/真机及发布NOT_RUN（按用户阶段规则排除，非必需）。详见[本轮迭代](../../10/lottery-default-plan/README.md)。

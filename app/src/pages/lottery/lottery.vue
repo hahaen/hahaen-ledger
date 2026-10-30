@@ -16,7 +16,7 @@ import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import LotteryNumbers from '../../components/LotteryNumbers.vue'
 import { lotteryApi } from '../../utils/api'
 import { gameName, resultLabel, planLabel, type LotteryGame, type LotteryKind, type LotteryPage, type LotteryRecord } from '../../utils/lottery'
-const game = ref<LotteryGame>('DLT'), kind = ref<LotteryKind>('single')
+const game = ref<LotteryGame>('DLT'), kind = ref<LotteryKind>('plan')
 const data = ref<LotteryPage | null>(null), items = ref<LotteryRecord[]>([]), loading = ref(false), error = ref(''), page = ref(1)
 let sequence = 0
 const back = () => uni.switchTab({ url: '/pages/mine/mine' })
@@ -37,7 +37,6 @@ onShow(() => { void load() })
 <template>
   <view class="page profile-page lottery-page">
     <NativeNavigation variant="help" :page-top-extra="20" title="彩票" back-label="返回我的" @back="back" />
-    <view class="profile-hero lottery-hero"><text class="profile-eyebrow">LOTTERY RECORDS</text><text class="profile-hero-title">每一期，都有记录</text><text class="profile-hero-copy">独立记录 · 自动核对 · 到期提醒</text><view class="profile-orbit profile-orbit-one" aria-hidden="true" /><view class="profile-orbit profile-orbit-two" aria-hidden="true" /></view>
     <view class="lottery-tabs"><button :class="{ active: game === 'DLT' }" :aria-pressed="game === 'DLT'" @click="chooseGame('DLT')">大乐透 · 体彩</button><button :class="{ active: game === 'SSQ' }" :aria-pressed="game === 'SSQ'" @click="chooseGame('SSQ')">双色球 · 福彩</button></view>
     <view v-if="data" class="lottery-card lottery-summary">
       <view><text class="lottery-muted">已购累计成本</text><MoneyDisplay :value="data.summary.costCents" /></view><view><text class="lottery-muted">已确认税前奖金</text><MoneyDisplay :value="data.summary.prizeCents" /></view>

@@ -53,3 +53,5 @@
 当前规则及本轮验证证据见[任务记录](auto-release-no-backup/README.md)；取代先前后端/H5 由用户自行发版规则。微信小程序仍独立发布，旧迭代仅作历史追溯。
 
 - [首页最近记账日期补充星期](home-date-weekday/README.md)。
+
+- [彩票首页精简与默认定投](lottery-default-plan/README.md)。

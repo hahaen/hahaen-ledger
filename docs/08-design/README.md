@@ -85,7 +85,7 @@
 
 ## 彩票子功能（2026-10-30）
 
-“我的”待办下方按lotteryEnabled显示彩票，沿用setting-item和细线票券图标。4个子页面复用NativeNavigation、MoneyDisplay、EntryDateTimePicker及系统确认弹层；薄荷渐变引导卡、17px白色卡片、细边框和轻阴影，红蓝只用于号码球，不改五项导航。批次统计明确已购、已结算与未知奖金。真实页面/尺寸验收见[彩票迭代](../10-iterations/2026/10/lottery/09-verification.md)，未验收部分不得据此标PASS。
+“我的”待办下方按lotteryEnabled显示彩票，沿用setting-item和细线票券图标。4个子页面复用NativeNavigation、MoneyDisplay、EntryDateTimePicker及系统确认弹层；彩票首页无顶部介绍卡，默认大乐透定投计划；编辑、详情和开奖页保留业务头部，使用17px白色卡片、细边框和轻阴影，红蓝只用于号码球，不改五项导航。批次统计明确已购、已结算与未知奖金。真实页面/尺寸验收见[彩票迭代](../10-iterations/2026/10/lottery/09-verification.md)，未验收部分不得据此标PASS。
 
 ## H5 新版本提示（2026-10-30）
 
