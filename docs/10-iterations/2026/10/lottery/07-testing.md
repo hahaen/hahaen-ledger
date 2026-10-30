@@ -4,7 +4,7 @@
 
 app/tests/lottery.test.mjs覆盖表单校验、保存防重重试和放弃编辑。后续执行类型检查、H5/微信构建、真实H5及微信开发者工具适配和操作。
 
-执行结果：Java25完整verify共107项，100执行通过、7条件跳过；其中LotteryRulesTest 5项，LotteryDevIntegrationTest 5项执行通过、1项独立UI条件跳过。真实H5条件测试已另行运行通过。前端相关回归24项、类型检查和H5/微信构建通过。
+执行结果（权限补强后）：Java25完整verify共109项，101执行通过、8条件跳过；其中LotteryRulesTest 5项，LotteryDevIntegrationTest 6项执行通过、1项独立UI条件跳过。真实H5条件测试已另行运行通过。前端相关回归24项、类型检查和H5/微信构建通过。
 
 新增真实DEV回归覆盖同步旧租约CAS、旧投递者不能覆盖新受理、UNKNOWN重试不解锁、官方A→B→A→B更正、取消事件恢复及未来位置编辑。补充单期到期/暂停恢复的正向验收结果见verification。
 
