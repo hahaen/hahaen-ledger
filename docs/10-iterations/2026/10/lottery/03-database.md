@@ -6,4 +6,4 @@
 
 本次只新增带默认值字段和空表，没有旧数据收缩。迁移前仍需核对历史版本、已有字段/表冲突、用户默认权限和结构；生产先完成既有迁移审核与数据库备份/正式Flyway迁移，成功核对后才能更新部署摘要。禁止跳过发布摘要门槛。
 
-实际DEV：PASS，Flyway为V12，默认权限、字段中文注释及全部9张Entity列集合已核对；MySQL/Redis/MinIO探针通过。生产迁移：NOT_RUN，等待必需验收完成，不修改线上迁移摘要。
+实际DEV：PASS，Flyway为V12，默认权限、字段中文注释及全部9张Entity列集合已核对；MySQL/Redis/MinIO探针通过。生产迁移：PASS，正式Flyway V11→V12，10张表及9个Entity字段契约核对，真实用户开通数0；验证成功后更新迁移摘要，再发布后端/H5。备份和详细记录见11-production-migration与09-verification。

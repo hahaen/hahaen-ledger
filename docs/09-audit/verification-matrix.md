@@ -1367,3 +1367,27 @@ PASS：DEV仅admin账号配置了Bark/pushplus。按用户“现在”的回复�
 新增实际命令：Java25 mvn -f server/pom.xml -Dtest=LotteryLiveNotificationDevTest -Dlottery.live.verify=true -Dlottery.live.account=admin test，退出0。测试Key仅在内存解密，不进入命令或文档。
 
 本轮必需功能验证与H5验收已通过，无剩余必需FAIL/BLOCKED。后续按既定流程安全保存、pull --ff-only、恢复核对、同步后复审复验，再提交推送，先正式生产V12迁移，再发布后端/H5。此处尚不宣称提交/发布已完成。
+
+
+## 最终交付（2026-10-30 13:43，北京时间）
+
+PASS：实现提交 `ba1bed0 feat(lottery): 新增独立彩票记录与定投提醒` 已普通推送 GitHub origin/main，核对远端等于本地。按用户最新要求只验H5，不执行微信模拟器/真机运行验收或上传发布。
+
+生产正式V12迁移PASS：迁移前haji为V11，数据库单事务压缩备份及完整性核对成功；首次入口独立validate将待执行V12判为错误，DDL前安全停止，复查仍V11/无彩票表。修正为migrate(validateOnMigrate=true)内部强制校验并经复审后重试成功，不添加ignore规则。最终V12成功、10张表、9个Entity字段集/注释、权限默认0及真实账号开通数0均核对。迁移摘要 `2befcc2a90f9e19909e89f55cc1f54035c1726664ce810b7aec1cb5d38235980` 在全部检查成功后更新，未绕过发布门槛。两份数据库备份及迁移日志/收据保留于服务器私有db-backups；未创建旧应用版本备份。
+
+发布：`python3 deploy/local/release.py all` 退出0；先后端健康检查通过，再更新H5。
+
+|组件|需要更新|实际结果|版本/依据|
+|---|---|---|---|
+|后端|是，新增API、权限、同步和兑奖任务|PASS，已发布|容器running、0重启，OCI revision=ba1bed06e7453b825553256250de3bc4b78855aa；backend-release.txt时间13:43:06+08:00|
+|H5|是，新增彩票页面及入口|PASS，已发布|h5-release.txt时间13:43:07+08:00；HTML、5个彩票JS模块及5个入口资源逐字节匹配本机构建|
+|微信小程序|使用新彩票入口需要新版客户端|本轮未运行验收、未上传/提审/发布|按用户指令排除；此前构建通过，后续用户自行发版|
+|数据库|是，先V12再应用|PASS，正式Flyway已完成|生产V12 success=1，全部实际用户lottery_enabled=0|
+
+运行验收PASS：生产自动同步DLT30期（最新26123，13:43:25.766成功）、SSQ30期（最新2026124，13:43:26.341成功），last_error均为空，历史回填游标2；后续后台继续增量/历史补齐。不能据此宣称全部历史已回填。彩票公开接口未登录返回HTTP401/code1。仅剩当前后端镜像，无ledger-upload/ledger-migrate临时目录。原数据库、Redis、MinIO、运行密钥、文件、日志和数据备份保留。
+
+真实通知PASS：BARK和PUSHPLUS各一条“彩票功能验收”均ACCEPTED，既有admin权限未改变；不宣称设备送达。默认所有真实用户无入口，维护者后续按用户ID设置app_user.lottery_enabled=1才能使用。
+
+当前无未解决必需FAIL/BLOCKED。边界：DLT早于19019及未知派奖按设计待核实；完整历史渐进回填。微信运行按用户明确指令不适用，不将未执行写成PASS。最终纯文档证据提交不触发重复发布。
+
+发布入口Java25 verify实际统计：108总/95执行通过/13条件跳过，0失败/0错误；发布构建不重复发送真实提醒。
