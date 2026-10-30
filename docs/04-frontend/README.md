@@ -212,4 +212,4 @@ H5 生产入口安装全局更新探测器：每次生产构建同步生成唯�
 
 ## 2026-10-30 开奖卡片个人金额
 
-大乐透/双色球开奖列表共享模板，底部右侧两行显示个人当期成本、税前奖金，复用MoneyDisplay；无购买显示0，未核实奖金显示待确认，旧接口无personalSummary显示暂不可用。左侧保留奖金与官方依据入口，窄屏及长金额换行。见[迭代](../10-iterations/2026/10/lottery-draw-summary/README.md)。
+大乐透/双色球开奖列表共享模板，底部右侧同一行显示个人当期成本、税前奖金，复用MoneyDisplay；无购买显示0，未核实奖金显示待确认，旧接口无personalSummary显示暂不可用。左侧保留奖金与官方依据入口，窄屏时整个金额区可独占底部一行并右对齐，两个指标仍横向排列。见[金额汇总](../10-iterations/2026/10/lottery-draw-summary/README.md)及[同行布局](../10-iterations/2026/10/lottery-draw-summary-inline/README.md)。

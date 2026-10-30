@@ -17,8 +17,9 @@
 .lottery-reminder { display:block; margin-top:8px; color:#236f61; font-size:12px; line-height:1.75; white-space:normal; overflow-wrap:anywhere; }
 .lottery-reminder .lottery-muted { display:inline; }
 .lottery-draw-footer { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:10px 12px; }
-.lottery-draw-summary { display:flex; flex-direction:column; align-items:flex-end; gap:4px; min-width:0; max-width:100%; margin-left:auto; }
-.lottery-draw-summary .lottery-inline { justify-content:flex-end; }
+.lottery-draw-summary { display:flex; align-items:baseline; justify-content:flex-end; gap:12px; min-width:0; max-width:100%; margin-left:auto; }
+.lottery-draw-summary .lottery-inline { justify-content:flex-end; flex-wrap:nowrap; gap:4px; }
+.lottery-draw-summary .lottery-muted { flex-shrink:0; }
 .lottery-draw-summary .money-display { min-width:0; font-size:13px; line-height:1.6; white-space:normal; overflow-wrap:anywhere; }
 .lottery-numbers { display:flex; align-items:center; flex-wrap:wrap; gap:5px; margin:15px 0; }.lottery-ball { display:flex; flex:0 0 28px; width:28px; height:28px; align-items:center; justify-content:center; border-radius:50%; font-size:12px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums; }.lottery-ball-red { color:#ac514c; background:#fff0ed; }.lottery-ball-blue { color:#3b6f9d; background:#edf5ff; }.lottery-number-separator { color:#91a49f; font-size:12px; }
 .lottery-notice { display:block; width:100%; box-sizing:border-box; margin:14px 0; padding:13px 14px; border:1px solid #dff0eb; border-radius:13px; color:#356f61; background:#edf8f3; text-align:left; font-size:12px; line-height:1.7; overflow-wrap:anywhere; }

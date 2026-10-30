@@ -61,3 +61,5 @@
 - [彩票表单统一提示](lottery-feedback/README.md)。
 
 - [开奖卡片个人成本与奖金](lottery-draw-summary/README.md)。
+
+- [开奖成本与奖金同行](lottery-draw-summary-inline/README.md)。
