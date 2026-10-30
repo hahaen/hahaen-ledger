@@ -19,6 +19,17 @@ test('号码规范化、重复、边界与未知奖金状态', () => {
   assert.equal(helpers.deliveryLabel('ACCEPTED'), '渠道已受理')
   assert.equal(helpers.resultLabel({ result: 'WAITING', issue: null }), '期号待核对')
 })
+test('计划提醒展示区分预估、过期同步、已受理和不发送状态', () => {
+  const progress = { estimatedReminderDate: '2026-11-21', reminderState: 'WAITING' }
+  assert.equal(helpers.reminderLabel(progress), '2026-11-21 晚开奖后')
+  assert.match(helpers.reminderLabel({ ...progress, reminderState: 'WAITING_SYNC' }), /等待开奖数据同步/)
+  assert.match(helpers.reminderLabel({ ...progress, reminderState: 'PAUSED' }), /已暂停提醒/)
+  assert.match(helpers.reminderLabel({ ...progress, reminderState: 'ACCEPTED' }), /已受理，待续买/)
+  assert.match(helpers.reminderLabel({ reminderState: 'NO_PURCHASE' }), /登记实际购买后计算/)
+  assert.match(helpers.reminderLabel({ reminderState: 'UNCONFIRMED' }), /待官方期次核对/)
+  assert.match(helpers.reminderLabel({ reminderState: 'NO_CHANNEL' }), /配置通知渠道/)
+  assert.match(helpers.reminderLabel(), /刷新重试/)
+})
 async function editor(api) {
   const source = await readFile(new URL('../src/pages/lottery-editor/lottery-editor.vue', import.meta.url), 'utf8')
   const script = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]

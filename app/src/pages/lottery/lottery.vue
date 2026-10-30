@@ -15,7 +15,7 @@ import NativeNavigation from '../../components/NativeNavigation.vue'
 import MoneyDisplay from '../../components/MoneyDisplay.vue'
 import LotteryNumbers from '../../components/LotteryNumbers.vue'
 import { lotteryApi } from '../../utils/api'
-import { gameName, resultLabel, planLabel, type LotteryGame, type LotteryKind, type LotteryPage, type LotteryRecord } from '../../utils/lottery'
+import { gameName, resultLabel, planLabel, reminderLabel, type LotteryGame, type LotteryKind, type LotteryPage, type LotteryRecord } from '../../utils/lottery'
 const game = ref<LotteryGame>('DLT'), kind = ref<LotteryKind>('plan')
 const data = ref<LotteryPage | null>(null), items = ref<LotteryRecord[]>([]), loading = ref(false), error = ref(''), page = ref(1)
 let sequence = 0
@@ -53,6 +53,12 @@ onShow(() => { void load() })
       <LotteryNumbers :red="item.red" :blue="item.blue" />
       <view class="lottery-row lottery-muted"><text>{{ item.multiple }}倍{{ item.additional ? ' · 追加' : '' }}</text><text v-if="kind === 'single'">{{ item.purchasedOn }}</text></view>
       <view class="lottery-row"><view class="lottery-inline"><text class="lottery-muted">成本</text><MoneyDisplay :value="kind === 'plan' ? item.summary?.costCents : item.costCents" /></view><view class="lottery-inline"><text class="lottery-muted">奖金</text><MoneyDisplay v-if="kind === 'plan' || item.prizeCents != null" :value="kind === 'plan' ? item.summary?.prizeCents : item.prizeCents" /><text v-else class="lottery-muted">待确认</text></view></view>
+      <view v-if="kind === 'plan'" class="lottery-plan-progress">
+        <view v-if="item.progress?.batchId" class="lottery-row lottery-muted"><text>本批已开奖 {{ item.progress.drawnCount }} 期</text><text>剩余 {{ item.progress.remainingCount }} 期</text></view>
+        <text v-else-if="item.progress" class="lottery-muted">尚未登记实际购买批次</text>
+        <text class="lottery-reminder"><text class="lottery-muted">预计下次提醒：</text>{{ reminderLabel(item.progress) }}</text>
+        <text v-if="item.progress?.estimatedReminderDate" class="lottery-hint">按常规开奖日估算，休市、延期及同步延迟会调整</text>
+      </view>
     </button>
     <button v-if="data?.hasMore && !error" class="secondary-btn" :disabled="loading" @click="load(false)">{{ loading ? '加载中…' : '加载更多' }}</button>
     <button class="text-button" @click="draws">查看{{ gameName(game) }}历史开奖</button>

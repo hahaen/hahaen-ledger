@@ -17,3 +17,9 @@
 保存参数和状态详见[本次契约](../10-iterations/2026/10/lottery/04-api.md)。所有写接口必须提供8–64位幂等键，相同键不同内容拒绝。用户信息GET /api/app/user/profile新增只读lotteryEnabled。
 
 单次渠道受理后禁改；发送中/结果未知禁改，重试不消除未知历史安全锁。未开奖定投快照可修改，已结算不可改；未来期号由官方连续列表绑定。
+
+## 定投卡片进度
+
+kind=plan列表和计划详情新增progress：batchId（字符串/空）、startIssue、periods、drawnCount、remainingCount、estimatedReminderDate（北京时间日期/空）、reminderState。仅最新实际购买批次，不混入历史批次；累计summary含义保持。drawnCount按已有draw_id统计，与奖金是否核实无关。
+
+reminderState为NO_PURCHASE/PAUSED/ENDED/NO_CHANNEL/ACCEPTED/DUE/FAILED/UNKNOWN/UNCONFIRMED/WAITING_SYNC/WAITING。ACCEPTED只代表至少一个配置渠道受理；预计日期不构成新的调度时间，实际仍按末期官方开奖同步后的既有任务发送。未知起始期/跨年无锚点不猜日期；预测按常规开奖日估算，休市、延期及同步延迟会调整。无数据库写入及Migration。

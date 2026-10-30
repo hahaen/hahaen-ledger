@@ -25,6 +25,7 @@ public class LotteryService {
     private final LotteryStore db;
     private final ObjectMapper json;
     private final UserNotificationConfigMapper configs;
+    private final LotteryPlanProgressService progress;
     private final org.springframework.context.ApplicationEventPublisher publisher;
     public record Changed(long userId) {}
 
@@ -45,11 +46,12 @@ public class LotteryService {
         long user=owner();game(game);page(page);if(!Set.of("single","plan").contains(kind))throw error("清单类型无效");
         ObjectNode result=json.createObjectNode();
         result.set("summary",view(db.summary(user,game,null)));
-        result.put("notificationConfigured",!channels(user).isEmpty());
+        boolean notificationConfigured = !channels(user).isEmpty();
+        result.put("notificationConfigured",notificationConfigured);
         List<?> values=kind.equals("single")?db.list(LotteryEntry.class,q->q.eq("user_id",user).eq("game",game).isNull("plan_id").orderByDesc("created_at","id").last(paging(page))):
                 db.list(LotteryPlan.class,q->q.eq("user_id",user).eq("game",game).orderByDesc("created_at","id").last(paging(page)));
         ArrayNode items=json.createArrayNode();
-        values.stream().limit(20).forEach(value->{ObjectNode item=(ObjectNode)view(value);if(value instanceof LotteryPlan p){item.set("summary",view(db.summary(user,game,p.getId())));item.put("awaitingRenewal",awaiting(p));}items.add(item);});
+        values.stream().limit(20).forEach(value->{ObjectNode item=(ObjectNode)view(value);if(value instanceof LotteryPlan p){item.set("summary",view(db.summary(user,game,p.getId())));item.put("awaitingRenewal",awaiting(p));item.set("progress",view(progress.describe(p,notificationConfigured)));}items.add(item);});
         result.set("items",items);result.put("hasMore",values.size()>20);result.set("sync",syncInfo(game));return result;
     }
     public ObjectNode draws(String game,int page) {
@@ -66,7 +68,7 @@ public class LotteryService {
             case "entry"->{LotteryEntry e=entry(user,id);result=(ObjectNode)view(e);result.put("editable",editable(e));
                 if(e.getDrawId()!=null)result.set("draw",view(db.get(LotteryDraw.class,e.getDrawId())));
                 List<LotteryEvent> events=db.list(LotteryEvent.class,q->q.eq("user_id",user).eq("entry_id",id).eq("cancelled",0).orderByDesc("id").last("LIMIT 20"));result.set("notifications",eventViews(events));}
-            case "plan"->{LotteryPlan p=plan(user,id);result=(ObjectNode)view(p);result.set("summary",view(db.summary(user,p.getGame(),id)));result.put("awaitingRenewal",awaiting(p));
+            case "plan"->{LotteryPlan p=plan(user,id);result=(ObjectNode)view(p);result.set("summary",view(db.summary(user,p.getGame(),id)));result.put("awaitingRenewal",awaiting(p));result.set("progress",view(progress.describe(p,!channels(user).isEmpty())));
                 List<LotteryBatch> values=db.list(LotteryBatch.class,q->q.eq("user_id",user).eq("plan_id",id).orderByDesc("created_at","id").last(paging(page)));
                 result.set("items",view(values.stream().limit(20).toList()));result.put("hasMore",values.size()>20);}
             case "batch"->{LotteryBatch b=batch(user,id);result=(ObjectNode)view(b);List<LotteryEntry> entries=db.list(LotteryEntry.class,q->q.eq("user_id",user).eq("batch_id",id).orderByAsc("position"));
