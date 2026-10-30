@@ -45,3 +45,11 @@ PASS：Java25 `mvn -B -q -f server/pom.xml clean verify -Dlottery.dev.verify=tru
 PASS：17个任务文件安全stash后执行`git pull --ff-only`，远端Already up to date；stash apply成功，所有文件SHA-256与保存前逐字节相同，确认恢复后删除stash。无冲突、无无关差异。仅本轮API查询/金额/归属/修订待核实/双端模板/样式/测试再次Review，无未解决问题，开始同步后受影响复验。构建输入未变，双端既有构建对应同步后源码。
 
 同步后复验PASS：真实DEV新HTTP综合场景退出0（两彩种金额/隔离/删除/未知/修订/撤权），前端200/200、TypeScript、25页微信分享产物复验通过。源码/依赖未变，沿用相同输入的H5/微信构建；正式发布入口再构建后端/H5。文档相对链接、`git diff --check`通过，待提交推送后执行`python3 deploy/local/release.py all`。
+
+## 发布闭环
+
+PASS：`b6106ed feat(lottery): 在开奖卡片展示个人成本与奖金`普通推送GitHub origin/main，`git ls-remote origin refs/heads/main`与本地HEAD一致。`python3 deploy/local/release.py all`退出0，后端及H5均于2026-10-30 23:30:26+08:00发布，分组件记录及容器OCI revision均为b6106edb41ee7ad6cec2651d879a0947ef7f9749；容器running/0重启。发布构建116总/101执行通过/15条件跳过、0失败错误；发布前含真实DEV完整验证108执行通过。
+
+PASS：公开HTML、7个静态资源（含开奖页JS/CSS入口及共享lottery模块）、haji-version.json与本地发布产物逐字节一致，静态版本0b601e07-13e7-4f59-b4a2-6e160ac4515c；公开未登录开奖API返回401。Chrome独立后台登录会话实页确认大乐透最新期个人成本/奖金显示2/0，既有中奖期显示2/5，未购买期0/0；双色球最新期0/0。线上大乐透375px无横向溢出，双色球默认视口读取正常；两彩种四尺寸已在本地构建验收。只读未新增或修改实际用户购买记录，临时页面、视口覆写及本地预览服务器均已清理。线上截图只保留本机/tmp，不提交真实用户金额画面。
+
+后端需要更新且已发布成功；H5需要更新且已发布成功；微信共享源码、类型及命令行构建已同步，使用新界面需用户自行上传发布，工具/真机及发布NOT_RUN（按用户阶段规则排除，非必需）。数据库无SQL/Migration/配置操作；数据、密钥、日志、备份保留。服务器仅保留当前后端镜像，无ledger-upload或haji.incoming残留目录；不备份旧版本、不自动回滚。无未解决必需FAIL/BLOCKED；后续仅文档归档无需重复发布服务或客户端。
