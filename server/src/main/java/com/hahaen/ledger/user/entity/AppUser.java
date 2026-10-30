@@ -3,6 +3,8 @@ package com.hahaen.ledger.user.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.hahaen.ledger.common.entity.BaseAuditEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,6 +27,7 @@ public class AppUser extends BaseAuditEntity {
     private String avatarFileUrl;
     private String status;
     /** 默认关闭；只允许维护者配置，不接受用户资料写入。 */
+    @TableField(insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER)
     private Integer lotteryEnabled = 0;
     private LocalDateTime lastLoginAt;
     private String lastLoginIp;

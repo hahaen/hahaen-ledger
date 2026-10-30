@@ -73,3 +73,12 @@ PASS：实现提交 `ba1bed0 feat(lottery): 新增独立彩票记录与定投提
 当前无未解决必需FAIL/BLOCKED。边界：DLT早于19019及未知派奖按设计待核实；完整历史渐进回填。微信运行按用户明确指令不适用，不将未执行写成PASS。最终纯文档证据提交不触发重复发布。
 
 发布入口Java25 verify实际统计：108总/95执行通过/13条件跳过，0失败/0错误；发布构建不重复发送真实提醒。
+
+
+## 发布后权限边界补强
+
+最终复核发现：普通资料保存使用已加载AppUser做updateById，维护者并发关闭权限后，旧实体可能回写旧lottery_enabled值。修复为该字段MyBatis insertStrategy=NEVER、updateStrategy=NEVER，业务创建统一依赖数据库DEFAULT0，业务更新完全排除该列；维护者显式SQL配置不受影响。DTO和前端只读保持。补充真实DEV覆盖显式置1创建仍为0、旧实体不能覆盖关闭、普通Mapper强行置1仍为0。该补强无需新Migration，只影响后端；按同一流程Review、验证、同步、提交和后端发布。当前验证待执行。
+
+权限补强首轮Review PASS；Java25 clean verify -Dlottery.dev.verify=true退出0：109总/101执行通过/8条件跳过，真实数据库只读权限回归通过，无新Migration。
+
+权限补强同步后复审/复验PASS：stash 99bcc35e225eaed8c3ea759469006e2fdb283f1f → pull --ff-only（Already up to date）→ apply后4文件摘要完全相同，确认后删除stash；无新上下文变化，复审无未解决问题。定向ordinaryUserWritesCannotGrantOrRestoreLotteryPermission及ProfileServiceTest退出0。本轮仅后端及测试/文档，H5无改动、无新Migration。

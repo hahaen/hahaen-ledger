@@ -39,12 +39,14 @@ class LotteryDevIntegrationTest {
     @Autowired JdbcTemplate jdbc;
     @Autowired PasswordEncoder encoder;
     @Autowired LotteryStore db;
+    @Autowired com.hahaen.ledger.user.mapper.AppUserMapper userMapper;
     @Autowired LotteryProcessor processor;
     @Autowired LotteryDeliveryService deliveries;
     @Autowired LotteryOfficialClient official;
     @Autowired LotterySyncService sync;
     @Autowired NotificationKeyCipher cipher;
     @MockitoBean TodoNotificationSender sender;
+    @MockitoBean com.hahaen.ledger.todo.service.TodoReminderWorker unrelatedTodoWorker;
 
     @Test void officialSourcesAndPersistentRevisions() {
         for(String game:List.of("DLT","SSQ")) {
@@ -67,6 +69,22 @@ class LotteryDevIntegrationTest {
             assertTrue(db.hasSyncLease("DLT","new-test-holder"));
             assertNotEquals(9999,db.one(LotterySyncState.class,q->q.eq("game","DLT")).getHistoryPage());
         }finally{db.releaseSync("DLT","new-test-holder");db.releaseSync("DLT","old-test-holder");}
+    }
+    @Test void ordinaryUserWritesCannotGrantOrRestoreLotteryPermission() {
+        long id=IdWorker.getId();var user=new com.hahaen.ledger.user.entity.AppUser();
+        user.setId(id);user.setLoginAccount("lotteryqa"+id);user.setNickname("彩票验收");user.setStatus("ACTIVE");
+        user.setPasswordHash("synthetic-unusable-hash");user.setLotteryEnabled(1);
+        try {
+            userMapper.insert(user);
+            assertEquals(0,jdbc.queryForObject("SELECT lottery_enabled FROM app_user WHERE id=?",Integer.class,id),"所有业务创建路径必须使用数据库默认关闭");
+            jdbc.update("UPDATE app_user SET lottery_enabled=1 WHERE id=?",id);
+            var stale=userMapper.selectById(id);assertEquals(1,stale.getLotteryEnabled());
+            jdbc.update("UPDATE app_user SET lottery_enabled=0 WHERE id=?",id);
+            stale.setNickname("彩票验收资料修改");userMapper.updateById(stale);
+            assertEquals(0,jdbc.queryForObject("SELECT lottery_enabled FROM app_user WHERE id=?",Integer.class,id),"旧资料实体不能覆盖维护者刚关闭的权限");
+            stale.setLotteryEnabled(1);userMapper.updateById(stale);
+            assertEquals(0,jdbc.queryForObject("SELECT lottery_enabled FROM app_user WHERE id=?",Integer.class,id),"业务Mapper不得写入权限字段");
+        }finally{cleanup(id,id);}
     }
     @Test void schemaDefaultsAndEntityColumns() {
         assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM haji_flyway_history WHERE version='12' AND success=1",Integer.class));
