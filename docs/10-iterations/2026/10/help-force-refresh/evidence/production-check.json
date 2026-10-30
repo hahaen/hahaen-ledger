@@ -1,0 +1,22 @@
+{
+  "publicHtmlMatches": true,
+  "assetsMatched": [
+    "/haji/assets/brand-BR8i54a-.png",
+    "/haji/assets/brand-white-CWQ4hh1_.png",
+    "/haji/assets/help-DMxFBRU3.css",
+    "/haji/assets/index-0pWxosoK.js",
+    "/haji/assets/index-D2ocJxNr.css",
+    "/haji/assets/pages-help-help.qcBT2-Vt.js",
+    "/haji/assets/uni.152e8bf8.css"
+  ],
+  "manifestMatches": true,
+  "versionInEntry": true,
+  "version": "c43cd926-c5fa-4c14-826c-18b542fe9350",
+  "unauthenticatedApi": 401,
+  "commit": "e5405ec8ed41483f2eae0c4be6a63aef090a04d3",
+  "publishedAt": "2026-10-30T22:29:51+08:00",
+  "backendCommit": "6980b2956a35f594187327d42ae36ae1f58e8650",
+  "backendStatus": "running",
+  "backendRestarts": 0,
+  "temporaryUploadAndWebStageDirectories": 0
+}
