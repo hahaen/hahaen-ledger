@@ -16,6 +16,10 @@ public record TodoSaveRequest(
         String repeatMode, String repeatUnit, Integer repeatInterval,
         @Size(max = 20) String weekDays, @Size(max = 100) String monthDays, boolean lastDay,
         @Size(max = 2200) String yearDays, @Size(max = 1100) String fixedDates) {
+    public TodoPlanRequest plan() {
+        return new TodoPlanRequest(recurrence, monthInterval, dueAt, repeatMode, repeatUnit, repeatInterval,
+                weekDays, monthDays, lastDay, yearDays, fixedDates);
+    }
     public TodoSaveRequest(String title, String note, String recurrence, Integer monthInterval,
                            LocalDateTime dueAt, boolean remind, String idempotencyKey) {
         this(title, note, recurrence, monthInterval, dueAt, remind, idempotencyKey,

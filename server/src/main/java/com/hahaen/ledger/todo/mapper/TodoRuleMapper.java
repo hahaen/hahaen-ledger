@@ -14,6 +14,10 @@ public interface TodoRuleMapper extends BaseMapper<TodoRule> {
     Long activeUser(@Param("userId") long userId);
     @Select("SELECT * FROM ha_todo_rule WHERE id=#{id} AND user_id=#{userId} AND deleted=0 FOR UPDATE")
     TodoRule ownedForUpdate(@Param("userId") long userId, @Param("id") long id);
+    @Select("SELECT * FROM ha_todo_rule WHERE id=#{id} AND user_id=#{userId} AND deleted=0 AND active=1")
+    TodoRule owned(@Param("userId") long userId, @Param("id") long id);
+    @Update("UPDATE ha_todo_rule SET title=#{title},note=#{note},remind=#{remind},updated_at=CURRENT_TIMESTAMP(3),updated_by=#{userId},update_name=#{updateName} WHERE id=#{id} AND user_id=#{userId} AND deleted=0 AND active=1")
+    int editContent(TodoRule rule);
     @Select("SELECT * FROM ha_todo_rule WHERE id=#{id} AND deleted=0 AND active=1 FOR UPDATE")
     TodoRule dueForUpdate(@Param("id") long id);
     @Select("SELECT id FROM ha_todo_rule WHERE deleted=0 AND active=1 AND next_due_at <= #{horizon} ORDER BY next_due_at,id LIMIT 100")

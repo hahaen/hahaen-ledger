@@ -3,6 +3,8 @@ package com.hahaen.ledger.todo.controller;
 import com.hahaen.ledger.common.response.ApiResponse;
 import com.hahaen.ledger.todo.dto.TodoActionRequest;
 import com.hahaen.ledger.todo.dto.TodoSaveRequest;
+import com.hahaen.ledger.todo.dto.TodoPreviewRequest;
+import com.hahaen.ledger.todo.vo.TodoPreviewVO;
 import com.hahaen.ledger.todo.service.TodoService;
 import com.hahaen.ledger.todo.vo.TodoPageVO;
 import com.hahaen.ledger.todo.vo.TodoAttemptVO;
@@ -24,6 +26,9 @@ public class TodoController {
     }
     @GetMapping("/{id}/attempts") public ApiResponse<List<TodoAttemptVO>> attempts(@PathVariable long id) {
         return ApiResponse.ok(service.attempts(id));
+    }
+    @PostMapping("/preview") public ApiResponse<TodoPreviewVO> preview(@Valid @RequestBody TodoPreviewRequest request) {
+        return ApiResponse.ok(service.preview(request));
     }
     @PostMapping public ApiResponse<String> create(@Valid @RequestBody TodoSaveRequest request) {
         return ApiResponse.ok(service.create(request));

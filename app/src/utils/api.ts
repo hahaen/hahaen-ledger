@@ -80,8 +80,12 @@ export type TodoPayload = TodoRepeatFields & {
   title: string; note: string; recurrence: TodoRecurrence; monthInterval: number
   dueAt: string; remind: boolean; idempotencyKey: string
 }
+export type TodoPlan = TodoRepeatFields & { recurrence: TodoRecurrence; monthInterval: number; dueAt: string }
+export type TodoPreview = { times: string[]; afterCompletion: boolean; scheduleChanged: boolean }
+export type TodoPreviewRequest = { plan: TodoPlan; occurrenceId?: string }
 export type TodoAttempt = { channel: string; messageTitle: string; messageBody: string; result: string; attemptedAt: string }
 export const todoApi = {
+  preview: (data: TodoPreviewRequest) => request<TodoPreview>('/api/app/todos/preview', { method: 'POST', data }),
   detail: (id: string) => request<TodoItem>(`/api/app/todos/${encodeURIComponent(id)}`),
   attempts: (id: string) => request<TodoAttempt[]>(`/api/app/todos/${encodeURIComponent(id)}/attempts`),
   list: (status: TodoStatus, page = 1) => request<TodoPage>(`/api/app/todos?status=${status}&page=${page}&pageSize=20`),

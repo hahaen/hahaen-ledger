@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { TodoRepeatFields } from '../utils/api'
-import { repeatModes, repeatUnits, splitSelection, toggleSelection } from '../utils/todoRepeat'
+import { repeatUnits, splitSelection, toggleSelection } from '../utils/todoRepeat'
 const props = defineProps<{ modelValue: TodoRepeatFields; disabled: boolean; minDate: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: TodoRepeatFields] }>()
 const calendarMonth = ref(props.minDate.slice(0, 7))
@@ -43,8 +43,7 @@ function moveMonth(delta: number) {
 </script>
 <template>
   <view class="repeat-fields">
-    <view class="repeat-modes"><button v-for="mode in repeatModes" :key="mode.value" :class="{ selected: modelValue.repeatMode === mode.value }" :disabled="disabled" :aria-pressed="modelValue.repeatMode === mode.value" @click="patch({ repeatMode: mode.value })">{{ mode.label }}</button></view>
-    <text class="repeat-tip">{{ fixed ? '选择多个公历日期，到所选日期按计划时间执行。' : modelValue.repeatMode === 'AFTER_COMPLETION' ? '完成后才创建下一次，以实际完成时间加上所选间隔。' : '以首次计划日期为基准，按规则生成待办；未完成不影响下一次。' }}</text>
+    <text class="repeat-tip">{{ fixed ? '选择多个公历日期，每个日期按执行时刻生成一次待办。' : modelValue.repeatMode === 'AFTER_COMPLETION' ? '完成后才创建下一次，以实际完成时间加上所选间隔。' : '以开始日期为周期基准，按执行时刻生成待办；未完成不影响下一次。' }}</text>
     <view v-if="!fixed" class="repeat-interval"><text>每</text><input :value="modelValue.repeatInterval" type="number" maxlength="3" aria-label="重复间隔，1至365" :disabled="disabled" @input="pickInterval" /><text>{{ repeatUnits.find(unit => unit.value === modelValue.repeatUnit)?.label }}</text></view>
     <view v-if="!fixed" class="repeat-modes repeat-units"><button v-for="unit in repeatUnits" :key="unit.value" :disabled="disabled" :class="{ selected: modelValue.repeatUnit === unit.value }" :aria-pressed="modelValue.repeatUnit === unit.value" @click="patch({ repeatUnit: unit.value })">{{ unit.label }}</button></view>
     <template v-if="modelValue.repeatMode === 'TIME'">
@@ -56,7 +55,7 @@ function moveMonth(delta: number) {
       <view v-else class="repeat-calendar-nav"><button aria-label="上一月" :disabled="disabled" @click="moveAnnualMonth(-1)">‹</button><text>{{ annualMonth }}月</text><button aria-label="下一月" :disabled="disabled" @click="moveAnnualMonth(1)">›</button></view>
       <view class="repeat-week"><text v-for="day in weekdays" :key="day">{{ day }}</text></view><view class="repeat-grid"><view v-for="(day, index) in calendar.cells" :key="index"><button v-if="day" :disabled="disabled || unavailable(day)" :class="{ selected: selected(day) }" :aria-pressed="selected(day)" :aria-label="dateKey(day)" @click="toggleDate(day)">{{ day }}</button></view></view>
       <view class="repeat-dates"><button v-for="day in splitSelection(fixed ? modelValue.fixedDates : modelValue.yearDays)" :key="day" :disabled="disabled" :aria-label="`移除${day}`" @click="patch(fixed ? { fixedDates: toggleSelection(modelValue.fixedDates, day) } : { yearDays: toggleSelection(modelValue.yearDays, day) })">{{ day }} ×</button></view>
-      <text class="repeat-tip">{{ fixed ? '首次计划时间为起点，早于起点的日期不执行；最多100个日期。' : '可跨月多选；2月29日在非闰年取2月末。' }}</text>
+      <text class="repeat-tip">{{ fixed ? '最多选择100个日期；重新安排时请移除已过去的日期。' : '可跨月多选；2月29日在非闰年取2月末。' }}</text>
     </template>
   </view>
 </template>

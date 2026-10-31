@@ -34,6 +34,7 @@ class TodoApiDevIntegrationTest {
     @Autowired ObjectMapper json;
     @Autowired JdbcTemplate jdbc;
     @Autowired PasswordEncoder encoder;
+    @org.springframework.boot.test.web.server.LocalServerPort int port;
     @Test void createCompleteEditDeleteAndOwnerIsolation() throws Exception {
         long userId=IdWorker.getId(), otherId=IdWorker.getId();
         String account="todoqa"+userId, other="todoqa"+otherId, password=UUID.randomUUID().toString();
@@ -145,6 +146,107 @@ class TodoApiDevIntegrationTest {
             jdbc.update("DELETE FROM ha_todo_rule WHERE user_id=?",userId);
             jdbc.update("DELETE FROM app_login_log WHERE user_id IN (?,?)",userId,otherId);
             jdbc.update("DELETE FROM app_user WHERE id IN (?,?)",userId,otherId);
+        }
+    }
+    @Test void previewAndOverdueContentEditPreserveAllPendingAndHistory() throws Exception {
+        long userId=IdWorker.getId(), otherId=IdWorker.getId();
+        String password=UUID.randomUUID().toString();
+        for (long id : new long[]{userId,otherId}) jdbc.update("INSERT INTO app_user(id,login_account,password_hash,nickname,status) VALUES(?,?,?,?,?)",id,"todoplan"+id,encoder.encode(password),"待办计划验收","ACTIVE");
+        try {
+            String publicKey=data(call(HttpMethod.GET,"/api/app/auth/password-key",null,null)).path("publicKey").asText();
+            String token=login(publicKey,"todoplan"+userId,password), otherToken=login(publicKey,"todoplan"+otherId,password);
+            String due=LocalDateTime.now(ZoneId.of("Asia/Shanghai")).plusDays(2).withSecond(0).withNano(0).toString();
+            var body=new java.util.HashMap<String,Object>();
+            body.put("title","原待办"); body.put("note",""); body.put("recurrence","CUSTOM"); body.put("monthInterval",1); body.put("dueAt",due); body.put("remind",false);
+            body.put("repeatMode","TIME"); body.put("repeatUnit","MONTH"); body.put("repeatInterval",3); body.put("monthDays","31"); body.put("idempotencyKey","plan-create-12345");
+            var plan=new java.util.HashMap<>(body); plan.remove("title"); plan.remove("note"); plan.remove("remind"); plan.remove("idempotencyKey");
+            var before=data(call(HttpMethod.POST,"/api/app/todos/preview",Map.of("plan",plan),token));
+            assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM ha_todo_rule WHERE user_id=?",Integer.class,userId));
+            String ruleId=data(call(HttpMethod.POST,"/api/app/todos",body,token)).asText();
+            var first=data(call(HttpMethod.GET,"/api/app/todos?status=PENDING",null,token)).path("items").get(0);
+            assertEquals(before.path("times").get(0).asText(),first.path("dueAt").asText());
+            String id=first.path("id").asText(); long second=IdWorker.getId(),completed=IdWorker.getId();
+            LocalDateTime anchor=LocalDateTime.parse("2020-01-31T09:00:12.345"),oldDue=anchor.plusMonths(3),secondDue=anchor.plusMonths(6),cursor=LocalDateTime.parse("2099-01-31T09:00:12.345");
+            jdbc.update("UPDATE ha_todo_rule SET anchor_at=?,next_due_at=? WHERE id=?",anchor,cursor,Long.valueOf(ruleId));
+            jdbc.update("UPDATE ha_todo_occurrence SET anchor_at=?,due_at=? WHERE id=?",anchor,oldDue,Long.valueOf(id));
+            for(long occurrenceId : new long[]{second,completed}) {
+                jdbc.update("INSERT INTO ha_todo_occurrence(id,rule_id,user_id,title,recurrence,month_interval,due_at,anchor_at,remind,status,repeat_mode,repeat_unit,repeat_interval,month_days) VALUES(?,?,?,'原待办','CUSTOM',1,?,?,0,?,'TIME','MONTH',3,'31')",occurrenceId,Long.valueOf(ruleId),userId,occurrenceId==second?secondDue:anchor,anchor,occurrenceId==second?"PENDING":"COMPLETED");
+            }
+            long delivery=IdWorker.getId();
+            jdbc.update("INSERT INTO ha_todo_delivery(id,occurrence_id,channel,status,attempts,next_attempt_at) VALUES(?,?,'BARK','SENT',1,CURRENT_TIMESTAMP(3))",delivery,Long.valueOf(id));
+            body.put("dueAt",oldDue.toString()); body.put("title","只改标题"); body.put("note","更新备注"); body.put("idempotencyKey","plan-overdue-content-12345");
+            plan.put("dueAt",oldDue.toString());
+            var previewRequest=Map.of("plan",plan,"occurrenceId",id);
+            var preview=data(call(HttpMethod.POST,"/api/app/todos/preview",previewRequest,token));
+            assertFalse(preview.path("scheduleChanged").asBoolean()); assertEquals(oldDue,LocalDateTime.parse(preview.path("times").get(0).asText()));
+            assertNotEquals(0,call(HttpMethod.POST,"/api/app/todos/preview",previewRequest,otherToken).path("code").asInt());
+            assertNotEquals(0,call(HttpMethod.PUT,"/api/app/todos/"+id,body,otherToken).path("code").asInt());
+            data(call(HttpMethod.PUT,"/api/app/todos/"+id,body,token)); data(call(HttpMethod.PUT,"/api/app/todos/"+id,body,token));
+            assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM ha_todo_occurrence WHERE rule_id=? AND status='PENDING' AND deleted=0",Integer.class,Long.valueOf(ruleId)));
+            for (long rowId : new long[]{Long.valueOf(id),second}) {
+                var row=data(call(HttpMethod.GET,"/api/app/todos/"+rowId,null,token));
+                assertEquals("只改标题",row.path("title").asText()); assertEquals("更新备注",row.path("note").asText());
+                assertEquals(rowId==second?secondDue:oldDue,LocalDateTime.parse(row.path("dueAt").asText())); assertEquals(anchor,LocalDateTime.parse(row.path("anchorAt").asText()));
+            }
+            assertEquals(cursor,jdbc.queryForObject("SELECT next_due_at FROM ha_todo_rule WHERE id=?",LocalDateTime.class,Long.valueOf(ruleId)));
+            assertEquals("原待办",data(call(HttpMethod.GET,"/api/app/todos/"+completed,null,token)).path("title").asText());
+            assertEquals("SENT",jdbc.queryForObject("SELECT status FROM ha_todo_delivery WHERE id=?",String.class,delivery));
+            assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM ha_todo_request WHERE user_id=? AND idempotency_key='plan-overdue-content-12345'",Integer.class,userId));
+            // 不能利用保留原时间的例外修改重复规则，或新建过去计划。
+            body.put("repeatInterval",2); body.put("idempotencyKey","plan-past-rearrange-12345");
+            assertNotEquals(0,call(HttpMethod.PUT,"/api/app/todos/"+id,body,token).path("code").asInt());
+            assertNotEquals(0,call(HttpMethod.POST,"/api/app/todos",body,token).path("code").asInt());
+            body.put("dueAt",due); body.put("idempotencyKey","plan-future-rearrange-12345");
+            plan.put("dueAt",due); plan.put("repeatInterval",2);
+            var changed=data(call(HttpMethod.POST,"/api/app/todos/preview",previewRequest,token));
+            assertTrue(changed.path("scheduleChanged").asBoolean());
+            data(call(HttpMethod.PUT,"/api/app/todos/"+id,body,token));
+            assertNotEquals(0,call(HttpMethod.GET,"/api/app/todos/"+id,null,token).path("code").asInt());
+            var replan=data(call(HttpMethod.GET,"/api/app/todos?status=PENDING",null,token));
+            assertEquals(1,replan.path("pendingCount").asInt()); assertEquals(changed.path("times").get(0).asText(),replan.path("items").get(0).path("dueAt").asText());
+            // 四模式预览不写入；完成后不虚构下一次，单次只返回一项。
+            for (String mode : new String[]{"ONCE","AFTER_COMPLETION","FIXED_DATES"}) {
+                var value=new java.util.HashMap<String,Object>(); value.put("recurrence",mode.equals("ONCE")?"ONCE":"CUSTOM"); value.put("monthInterval",1); value.put("dueAt",due);
+                if (!mode.equals("ONCE")) value.put("repeatMode",mode);
+                if (mode.equals("AFTER_COMPLETION")) {value.put("repeatUnit","DAY");value.put("repeatInterval",2);}
+                if (mode.equals("FIXED_DATES")) value.put("fixedDates",LocalDateTime.parse(due).toLocalDate()+","+LocalDateTime.parse(due).plusDays(2).toLocalDate());
+                var result=data(call(HttpMethod.POST,"/api/app/todos/preview",Map.of("plan",value),token));
+                assertEquals(mode.equals("FIXED_DATES")?2:1,result.path("times").size()); assertEquals(mode.equals("AFTER_COMPLETION"),result.path("afterCompletion").asBoolean());
+            }
+            assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM ha_todo_rule WHERE user_id=?",Integer.class,userId));
+            assertNotEquals(0,call(HttpMethod.POST,"/api/app/todos/preview",Map.of("plan",Map.of("recurrence","ONCE","dueAt","2100-01-01T00:00:00")),token).path("code").asInt());
+        } finally {
+            jdbc.update("DELETE d FROM ha_todo_delivery d JOIN ha_todo_occurrence o ON o.id=d.occurrence_id WHERE o.user_id=?",userId);
+            jdbc.update("DELETE FROM ha_todo_request WHERE user_id=?",userId); jdbc.update("DELETE FROM ha_todo_occurrence WHERE user_id=?",userId); jdbc.update("DELETE FROM ha_todo_rule WHERE user_id=?",userId);
+            jdbc.update("DELETE FROM app_login_log WHERE user_id IN (?,?)",userId,otherId);
+            jdbc.update("DELETE FROM app_user WHERE id IN (?,?)",userId,otherId);
+        }
+    }
+    @org.junit.jupiter.api.AfterEach void cleanDisposablePlanAccounts() {
+        // 仅本迭代明确创建且已无待办规则的合成账号，清除失败验收遗留的登录日志与账号。
+        var ids=jdbc.queryForList("SELECT id FROM app_user WHERE login_account LIKE 'todoplan%' AND nickname='待办计划验收' AND NOT EXISTS(SELECT 1 FROM ha_todo_rule WHERE user_id=app_user.id)",Long.class);
+        for(long id:ids) {jdbc.update("DELETE FROM app_login_log WHERE user_id=?",id);jdbc.update("DELETE FROM app_user WHERE id=?",id);}
+    }
+    @Test @EnabledIfSystemProperty(named="todo.ui.verify",matches="true")
+    void realH5WithDisposableAccount() throws Exception {
+        long userId=IdWorker.getId(); String account="todoplan"+userId,password=UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO app_user(id,login_account,password_hash,nickname,status) VALUES(?,?,?,?,?)",userId,account,encoder.encode(password),"待办计划验收","ACTIVE");
+        try {
+            String publicKey=data(call(HttpMethod.GET,"/api/app/auth/password-key",null,null)).path("publicKey").asText();
+            String token=login(publicKey,account,password);
+            String due=LocalDateTime.now(ZoneId.of("Asia/Shanghai")).plusDays(2).withSecond(0).withNano(0).toString();
+            String rule=data(call(HttpMethod.POST,"/api/app/todos",Map.of("title","逾期单次验收","note","只改标题应保留原时间","recurrence","ONCE","monthInterval",1,"dueAt",due,"remind",false,"idempotencyKey","plan-ui-create-12345"),token)).asText();
+            jdbc.update("UPDATE ha_todo_rule SET anchor_at='2020-01-01 09:00:12.345' WHERE id=?",Long.valueOf(rule));
+            jdbc.update("UPDATE ha_todo_occurrence SET anchor_at='2020-01-01 09:00:12.345',due_at='2020-01-01 09:00:12.345' WHERE rule_id=?",Long.valueOf(rule));
+            TodoUiVerifier.run(port,token);
+            assertEquals(LocalDateTime.parse("2020-01-01T09:00:12.345"),jdbc.queryForObject("SELECT due_at FROM ha_todo_occurrence WHERE rule_id=? AND deleted=0",LocalDateTime.class,Long.valueOf(rule)));
+            assertEquals("ONCE",jdbc.queryForObject("SELECT recurrence FROM ha_todo_rule WHERE id=?",String.class,Long.valueOf(rule)));
+            assertEquals("逾期单次验收已修改",jdbc.queryForObject("SELECT title FROM ha_todo_rule WHERE id=?",String.class,Long.valueOf(rule)));
+        } finally {
+            jdbc.update("DELETE a FROM ha_todo_delivery_attempt a JOIN ha_todo_occurrence o ON o.id=a.occurrence_id WHERE o.user_id=?",userId);
+            jdbc.update("DELETE d FROM ha_todo_delivery d JOIN ha_todo_occurrence o ON o.id=d.occurrence_id WHERE o.user_id=?",userId);
+            jdbc.update("DELETE FROM ha_todo_request WHERE user_id=?",userId);jdbc.update("DELETE FROM ha_todo_occurrence WHERE user_id=?",userId);jdbc.update("DELETE FROM ha_todo_rule WHERE user_id=?",userId);
+            jdbc.update("DELETE FROM app_login_log WHERE user_id=?",userId);jdbc.update("DELETE FROM app_user WHERE id=?",userId);
         }
     }
     private String login(String key,String account,String password) throws Exception {

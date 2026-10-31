@@ -1089,3 +1089,13 @@ PASS：公开HTML、7个静态资源（含开奖页JS/CSS入口及共享lottery�
 发布闭环PASS：`9127d66 feat(lottery): 在续买提醒中增加下期截止日期和星期`已普通推送GitHub origin/main并核对等于本地HEAD。`python3 deploy/local/release.py backend`退出0，2026-10-30 23:44:21+08:00发布；后端分组件记录与容器OCI revision均为9127d662da0ccb5572653ab69f913845580092a3，running/0重启。发布构建122总/107执行通过/15条件跳过，0失败错误；发布前完整DEV验证114通过。服务器/app/app.jar与本地产物SHA256均为008ec9ca35cf17af47cc1a23227d98c4924a54c13d84bc06c3ea29308b4123cf。公开彩票API未登录HTTP401/code1；DEV真实事件正文及渠道发送参数验证通过，不发送额外真实通知、不宣称设备送达。
 
 H5无需更新/未发布，保留314a217，公开静态版本5ed2d703-1045-4c59-b101-6ed1bc22b6a0；微信小程序无需更新/未发布，工具/真机NOT_RUN（按用户阶段规则排除，非必需）。数据库无SQL/Migration/配置操作，V12材料摘要保持2befcc2a90f9e19909e89f55cc1f54035c1726664ce810b7aec1cb5d38235980。服务器仅余本轮后端镜像，未遗留ledger-upload或haji.incoming目录，原数据、日志、密钥及备份保留，不备份旧应用、不自动回滚。无未解决必需FAIL/BLOCKED；后续仅文档归档无需再次发布服务或客户端。
+
+## 2026-10-31 待办计划表单与逾期编辑
+
+新增/编辑统一四模式，默认不重复；TIME拆开始日期与执行时刻，完成后保留本次计划并按实际完成时间算间隔，固定日期不重复填起点。只读预览复用正式后端规则。内容/提醒修改原地更新全部未完成项，保留ID、原逾期时间/毫秒、锚点/游标、完成历史及已发送记录；真正重排才替换。无Migration/配置/金额变更。
+
+本次范围Review PASS；前端204项、TypeScript、H5/微信项目命令行构建PASS。Java25完整verify130总/116执行通过/14条件跳过、0失败错误；真实DEV多项保留、预览一致/无写入、权限/幂等/历史/已发送记录及Schema/Entity检查PASS。可选真实H5用例1/1 PASS，Chrome实际新增/逾期编辑保存与DB核对通过；320/375/667横屏/768无横向溢出，合成账号和临时页面/桥接已清理。首次测试清理外键问题修正并复验，无未解决必需FAIL/BLOCKED。
+
+待同步复审复验、提交推送并自动发布后端/H5；微信工具/真机/上传发布NOT_RUN（按用户阶段规则排除，非必需），新版需用户自行发布。requirement/design/database/api/backend/frontend/testing/commands/verification/rollback详见[迭代](../10-iterations/2026/10/todo-plan-editor/README.md)。
+
+本轮同步后复审复验PASS：38文件安全保存/恢复逐字节一致，pull --ff-only为Already up to date；后端22总/21通过/1可选UI跳过，前端204/204与类型复验通过，0失败错误。无未解决必需FAIL/BLOCKED；待提交推送后自动发布后端/H5。

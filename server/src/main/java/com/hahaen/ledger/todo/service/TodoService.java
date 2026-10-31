@@ -3,6 +3,9 @@ package com.hahaen.ledger.todo.service;
 import com.hahaen.ledger.common.exception.BusinessException;
 import com.hahaen.ledger.common.security.CurrentUser;
 import com.hahaen.ledger.todo.dto.TodoSaveRequest;
+import com.hahaen.ledger.todo.dto.TodoPreviewRequest;
+import com.hahaen.ledger.todo.vo.TodoPreviewVO;
+import java.util.ArrayList;
 import com.hahaen.ledger.todo.entity.TodoOccurrence;
 import com.hahaen.ledger.todo.entity.TodoRule;
 import com.hahaen.ledger.todo.mapper.TodoOccurrenceMapper;
@@ -31,7 +34,6 @@ import java.util.regex.Pattern;
 public class TodoService {
     private static final ZoneId ZONE = ZoneId.of("Asia/Shanghai");
     private static final Pattern KEY = Pattern.compile("[A-Za-z0-9_-]{8,64}");
-    private static final Set<String> RECURRENCES = Set.of("ONCE", "DAILY", "MONTHLY", "EVERY_N_MONTHS", "YEARLY", "CUSTOM");
     private final TodoRuleMapper rules;
     private final TodoOccurrenceMapper occurrences;
     private final UserNotificationConfigMapper configurations;
@@ -69,6 +71,26 @@ public class TodoService {
                         row.getResult(), row.getAttemptedAt())).toList();
     }
 
+    public TodoPreviewVO preview(TodoPreviewRequest request) {
+        long userId = CurrentUser.id();
+        if (rules.activeUser(userId) == null) throw new BusinessException("USER_NOT_FOUND", "用户不存在或已停用");
+        TodoRule candidate = TodoPlanning.rule(request.plan());
+        boolean changed = false;
+        LocalDateTime first;
+        if (request.occurrenceId() != null) {
+            TodoOccurrence occurrence = occurrences.owned(userId, request.occurrenceId());
+            if (occurrence == null || !"PENDING".equals(occurrence.getStatus())) throw new BusinessException("TODO_NOT_FOUND", "未完成待办不存在，请刷新");
+            TodoRule original = rules.owned(userId, occurrence.getRuleId());
+            if (original == null) throw new BusinessException("TODO_NOT_FOUND", "待办规则不存在");
+            changed = !TodoPlanning.unchanged(original, occurrence, candidate);
+            if (!changed) { candidate = original; first = occurrence.getDueAt(); }
+            else first = TodoPlanning.first(candidate, occurrences.lastCompletedDue(original.getId(), userId), now());
+        } else first = TodoPlanning.first(candidate, null, now());
+        List<LocalDateTime> times = new ArrayList<>();
+        for (LocalDateTime due = first; due != null && times.size() < 3; due = TodoSchedule.next(candidate, due)) times.add(due);
+        return new TodoPreviewVO(times, TodoRepeat.afterCompletion(candidate), changed);
+    }
+
     @Transactional
     public String create(TodoSaveRequest request) {
         long userId = lockUser();
@@ -80,8 +102,7 @@ public class TodoService {
         TodoRule rule = new TodoRule();
         rule.setUserId(userId);
         populate(rule, request);
-        LocalDateTime firstDue = TodoRepeat.first(rule, request.dueAt());
-        if (firstDue == null) throw new BusinessException("TODO_DATE_INVALID", "重复规则在2099年前没有可用日期");
+        LocalDateTime firstDue = TodoPlanning.first(rule, null, now());
         rule.setNextDueAt(TodoSchedule.next(rule, firstDue));
         rule.setActive(1);
         rules.insert(rule);
@@ -97,26 +118,27 @@ public class TodoService {
         validateKey(request.idempotencyKey());
         String hash = hash("EDIT|" + occurrenceId + "|" + canonical(request));
         if (replay(userId, request.idempotencyKey(), hash) != null) return;
-        validate(request, userId);
         TodoOccurrence occurrence = pendingOwned(userId, occurrenceId);
         TodoRule rule = rules.ownedForUpdate(userId, occurrence.getRuleId());
         if (rule == null || rule.getActive() != 1) throw new BusinessException("TODO_NOT_FOUND", "待办规则不存在");
-        LocalDateTime lastCompletedDue = occurrences.lastCompletedDue(rule.getId(), userId);
-        boolean scheduleUnchanged = request.dueAt().equals(occurrence.getDueAt())
-                && request.recurrence().equals(rule.getRecurrence())
-                && java.util.Objects.equals(request.monthInterval() == null ? 1 : request.monthInterval(), rule.getMonthInterval())
-                && sameRepeat(rule, request);
-        LocalDateTime originalAnchor = rule.getAnchorAt();
-        // 编辑仅替换未完成项，完成历史不变；旧投递随软删除发生项停止重试。
-        occurrences.deletePendingRule(rule.getId(), userId, CurrentUser.optionalName());
-        populate(rule, request);
-        if (scheduleUnchanged) rule.setAnchorAt(originalAnchor);
-        LocalDateTime firstDue = TodoRepeat.first(rule, request.dueAt());
-        if (firstDue == null) throw new BusinessException("TODO_DATE_INVALID", "重复规则在2099年前没有可用日期");
-        if (lastCompletedDue != null && !firstDue.isAfter(lastCompletedDue)) {
-            firstDue = TodoSchedule.next(rule, lastCompletedDue);
-            if (firstDue == null) throw new BusinessException("TODO_DATE_INVALID", "单次计划时间必须晚于已完成记录");
+        validate(request, userId);
+        boolean scheduleUnchanged = TodoPlanning.unchanged(rule, occurrence, TodoPlanning.rule(request.plan()));
+        if (scheduleUnchanged) {
+            // 原计划允许逾期；只改内容/提醒保留全部发生项ID、时间、周期及投递记录。
+            rule.setTitle(request.title().trim());
+            rule.setNote(request.note() == null || request.note().isBlank() ? null : request.note().trim());
+            rule.setRemind(request.remind() ? 1 : 0);
+            rule.setUpdateName(CurrentUser.optionalName());
+            rules.editContent(rule);
+            occurrences.editPendingContent(rule);
+            rules.saveRequest(userId, request.idempotencyKey(), hash, rule.getId());
+            return;
         }
+        LocalDateTime lastCompletedDue = occurrences.lastCompletedDue(rule.getId(), userId);
+        populate(rule, request);
+        LocalDateTime firstDue = TodoPlanning.first(rule, lastCompletedDue, now());
+        // 仅重新安排才替换全部未完成项；完成历史和原投递快照不变。
+        occurrences.deletePendingRule(rule.getId(), userId, CurrentUser.optionalName());
         rule.setUpdateName(CurrentUser.optionalName());
         rule.setNextDueAt(TodoSchedule.next(rule, firstDue));
         rules.edit(rule);
@@ -185,15 +207,7 @@ public class TodoService {
         if (value.title() == null || value.title().trim().isEmpty() || value.title().trim().length() > 100
                 || value.note() != null && value.note().length() > 500)
             throw new BusinessException("TODO_TEXT_INVALID", "标题或备注长度无效");
-        if (value.recurrence() == null || !RECURRENCES.contains(value.recurrence())) throw new BusinessException("TODO_RECURRENCE_INVALID", "重复规则无效");
-        int interval = value.monthInterval() == null ? 1 : value.monthInterval();
-        if ("EVERY_N_MONTHS".equals(value.recurrence()) ? interval < 2 || interval > 120 : interval != 1)
-            throw new BusinessException("TODO_INTERVAL_INVALID", "间隔月数无效");
-        if (value.dueAt() == null || !value.dueAt().isAfter(now()) || value.dueAt().getYear() > 2099)
-            throw new BusinessException("TODO_DATE_INVALID", "计划时间必须晚于现在且不晚于2099年");
-        TodoRule candidate = new TodoRule();
-        populate(candidate, value);
-        TodoRepeat.validate(candidate);
+        TodoPlanning.rule(value.plan());
         if (value.remind() && configurations.selectCount(new LambdaQueryWrapper<UserNotificationConfig>()
                 .eq(UserNotificationConfig::getUserId, userId).eq(UserNotificationConfig::getDeleted, 0)
                 .in(UserNotificationConfig::getNotificationType, "BARK", "PUSHPLUS")) == 0)
@@ -219,17 +233,6 @@ public class TodoService {
         row.setMonthInterval(rule.getMonthInterval()); row.setRemind(rule.getRemind());
         TodoRepeat.snapshot(rule, row);
         return row;
-    }
-    private boolean sameRepeat(TodoRule rule, TodoSaveRequest value) {
-        if (!"CUSTOM".equals(value.recurrence())) return true;
-        return java.util.Objects.equals(rule.getRepeatMode(), value.repeatMode())
-                && java.util.Objects.equals(rule.getRepeatUnit(), value.repeatUnit())
-                && java.util.Objects.equals(rule.getRepeatInterval(), value.repeatInterval())
-                && java.util.Objects.equals(rule.getWeekDays(), value.weekDays())
-                && java.util.Objects.equals(rule.getMonthDays(), value.monthDays())
-                && java.util.Objects.equals(rule.getYearDays(), value.yearDays())
-                && java.util.Objects.equals(rule.getFixedDates(), value.fixedDates())
-                && Integer.valueOf(1).equals(rule.getLastDay()) == value.lastDay();
     }
     private Long replay(long userId, String key, String hash) {
         validateKey(key);

@@ -37,6 +37,12 @@ public interface TodoOccurrenceMapper extends BaseMapper<TodoOccurrence> {
     @Update("UPDATE ha_todo_occurrence SET status='COMPLETED',completed_at=#{completedAt},updated_at=CURRENT_TIMESTAMP(3),updated_by=#{userId},update_name=#{userName} WHERE id=#{id} AND user_id=#{userId} AND status='PENDING' AND deleted=0")
     int complete(@Param("id") long id,@Param("userId") long userId,@Param("userName") String userName,@Param("completedAt") LocalDateTime completedAt);
     @Update("""
+      UPDATE ha_todo_occurrence SET title=#{rule.title},note=#{rule.note},remind=#{rule.remind},
+      updated_at=CURRENT_TIMESTAMP(3),updated_by=#{rule.userId},update_name=#{rule.updateName}
+      WHERE rule_id=#{rule.id} AND user_id=#{rule.userId} AND status='PENDING' AND deleted=0
+      """)
+    int editPendingContent(@Param("rule") com.hahaen.ledger.todo.entity.TodoRule rule);
+    @Update("""
       UPDATE ha_todo_occurrence SET deleted=1,deleted_at=CURRENT_TIMESTAMP(3),deleted_by=#{userId},deleted_name=#{userName},
       updated_at=CURRENT_TIMESTAMP(3),updated_by=#{userId},update_name=#{userName}
       WHERE rule_id=#{ruleId} AND user_id=#{userId} AND status='PENDING' AND deleted=0
