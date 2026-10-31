@@ -1099,3 +1099,11 @@ H5无需更新/未发布，保留314a217，公开静态版本5ed2d703-1045-4c59-
 待同步复审复验、提交推送并自动发布后端/H5；微信工具/真机/上传发布NOT_RUN（按用户阶段规则排除，非必需），新版需用户自行发布。requirement/design/database/api/backend/frontend/testing/commands/verification/rollback详见[迭代](../10-iterations/2026/10/todo-plan-editor/README.md)。
 
 本轮同步后复审复验PASS：38文件安全保存/恢复逐字节一致，pull --ff-only为Already up to date；后端22总/21通过/1可选UI跳过，前端204/204与类型复验通过，0失败错误。无未解决必需FAIL/BLOCKED；待提交推送后自动发布后端/H5。
+
+发布闭环PASS：`e55eda0 fix(todo): 重构计划表单并保留逾期待办原计划`普通推送GitHub origin/main，`git ls-remote origin refs/heads/main`与当时本地HEAD一致；工作区干净后`python3 deploy/local/release.py all`退出0。后端与H5均于2026-10-31 16:15:35+08:00发布，分组件记录、latest-release及容器OCI revision均为e55eda053a4c08fa506127faa562a5f0e3cb238a；容器running/0重启。发布构建130总/113执行通过/17条件跳过、0失败错误；发布前真实DEV完整验证116通过、独立H5用例1/1通过。
+
+公开HTML、13个静态资源（含待办清单/详情/编辑页JS与CSS、共享todoRepeat和入口）及haji-version.json逐字节匹配本地发布产物，静态版本067524c4-eddb-4223-b3d9-6c22f88e3557。服务器/app/app.jar与本地JAR的SHA256均为a23f4660fdcff7ed6f14c086dd30be81e0dca54d1bfab24e0a11a190aa3b1697。公开账户API及使用合法计划请求体的未登录preview API均HTTP401；首次用空对象核查preview得到参数校验400，改用合法计划后确认鉴权401，不以无效请求代替鉴权验证。
+
+Chrome独立正式页面确认新增默认不重复；TIME以10-31为开始日期、每月1日时，正式后端预览11-01/12-01/次年01-01，375px无横向溢出。只切换空表单并调用只读预览，未保存或修改生产待办；正式截图见待办计划迭代/evidence/h5-production-preview-375.png。临时页面和viewport覆写已清理。
+
+后端需要更新且已实际发布成功；H5需要更新且已实际发布成功，刷新可用；微信共享源码/类型/命令行构建已同步，使用新版需用户自行上传发布，工具/真机/上传发布NOT_RUN（按用户阶段规则排除，非必需）。数据库无需SQL/Migration/配置操作，V12材料摘要仍为2befcc2a90f9e19909e89f55cc1f54035c1726664ce810b7aec1cb5d38235980；保留数据、运行密钥、日志和现有备份。服务器仅余当前后端镜像，无ledger-upload或haji.incoming目录，不备份旧应用、不自动回滚。无未解决必需FAIL/BLOCKED；后续仅文档归档无需再次更新服务或客户端。
