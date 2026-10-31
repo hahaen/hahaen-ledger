@@ -1,3 +1,4 @@
+import { parsePages } from './helpers/platform.mjs'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import assert from 'node:assert/strict'
@@ -10,7 +11,7 @@ const shared = uniRequire('@dcloudio/uni-shared')
 const shareSource = await readFile(new URL('../src/utils/wechatShare.ts', import.meta.url), 'utf8')
 const runtimeSource = await readFile(uniRequire.resolve('@dcloudio/uni-mp-weixin/dist/uni.mp.esm.js'), 'utf8')
 const runtimeHooks = runtimeSource.slice(runtimeSource.indexOf('function findHooks('), runtimeSource.indexOf('\nconst HOOKS ='))
-const pages = JSON.parse(await readFile(new URL('../src/pages.json', import.meta.url), 'utf8')).pages
+const pages = parsePages(await readFile(new URL('../src/pages.json', import.meta.url), 'utf8')).pages
 const transpile = source => ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
 const staticResourceSource = await readFile(new URL('../src/utils/staticResource.ts', import.meta.url), 'utf8')
 const expectedImage = 'https://hahaen.xyz/minio-api/haji/wx/share-welcome.png'

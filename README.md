@@ -70,6 +70,10 @@ pnpm run build:mp-weixin
 
 在 `app` 目录运行 `pnpm run dev:h5`，访问终端打印的 Local 地址（默认 http://localhost:5173）。依赖或 Vite 配置变更后完整重启服务并刷新页面。若端口被占用，Vite 会使用下一个可用端口。H5/微信平台包必须与 uni-app 编译器版本一致，不要用自定义 Vue shim 代替平台运行时。启动验收应直接进入首页，并能切换五项导航；首次使用页仍保留为可选页面。
 
+## 平台功能边界
+
+彩票功能保留在 H5，微信小程序构建不包含彩票入口、四个页面、API 调用和样式，不受账号 `lotteryEnabled` 权限开启影响。双端构建后运行 `cd app && node scripts/check-lottery-platform.mjs` 检查产物边界。详见[本轮迭代](docs/10-iterations/2026/10/lottery-wechat-exclusion/README.md)。
+
 ## 独立物品管理
 
 资产右侧新增“物品”，支持添加、在役/退役筛选、详情、退役出售与逻辑删除。物品按用户独立归属，不影响记账和账户余额。购入当天计第1天，在役日均成本=购入价/服役天数；退役后天数冻结，最终日均成本=(购入价-二手售价)/服役天数。正式迁移新增V6，已有V1–V5保持不变。详见 [物品契约](docs/03-api/items.md) 和 [本轮验收](docs/10-iterations/2026/09/item-lifecycle/09-verification.md)。

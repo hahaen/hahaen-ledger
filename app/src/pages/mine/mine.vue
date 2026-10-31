@@ -24,7 +24,9 @@ type Profile = {
   userId: string
   nickname: string
   createdAt?: string
+  // #ifndef MP-WEIXIN
   lotteryEnabled?: boolean
+  // #endif
   cumulativeDays: number
   avatarAuthorized: boolean
   avatarFileUrl?: string
@@ -91,7 +93,9 @@ async function loadProfile() {
       }
     }
   } catch {
+    // #ifndef MP-WEIXIN
     if (isCurrent() && profile.value) profile.value.lotteryEnabled = false
+    // #endif
     if (isCurrent() && !uni.getStorageSync('auth-token')) {
       ledger.state.token = ''
       clearProfile()
@@ -126,7 +130,9 @@ function openNotifications() {
   uni.navigateTo({ url: '/pages/notification-center/notification-center' })
 }
 
+// #ifndef MP-WEIXIN
 function openLottery() { uni.navigateTo({ url: '/pages/lottery/lottery' }) }
+// #endif
 function openTodos() {
   if (!loggedIn.value) { openLogin(); return }
   uni.navigateTo({ url: '/pages/ha-todo/ha-todo' })
@@ -210,10 +216,12 @@ onShow(() => {
           <text class="setting-text">待办清单</text>
           <text class="setting-arrow">›</text>
         </button>
+        <!-- #ifndef MP-WEIXIN -->
         <button v-if="profile?.lotteryEnabled" class="setting-item" aria-label="彩票" @click="openLottery">
           <view class="setting-icon" aria-hidden="true"><view class="setting-lottery-ticket" /></view>
           <text class="setting-text">彩票</text><text class="setting-arrow">›</text>
         </button>
+        <!-- #endif -->
             <button class="setting-item" @click="openHelp">
           <text class="setting-icon setting-icon-help">?</text>
           <text class="setting-text">关于与帮助</text>

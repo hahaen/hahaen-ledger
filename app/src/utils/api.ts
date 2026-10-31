@@ -95,6 +95,7 @@ export const todoApi = {
   remove: (id: string, idempotencyKey: string) => request<void>(`/api/app/todos/${encodeURIComponent(id)}/delete`, { method: 'POST', data: { idempotencyKey } }),
 }
 
+// #ifndef MP-WEIXIN
 // 彩票独立域；官方数据由后端同步，页面只访问本地业务API。
 import type { LotteryGame, LotteryKind, LotteryDetailKind, LotteryPage, LotteryPayload, LotteryRecord } from './lottery'
 export const lotteryApi = {
@@ -106,3 +107,4 @@ export const lotteryApi = {
   purchase: (id: string, data: LotteryPayload) => request<string>(`/api/app/lottery/plan/${encodeURIComponent(id)}/purchase`, { method: 'POST', data }),
   action: (kind: 'entry' | 'plan' | 'delivery', id: string, action: 'delete' | 'status' | 'retry', idempotencyKey: string, status?: string) => request<string>(`/api/app/lottery/${kind}/${encodeURIComponent(id)}/${action}`, { method: 'POST', data: { idempotencyKey, status } }),
 }
+// #endif

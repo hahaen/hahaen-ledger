@@ -1,3 +1,4 @@
+import { parsePages } from './helpers/platform.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
@@ -26,7 +27,7 @@ test('失败重试复用幂等键，修改数据后更换', () => {
 })
 test('物品导航位于资产右边，五个一级导航保持跨端一致', () => {
   for (const path of ['../src/pages.json', '../pages.json']) {
-    const config = JSON.parse(fs.readFileSync(new URL(path, import.meta.url)))
+    const config = parsePages(fs.readFileSync(new URL(path, import.meta.url), 'utf8'))
     assert.deepEqual(config.tabBar.list.map(item => item.text), ['首页', '日历', '资产', '物品', '我的'])
   }
 })

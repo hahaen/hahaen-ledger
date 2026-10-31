@@ -1,3 +1,4 @@
+import { parsePages } from './helpers/platform.mjs'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { createHash } from 'node:crypto'
@@ -557,7 +558,7 @@ test('微信小程序个人中心使用用户选择的图片上传，不获取�
 test('登录和注册均须先同意两份协议，且协议页可在未登录状态访问', async () => {
   const source = await readFile(new URL('../src/components/AuthPage.vue', import.meta.url), 'utf8')
   const guard = run(await readFile(new URL('../src/utils/h5AuthGuard.ts', import.meta.url), 'utf8'))
-  const pages = JSON.parse(await readFile(new URL('../src/pages.json', import.meta.url), 'utf8'))
+  const pages = parsePages(await readFile(new URL('../src/pages.json', import.meta.url), 'utf8'))
   const legalDocuments = await readFile(new URL('../src/constants/legalDocuments.ts', import.meta.url), 'utf8')
 
   assert.match(source, /const agreementAccepted = ref\(false\)/)
@@ -616,7 +617,7 @@ test('微信小程序启动默认静默登录并进入首页，H5 继续使用�
 
 test('微信小程序默认首路由为首页，首次使用页仍保留为可选页面', async () => {
   const pagesSource = await readFile(new URL('../src/pages.json', import.meta.url), 'utf8')
-  const pages = JSON.parse(pagesSource)
+  const pages = parsePages(pagesSource)
   assert.equal(pages.pages[0].path, 'pages/index/index')
   assert.ok(pages.pages.some(page => page.path === 'pages/first-use/first-use'))
 })

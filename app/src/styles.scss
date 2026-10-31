@@ -1,5 +1,7 @@
 @use './prototype.scss';
+/* #ifndef MP-WEIXIN */
 @use './lottery.scss';
+/* #endif */
 
 /* 关于与帮助沿用原型同名模块，映射为 uni-app 组件。 */
 .help-page { height:100%; min-height:0; overflow:hidden; background:#f7f8f7; }

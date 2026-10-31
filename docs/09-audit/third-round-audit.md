@@ -1107,3 +1107,9 @@ H5无需更新/未发布，保留314a217，公开静态版本5ed2d703-1045-4c59-
 Chrome独立正式页面确认新增默认不重复；TIME以10-31为开始日期、每月1日时，正式后端预览11-01/12-01/次年01-01，375px无横向溢出。只切换空表单并调用只读预览，未保存或修改生产待办；正式截图见待办计划迭代/evidence/h5-production-preview-375.png。临时页面和viewport覆写已清理。
 
 后端需要更新且已实际发布成功；H5需要更新且已实际发布成功，刷新可用；微信共享源码/类型/命令行构建已同步，使用新版需用户自行上传发布，工具/真机/上传发布NOT_RUN（按用户阶段规则排除，非必需）。数据库无需SQL/Migration/配置操作，V12材料摘要仍为2befcc2a90f9e19909e89f55cc1f54035c1726664ce810b7aec1cb5d38235980；保留数据、运行密钥、日志和现有备份。服务器仅余当前后端镜像，无ledger-upload或haji.incoming目录，不备份旧应用、不自动回滚。无未解决必需FAIL/BLOCKED；后续仅文档归档无需再次更新服务或客户端。
+
+## 2026-10-31 微信小程序剥离彩票
+
+PASS：编译时剥离微信四个彩票路由、我的入口/导航、API 与样式；全量扫描21页/140个微信产物文件无彩票相关文件名/代码/文案，H5保留四路由、入口、API、样式。四个修改源文件的H5预处理结果与修改前一致（忽略空行）。权限true/false实际模板渲染覆盖H5按权限显示、微信始终无入口。范围Review及前端206/206、TypeScript、双端项目命令行构建PASS；初次测试夹具问题已修正并复验，无未解决必需FAIL/BLOCKED/PARTIAL。
+
+database/api/backend无变化，无SQL/Migration/配置操作；后端与H5无需更新/未发布，H5线上保持现状。微信小程序需用户自行上传发布新版；工具/真机及发布NOT_RUN（按用户阶段规则排除，非必需）。同步后复审复验PASS：20文件安全保存/恢复SHA256一致，pull --ff-only无远端更新，前端206/206、类型及产物扫描复验通过；无冲突。提交推送以本轮Git记录为准。requirement/design/database/api/backend/frontend/testing/commands/verification/rollback详见[本轮迭代](../10-iterations/2026/10/lottery-wechat-exclusion/README.md)。

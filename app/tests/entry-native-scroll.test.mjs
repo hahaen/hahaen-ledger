@@ -1,3 +1,4 @@
+import { parsePages } from './helpers/platform.mjs'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -25,6 +26,6 @@ test('账户弹窗滚动区的祖先不拦截微信手势', () => {
 })
 
 test('H5 不安装全局取消 touchmove 的页面禁滚监听', () => {
-  const page = JSON.parse(read('../src/pages.json')).pages.find(page => page.path === 'pages/entry/entry')
+  const page = parsePages(read('../src/pages.json'), 'h5').pages.find(page => page.path === 'pages/entry/entry')
   assert.notEqual(page.style.disableScroll, true)
 })

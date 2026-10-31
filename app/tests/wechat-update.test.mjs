@@ -1,3 +1,4 @@
+import { parsePages } from './helpers/platform.mjs'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import assert from 'node:assert/strict'
@@ -189,7 +190,7 @@ test('应用注册早于异步恢复，页面与前台均接入，H5条件编译
   assert.match(main, /app.mixin\(\{ onShow\(\) \{ getWechatUpdateGuard\(\).enforce\(\) \}/)
   const h5 = value => value.replace(/\/\/ #ifdef MP-WEIXIN\n[\s\S]*?\/\/ #endif/g, '')
   assert.doesNotMatch(h5(app) + h5(main), /wechatUpdate|getWechatUpdateGuard/)
-  const pages = JSON.parse(await readFile(new URL('../src/pages.json', import.meta.url), 'utf8'))
+  const pages = parsePages(await readFile(new URL('../src/pages.json', import.meta.url), 'utf8'))
   assert.ok(pages.pages.some(page => `/${page.path}` === WECHAT_UPDATE_PATH))
   assert.ok(pages.tabBar.list.every(tab => `/${tab.pagePath}` !== WECHAT_UPDATE_PATH))
 })
