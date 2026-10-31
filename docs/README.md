@@ -50,3 +50,5 @@
 本轮核心页面交付与验证见 [core-pages-prototype](10-iterations/2026/09/core-pages-prototype/README.md)，包含前后端回归和独立只读页面截图。
 
 开发完成后的验证、远端同步、冲突处理、自动提交与推送，以 [AGENTS.md](../AGENTS.md) 的“验证、同步与自动提交”为准，验证门槛见 [测试规范](07-testing/README.md)。
+
+2026-10-31 起，后续新功能仅做 H5，微信小程序只维护已有功能；完整边界以 [AGENTS.md](../AGENTS.md#h5-核心与新旧功能维护边界2026-10-31) 为准，变更记录见 [本轮档案](10-iterations/2026/10/h5-only-new-features/README.md)。

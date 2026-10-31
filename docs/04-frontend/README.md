@@ -2,6 +2,10 @@
 
 本目录是 Vue 3 + TypeScript + uni-app 的页面与交互约束入口。当前构建目标包括 H5 和微信小程序，但“可构建”不等于两端认证和真实依赖链路均已闭环。
 
+## H5 核心与已有功能维护（2026-10-31）
+
+后续新功能仅开发 H5，微信小程序不再新增功能；修改两端共有的已有功能时随 H5 同步维护小程序，仅 H5 已有的功能继续只维护 H5。新功能的页面、路由、入口、组件和 API 调用通过条件编译或平台隔离限定在 H5；共享组件、接口和数据结构仍须兼容小程序已有功能。验证按实际影响范围执行，涉及共享代码、平台隔离或小程序已有功能时保留相关回归、类型检查与受影响端的项目命令行构建。彩票永久禁止进入微信小程序，本机微信开发者工具操作仍按阶段规则排除。完整规则见 [AGENTS.md](../../AGENTS.md#h5-核心与新旧功能维护边界2026-10-31)。
+
 ## 代码位置
 
 - 页面放在 `app/src/pages`，当前页面包括认证、首次使用、首页、日历、资产、记账、账单详情、账户详情、我的和帮助；小程序默认首路由为首页，首次使用页保留为可选页面。
@@ -11,7 +15,7 @@
 - `pages.json` 的底部导航固定为：首页、日历、资产、物品、我的。记账、详情和账户详情是二级页面。
 - `BottomNav` 必须使用五项等宽的连续底栏；五项图标按可见轮廓对齐，字符图标分别按字形留白调整字号，首页和日历的字形向上微调 2px，物品描边图标适当收小，不再额外缩放。导航按钮显式清除平台默认边框、圆角、阴影和背景，仅当前项图标使用选中态薄荷绿背景。
 - 微信平台差异使用条件编译；小程序登录分支调用 `uni.login` 后请求 `/api/app/auth/wechat-mini/login`，H5 继续使用账号密码认证。
-- 微信小程序的全部路由页面在独立 `<script lang="ts">` 中显式声明 `onShareAppMessage: createWechatShareMessage`，共享 `utils/wechatShare.ts` 的固定标题、首页路径和服务器启动页文案图（`staticResource('share-welcome.png')`，500×400，公开HTTPS地址）。分享回调直接返回网络图片，不调用本地文件API；原图备份在 `app/offloaded-static-assets/wx/share-welcome.png`，不再打入代码包。图片服务须公开可读且可用；不携带账单或用户参数。H5 条件编译排除微信分享选项。禁止只依赖全局 mixin：uni-app 一次性读取 App mixin，页面先注册时可能永久遗漏回调；也不能在工具函数中间接注册 setup 回调。新增页面须同步接入，并执行源码原生生命周期回归及生产包检查 `node app/tests/wechat-share-build.check.mjs`（先构建微信产物）。朋友圈本轮未开放。
+- 微信小程序的全部路由页面在独立 `<script lang="ts">` 中显式声明 `onShareAppMessage: createWechatShareMessage`，共享 `utils/wechatShare.ts` 的固定标题、首页路径和服务器启动页文案图（`staticResource('share-welcome.png')`，500×400，公开HTTPS地址）。分享回调直接返回网络图片，不调用本地文件API；原图备份在 `app/offloaded-static-assets/wx/share-welcome.png`，不再打入代码包。图片服务须公开可读且可用；不携带账单或用户参数。H5 条件编译排除微信分享选项。禁止只依赖全局 mixin：uni-app 一次性读取 App mixin，页面先注册时可能永久遗漏回调；也不能在工具函数中间接注册 setup 回调。仅小程序已有功能维护中新增或调整的微信路由页面须接入（H5 新功能页面不适用），并执行源码原生生命周期回归及生产包检查 `node app/tests/wechat-share-build.check.mjs`（先构建微信产物）。朋友圈本轮未开放。
 - 新增/编辑记账页的主体内容由 `.entry-content` 独立滚动，数字键盘保持固定；H5 明确使用 `flex:1 1 0`、`height:0`、`overflow-y:auto` 和 iOS 惯性触摸滚动，避免手机视口下 flex 子项无法触摸上滑；主体使用 `@touchmove.stop` 阻止事件冒泡至 H5 的 `disableScroll` 全局监听，但不取消默认滚动。
 
 ## 自定义导航与微信胶囊对齐
