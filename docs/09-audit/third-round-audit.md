@@ -1113,3 +1113,7 @@ Chrome独立正式页面确认新增默认不重复；TIME以10-31为开始日�
 PASS：编译时剥离微信四个彩票路由、我的入口/导航、API 与样式；全量扫描21页/140个微信产物文件无彩票相关文件名/代码/文案，H5保留四路由、入口、API、样式。四个修改源文件的H5预处理结果与修改前一致（忽略空行）。权限true/false实际模板渲染覆盖H5按权限显示、微信始终无入口。范围Review及前端206/206、TypeScript、双端项目命令行构建PASS；初次测试夹具问题已修正并复验，无未解决必需FAIL/BLOCKED/PARTIAL。
 
 database/api/backend无变化，无SQL/Migration/配置操作；后端与H5无需更新/未发布，H5线上保持现状。微信小程序需用户自行上传发布新版；工具/真机及发布NOT_RUN（按用户阶段规则排除，非必需）。同步后复审复验PASS：20文件安全保存/恢复SHA256一致，pull --ff-only无远端更新，前端206/206、类型及产物扫描复验通过；无冲突。提交推送以本轮Git记录为准。requirement/design/database/api/backend/frontend/testing/commands/verification/rollback详见[本轮迭代](../10-iterations/2026/10/lottery-wechat-exclusion/README.md)。
+
+## 2026-10-31 彩票平台永久规则
+
+按用户要求在根目录AGENTS.md明确永久边界：微信禁止包含彩票功能，账号权限开启也无入口/页面，构建产物必须剥离相关内容；H5保留原功能和权限。后续开发、重构及跨端同步必须遵守，恢复微信工具操作不解除该限制；相关修改须回归权限开启/关闭两种状态并检查双端产物。仅工程规则及审计文档变化，Review范围限本次文档；不以本文宣称新增运行验收。见[追加记录](../10-iterations/2026/10/lottery-wechat-exclusion/README.md#2026-10-31-追加永久工程规则)。本次无需更新任何服务或客户端，后端、H5和微信小程序均无需发布。
